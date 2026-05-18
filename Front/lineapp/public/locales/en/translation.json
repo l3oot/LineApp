@@ -1,0 +1,119 @@
+{
+  "common": {
+    "close": "Close"
+  },
+  "nav": {
+    "summary": "Summary",
+    "cycle": "Cycle",
+    "analytics": "Analytics",
+    "list": "List",
+    "settings": "Settings"
+  },
+  "settings": {
+    "userTitle": "User",
+    "userSubtitle": "Profile settings",
+    "lineLogin": "Log in with LINE",
+    "lineLoginNotConfigured": "Set VITE_LINE_CHANNEL_ID and VITE_LINE_REDIRECT_URI, or VITE_LINE_LOGIN_URL in .env",
+    "item": {
+      "category": "Category settings",
+      "currency": "Currency settings",
+      "timezone": "Timezone settings",
+      "language": "Language settings",
+      "deleteAll": "Delete all records"
+    },
+    "languageName": {
+      "th": "Thai",
+      "en": "English",
+      "jp": "Japanese"
+    },
+    "languageSheet": {
+      "title": "Language settings",
+      "searchPlaceholder": "Search language",
+      "chooseLabel": "Choose display language"
+    },
+    "timezoneSheet": {
+      "title": "Timezone settings",
+      "chooseLabel": "Choose display timezone",
+      "searchPlaceholder": "Search timezone",
+      "loading": "Loading time...",
+      "noData": "No time data",
+      "dstOn": "DST On",
+      "dstOff": "DST Off",
+      "fetchError": "Unable to load timezone data"
+    },
+    "categorySheet": {
+      "title": "Category settings",
+      "category": "Category",
+      "income": "Income",
+      "expense": "Expense",
+      "addIncome": "Add income category",
+      "addExpense": "Add expense category",
+      "mockIncome": {
+        "cropSales": "Crop sales",
+        "sideJob": "Side income",
+        "livestock": "Livestock sales",
+        "other": "Other"
+      },
+      "mockExpense": {
+        "fertilizer": "Fertilizer",
+        "seed": "Seeds",
+        "labor": "Labor",
+        "other": "Other"
+      }
+    }
+  },
+  "list": {
+    "dateRangeAria": "Select date range",
+    "filterTitle": "Filter transaction type",
+    "extraFilterAria": "More filters",
+    "categoryTitle": "Category",
+    "all": "All",
+    "expense": "Expense",
+    "income": "Income",
+    "dailyTotalPrefix": "Total",
+    "currencySuffix": "THB",
+    "empty": "No transaction found for this filter"
+  },
+  "sum": {
+    "dateRangeAria": "Select date range",
+    "financeOverview": "Financial overview",
+    "totalIncome": "Total income",
+    "totalExpense": "Total expense",
+    "totalBalance": "Balance",
+    "farmingCycle": "Farming cycle",
+    "hide": "Hide",
+    "viewMore": "View more"
+  },
+  "transaction": {
+    "income": "Income",
+    "expense": "Expense"
+  },
+  "cycle": {
+    "addNew": "Add new farming cycle"
+  },
+  "addcycle": {
+    "income": "Income",
+    "expense": "Expense",
+    "profit": "Profit",
+    "usedBudget": "Used budget",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "pnl": {
+    "profit": "Profit",
+    "nearBreakEven": "Near break-even",
+    "breakEven": "Break-even",
+    "loss": "Loss"
+  },
+  "cyclecard": {
+    "usedBudgetLine": "Used budget {{amount}}"
+  },
+  "analytic": {
+    "trendTitle": "Income - Expense trend",
+    "income": "Income",
+    "expense": "Expense",
+    "incomeExpenseTitle": "Income/Expense",
+    "expenseShare": "Expense share",
+    "year": "Year"
+  }
+}

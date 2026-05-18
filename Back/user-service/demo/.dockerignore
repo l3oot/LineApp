@@ -1,0 +1,25 @@
+target/
+build/
+.gradle/
+*.log
+logs/
+
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+.git/
+.gitignore
+
+# secrets / local env (mount ผ่าน docker-compose แทน)
+.env
+.env.*
+application-local.yml
+application-dev.yml
+
+# OS junk
+.DS_Store
+Thumbs.db

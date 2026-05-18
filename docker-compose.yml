@@ -1,0 +1,91 @@
+# รันทั้ง stack: frontend (nginx) + user-service (Spring) + ai-service (FastAPI)
+# คำสั่ง:   docker compose up -d --build
+# Postgres รันบนเครื่อง host (ไม่ได้อยู่ใน compose) — container เชื่อมผ่าน host.docker.internal
+
+services:
+  frontend:
+    build:
+      context: ./Front/lineapp
+      dockerfile: Dockerfile
+      args:
+        # Vite อ่าน VITE_* ตอน build เท่านั้น — ต้องส่งเป็น build arg
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+        VITE_LINE_CHANNEL_ID: ${VITE_LINE_CHANNEL_ID:-2009886740}
+        VITE_LINE_REDIRECT_URI: ${VITE_LINE_REDIRECT_URI:-http://localhost:5173/callback}
+    container_name: lineapp-frontend
+    ports:
+      # map 5173 → 80 ภายใน container เพื่อให้ LINE redirect_uri เดิม (localhost:5173) ใช้งานได้
+      - "5173:80"
+    depends_on:
+      - user-service
+    restart: unless-stopped
+    networks:
+      - lineapp-net
+
+  user-service:
+    build:
+      context: ./Back/user-service/demo
+      dockerfile: Dockerfile
+    container_name: lineapp-user-service
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./Back/user-service/demo/.env
+    environment:
+      # Postgres รันบนเครื่อง host — ใช้ host.docker.internal ชี้ออกไปนอก container
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/${POSTGRES_DB:-Lineapp}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-chutiman}
+      SERVER_ADDRESS: 0.0.0.0
+      SERVER_PORT: "8080"
+      # CORS — ต้องเปิดให้ origin ของ frontend (รวม 5173 ทั้ง dev mode + nginx container)
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost:4173}
+      # HTTP Basic ของ /api/docs (override ผ่าน root .env ได้)
+      DOCS_USERNAME: ${DOCS_USERNAME:-admin}
+      DOCS_PASSWORD: ${DOCS_PASSWORD:-admin}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    networks:
+      - lineapp-net
+
+  ai-service:
+    build:
+      context: ./Back/ai-service
+      dockerfile: Dockerfile
+    container_name: lineapp-ai-service
+    depends_on:
+      - user-service
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./Back/ai-service/.env
+    environment:
+      PYTHONUNBUFFERED: "1"
+      # ภายใน docker network เรียก user-service ตามชื่อ service ได้เลย
+      LINEAPP_API_BASE: http://user-service:8080
+      # bind mount + uvicorn --reload — บังคับ polling ให้เห็นการแก้ไฟล์บน Windows host
+      WATCHFILES_FORCE_POLLING: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./Back/ai-service/src:/app/src
+    command:
+      - uvicorn
+      - src.main:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8000"
+      - --reload
+      - --reload-dir
+      - /app/src
+      - --reload-delay
+      - "0.25"
+    restart: unless-stopped
+    networks:
+      - lineapp-net
+
+networks:
+  lineapp-net:
+    driver: bridge

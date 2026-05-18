@@ -1,0 +1,69 @@
+-- ต้องใช้ extension สำหรับ UUID
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- ตาราง user: เก็บข้อมูลผู้ใช้งานระบบ
+CREATE TABLE "user" (
+  user_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- รหัสผู้ใช้ (UUID)
+  user_sub      VARCHAR(50)   NOT NULL UNIQUE,              -- Subject จาก OAuth provider (เช่น Google)
+  user_name     VARCHAR(50),                                 -- ชื่อผู้ใช้
+  user_picture  VARCHAR(500),                                -- URL รูปโปรไฟล์
+  user_email    VARCHAR(100)  NOT NULL,                      -- อีเมล
+  created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP, -- วันที่สร้างบัญชี
+  lastlogin_at  TIMESTAMP                                     -- วันที่ login ล่าสุด
+);
+
+-- ตาราง cycle: เก็บรอบการผลิตของแต่ละ user
+CREATE TABLE cycle (
+  cycle_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- รหัสรอบการผลิต (UUID)
+  user_id       UUID NOT NULL,                              -- FK → user: เจ้าของรอบนี้
+  name          VARCHAR(100)  NOT NULL,                     -- ชื่อรอบ เช่น "ข้าว รอบ 1/68"
+  farm_type     VARCHAR(100)  NOT NULL,                     -- ประเภทเกษตร
+  start_date    DATE,                                       -- วันเริ่มรอบการผลิต
+  end_date      DATE,                                       -- วันสิ้นสุดรอบการผลิต (ประมาณการ)
+  status        VARCHAR(50)   NOT NULL,                     -- สถานะรอบ: กำลังดำเนินอยู่ / ปิดแล้ว
+  created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP, -- วันที่สร้างรอบ
+  FOREIGN KEY (user_id) REFERENCES "user"(user_id) ON DELETE CASCADE
+);
+
+-- ตาราง category: หมวดหมู่รายรับ-รายจ่าย กำหนดเองได้ต่อ user
+CREATE TABLE category (
+  category_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- รหัสหมวดหมู่ (UUID)
+  user_id       UUID NOT NULL,                              -- FK → user: เจ้าของหมวดนี้
+  name          VARCHAR(100)  NOT NULL,                     -- ชื่อหมวด เช่น "ปุ๋ย/ยา", "ขายผลผลิต"
+  created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP, -- วันที่สร้างหมวด
+  FOREIGN KEY (user_id) REFERENCES "user"(user_id) ON DELETE CASCADE
+);
+
+-- ตาราง transaction: รายการรายรับ-รายจ่ายจริง (ตารางหลัก)
+CREATE TABLE "transaction" (
+  tx_id         UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- รหัสรายการ (UUID)
+  user_id       UUID NOT NULL,                              -- FK → user: ผู้บันทึกรายการ
+  cycle_id      UUID,                                       -- FK → cycle: รอบที่รายการนี้สังกัด (nullable)
+  category_id   UUID,                                       -- FK → category: หมวดของรายการนี้ (nullable)
+  tx_type       VARCHAR(50),                                -- ประเภท: รายรับ หรือ รายจ่าย
+  amount        DECIMAL(13,2) NOT NULL CHECK (amount >= 0), -- จำนวนเงิน (บาท, ทศนิยม 2 ตำแหน่ง)
+  note          VARCHAR(255),                               -- หมายเหตุเพิ่มเติม
+  tx_date       DATE NOT NULL,                              -- วันที่เกิดรายการจริง
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- วันที่บันทึกลงระบบ
+  FOREIGN KEY (user_id)     REFERENCES "user"(user_id)         ON DELETE CASCADE,
+  FOREIGN KEY (cycle_id)    REFERENCES cycle(cycle_id)        ON DELETE SET NULL, -- ลบรอบ → รายการยังอยู่ แต่ไม่ผูกรอบ
+  FOREIGN KEY (category_id) REFERENCES category(category_id)  ON DELETE SET NULL  -- ลบหมวด → รายการยังอยู่ แต่ไม่ผูกหมวด
+);
+
+-- ตาราง budget_cycle: งบประมาณที่ตั้งไว้ล่วงหน้า แยกตามรอบ
+CREATE TABLE budget_cycle (
+  budget_cycle_id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- รหัสงบประมาณ (UUID)
+  cycle_id        UUID NOT NULL,                              -- FK → cycle: รอบที่ตั้งงบ
+  amount          DECIMAL(13,2) NOT NULL CHECK (amount >= 0), -- จำนวนงบที่ตั้งไว้ (บาท)
+  created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- วันที่ตั้งงบ
+  FOREIGN KEY (cycle_id) REFERENCES cycle(cycle_id) ON DELETE CASCADE -- ลบรอบ → ลบงบด้วย
+);
+
+-- ตาราง budget_category: งบประมาณที่ตั้งไว้ล่วงหน้า แยกตามหมวดหมู่
+CREATE TABLE budget_category (
+  budget_category_id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- รหัสงบประมาณ (UUID)
+  category_id        UUID NOT NULL,                              -- FK → category: หมวดที่ตั้งงบ
+  amount             DECIMAL(13,2) NOT NULL CHECK (amount >= 0), -- จำนวนงบที่ตั้งไว้ (บาท)
+  created_at         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- วันที่ตั้งงบ
+  FOREIGN KEY (category_id) REFERENCES category(category_id) ON DELETE CASCADE -- ลบหมวด → ลบงบด้วย
+);

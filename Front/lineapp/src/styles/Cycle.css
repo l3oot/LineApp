@@ -1,0 +1,28 @@
+.addbutton {
+    background-color: var(--surface);
+    padding: 0.7rem 1rem;
+    border-radius: var(--radius-card);
+    height: 3.5rem;
+    border-style: dashed;
+    border-width: 2px;
+    border-color: color-mix(in srgb, var(--primary) 55%, white);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-soft);
+}
+
+.addbutton:hover {
+    background-color: var(--primary-soft);
+    border-color: var(--primary);
+    border-style: solid;
+}
+
+.addbutton:active {
+    background-color: color-mix(in srgb, var(--primary) 14%, white);
+}
+
+/* bottom-sheet ใช้ class กลาง `.bottom-sheet-panel` จาก index.css แล้ว */

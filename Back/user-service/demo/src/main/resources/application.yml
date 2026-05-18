@@ -1,0 +1,12 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+
+line:
+  client-id: ${LINE_CLIENT_ID}
+  client-secret: ${LINE_CLIENT_SECRET}
+  redirect-uri: ${LINE_REDIRECT_URI}
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}

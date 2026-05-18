@@ -1,0 +1,119 @@
+{
+  "common": {
+    "close": "ปิด"
+  },
+  "nav": {
+    "summary": "ภาพรวม",
+    "cycle": "รอบ",
+    "analytics": "วิเคราะห์",
+    "list": "รายการ",
+    "settings": "ตั้งค่า"
+  },
+  "settings": {
+    "userTitle": "ผู้ใช้งาน",
+    "userSubtitle": "ตั้งค่าโปรไฟล์",
+    "lineLogin": "เข้าสู่ระบบด้วย LINE",
+    "lineLoginNotConfigured": "กำหนด VITE_LINE_CHANNEL_ID กับ VITE_LINE_REDIRECT_URI หรือ VITE_LINE_LOGIN_URL ในไฟล์ .env",
+    "item": {
+      "category": "ตั้งค่าหมวด",
+      "currency": "ตั้งค่าสกุลเงิน",
+      "timezone": "ตั้งค่าโซนเวลา",
+      "language": "ตั้งค่าภาษา",
+      "deleteAll": "ลบรายการทั้งหมด"
+    },
+    "languageName": {
+      "th": "ไทย",
+      "en": "English",
+      "jp": "日本語"
+    },
+    "languageSheet": {
+      "title": "ตั้งค่าภาษา",
+      "searchPlaceholder": "ค้นหาภาษา",
+      "chooseLabel": "เลือกภาษาที่ระบบจะแสดงผล"
+    },
+    "timezoneSheet": {
+      "title": "ตั้งค่าโซนเวลา",
+      "chooseLabel": "เลือกโซนเวลาที่ระบบจะแสดงผล",
+      "searchPlaceholder": "ค้นหาโซนเวลา",
+      "loading": "กำลังโหลดเวลา...",
+      "noData": "ไม่มีข้อมูลเวลา",
+      "dstOn": "DST เปิด",
+      "dstOff": "DST ปิด",
+      "fetchError": "ไม่สามารถโหลดข้อมูลเวลาได้"
+    },
+    "categorySheet": {
+      "title": "ตั้งค่าหมวด",
+      "category": "หมวด",
+      "income": "รายรับ",
+      "expense": "รายจ่าย",
+      "addIncome": "เพิ่มหมวดรายรับ",
+      "addExpense": "เพิ่มหมวดรายจ่าย",
+      "mockIncome": {
+        "cropSales": "ขายผลผลิต",
+        "sideJob": "รายได้เสริม",
+        "livestock": "ขายปศุสัตว์",
+        "other": "อื่นๆ"
+      },
+      "mockExpense": {
+        "fertilizer": "ค่าปุ๋ย",
+        "seed": "ค่าเมล็ดพันธุ์",
+        "labor": "ค่าแรง",
+        "other": "อื่นๆ"
+      }
+    }
+  },
+  "list": {
+    "dateRangeAria": "เลือกช่วงวันที่",
+    "filterTitle": "คัดกรองประเภทรายการ",
+    "extraFilterAria": "ตัวกรองเพิ่มเติม",
+    "categoryTitle": "หมวดหมู่",
+    "all": "ทั้งหมด",
+    "expense": "รายจ่าย",
+    "income": "รายรับ",
+    "dailyTotalPrefix": "รวม",
+    "currencySuffix": "บาท",
+    "empty": "ไม่พบรายการในตัวกรองนี้"
+  },
+  "sum": {
+    "dateRangeAria": "เลือกช่วงวันที่",
+    "financeOverview": "ภาพรวมการเงิน",
+    "totalIncome": "รายได้รวม",
+    "totalExpense": "รายจ่ายรวม",
+    "totalBalance": "เงินคงเหลือ",
+    "farmingCycle": "รอบการทำเกษตร",
+    "hide": "ซ่อน",
+    "viewMore": "ดูเพิ่มเติม"
+  },
+  "transaction": {
+    "income": "รายรับ",
+    "expense": "รายจ่าย"
+  },
+  "cycle": {
+    "addNew": "เพิ่มรอบการเกษตรใหม่"
+  },
+  "addcycle": {
+    "income": "รายรับ",
+    "expense": "รายจ่าย",
+    "profit": "กำไร",
+    "usedBudget": "งบที่ใช้ไป",
+    "edit": "แก้ไข",
+    "delete": "ลบ"
+  },
+  "pnl": {
+    "profit": "กำไร",
+    "nearBreakEven": "ใกล้คุ้มทุน",
+    "breakEven": "คุ้มทุน",
+    "loss": "ขาดทุน"
+  },
+  "cyclecard": {
+    "usedBudgetLine": "งบที่ใช้ไปแล้ว {{amount}} บาท"
+  },
+  "analytic": {
+    "trendTitle": "แนวโน้มรายรับ - รายจ่าย",
+    "income": "รายรับ",
+    "expense": "รายจ่าย",
+    "incomeExpenseTitle": "รายรับ/รายจ่าย",
+    "expenseShare": "สัดส่วนรายจ่าย",
+    "year": "ปี"
+  }
+}

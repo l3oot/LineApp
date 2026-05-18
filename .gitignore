@@ -1,0 +1,127 @@
+# ============================================================================
+# Secrets / Environment — ต้องไม่ commit เด็ดขาด (มี LINE secret, JWT secret,
+# DB password, OpenAI/Typhoon API keys ฯลฯ)
+# ============================================================================
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# ============================================================================
+# Node.js / Vite / React (Front/lineapp)
+# ============================================================================
+node_modules/
+dist/
+dist-ssr/
+.vite/
+.vite-cache/
+.cache/
+.parcel-cache/
+*.local
+.eslintcache
+.npm
+.pnp.*
+coverage/
+
+# Build logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ============================================================================
+# Java / Spring Boot / Maven (Back/user-service/demo)
+# ============================================================================
+target/
+build/
+.gradle/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# Spring Boot devtools restart trigger files
+**/.spring-boot-devtools/
+.spring/
+
+# ============================================================================
+# Python / FastAPI (Back/ai-service)
+# ============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# ============================================================================
+# IDE / Editor
+# ============================================================================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.vs/
+.cursor/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+
+# ============================================================================
+# OS
+# ============================================================================
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ============================================================================
+# Logs / Temp
+# ============================================================================
+logs/
+*.log
+*.tmp
+*.bak
+*.orig
+
+# ============================================================================
+# Docker — ignore volumes / runtime data ถ้ามี (ไม่ใช่ Dockerfile / compose)
+# ============================================================================
+*.pid
+.docker/
+
+# ============================================================================
+# Tools / Binaries (load testing, etc.)
+# ============================================================================
+k6.exe
+*.exe
+*.dll

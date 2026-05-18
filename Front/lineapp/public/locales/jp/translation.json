@@ -1,0 +1,119 @@
+{
+  "common": {
+    "close": "閉じる"
+  },
+  "nav": {
+    "summary": "概要",
+    "cycle": "サイクル",
+    "analytics": "分析",
+    "list": "一覧",
+    "settings": "設定"
+  },
+  "settings": {
+    "userTitle": "ユーザー",
+    "userSubtitle": "プロフィール設定",
+    "lineLogin": "LINEでログイン",
+    "lineLoginNotConfigured": ".envで VITE_LINE_CHANNEL_ID と VITE_LINE_REDIRECT_URI、または VITE_LINE_LOGIN_URL を設定してください",
+    "item": {
+      "category": "カテゴリ設定",
+      "currency": "通貨設定",
+      "timezone": "タイムゾーン設定",
+      "language": "言語設定",
+      "deleteAll": "すべての記録を削除"
+    },
+    "languageName": {
+      "th": "タイ語",
+      "en": "英語",
+      "jp": "日本語"
+    },
+    "languageSheet": {
+      "title": "言語設定",
+      "searchPlaceholder": "言語を検索",
+      "chooseLabel": "表示言語を選択"
+    },
+    "timezoneSheet": {
+      "title": "タイムゾーン設定",
+      "chooseLabel": "表示タイムゾーンを選択",
+      "searchPlaceholder": "タイムゾーンを検索",
+      "loading": "時刻を読み込み中...",
+      "noData": "時刻データなし",
+      "dstOn": "DST オン",
+      "dstOff": "DST オフ",
+      "fetchError": "タイムゾーン情報を取得できません"
+    },
+    "categorySheet": {
+      "title": "カテゴリ設定",
+      "category": "カテゴリ",
+      "income": "収入",
+      "expense": "支出",
+      "addIncome": "収入カテゴリを追加",
+      "addExpense": "支出カテゴリを追加",
+      "mockIncome": {
+        "cropSales": "農作物販売",
+        "sideJob": "副収入",
+        "livestock": "家畜販売",
+        "other": "その他"
+      },
+      "mockExpense": {
+        "fertilizer": "肥料費",
+        "seed": "種子費",
+        "labor": "人件費",
+        "other": "その他"
+      }
+    }
+  },
+  "list": {
+    "dateRangeAria": "日付範囲を選択",
+    "filterTitle": "取引タイプを絞り込み",
+    "extraFilterAria": "追加フィルター",
+    "categoryTitle": "カテゴリ",
+    "all": "すべて",
+    "expense": "支出",
+    "income": "収入",
+    "dailyTotalPrefix": "合計",
+    "currencySuffix": "バーツ",
+    "empty": "この条件の取引はありません"
+  },
+  "sum": {
+    "dateRangeAria": "日付範囲を選択",
+    "financeOverview": "財務概要",
+    "totalIncome": "総収入",
+    "totalExpense": "総支出",
+    "totalBalance": "残高",
+    "farmingCycle": "農業サイクル",
+    "hide": "非表示",
+    "viewMore": "もっと見る"
+  },
+  "transaction": {
+    "income": "収入",
+    "expense": "支出"
+  },
+  "cycle": {
+    "addNew": "新しい農業サイクルを追加"
+  },
+  "addcycle": {
+    "income": "収入",
+    "expense": "支出",
+    "profit": "利益",
+    "usedBudget": "使用済み予算",
+    "edit": "編集",
+    "delete": "削除"
+  },
+  "pnl": {
+    "profit": "利益",
+    "nearBreakEven": "損益分岐点に近い",
+    "breakEven": "損益分岐点",
+    "loss": "赤字"
+  },
+  "cyclecard": {
+    "usedBudgetLine": "使用済み予算 {{amount}}"
+  },
+  "analytic": {
+    "trendTitle": "収入 - 支出の推移",
+    "income": "収入",
+    "expense": "支出",
+    "incomeExpenseTitle": "収入/支出",
+    "expenseShare": "支出の割合",
+    "year": "年"
+  }
+}

@@ -1,0 +1,11 @@
+.main-layout-content {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+}
+
+.main-layout-footer {
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+}
