@@ -35,28 +35,28 @@ public class CycleService {
     }
 
     public ApiRes<CycleRes> updateCycle(CycleUpdateReq req) {
-        if (req.getCycleId() == null) {
+        if (req.cycleId() == null) {
             return ApiRes.failure("cycleId is required", TypeError.VALIDATION_ERROR);
         }
-        if (req.getName() == null || req.getFarmType() == null || req.getStartDate() == null
-                || req.getEndDate() == null || req.getStatus() == null || req.getIcon() == null) {
+        if (req.name() == null || req.farmType() == null || req.startDate() == null
+                || req.endDate() == null || req.status() == null || req.icon() == null) {
             return ApiRes.failure("All fields are required for update", TypeError.VALIDATION_ERROR);
         }
-        Optional<CycleEntity> opt = cycleRepository.findById(req.getCycleId());
+        Optional<CycleEntity> opt = cycleRepository.findById(req.cycleId());
         if (opt.isEmpty()) {
             return ApiRes.failure("Cycle not found", TypeError.NOT_FOUND);
         }
-        if (cycleRepository.existsByNameAndCycleIdNot(req.getName(), req.getCycleId())) {
+        if (cycleRepository.existsByNameAndCycleIdNot(req.name(), req.cycleId())) {
             return ApiRes.failure("Name already exists", TypeError.CONFLICT);
         }
 
         CycleEntity entity = opt.get();
-        entity.setName(req.getName());
-        entity.setFarmType(req.getFarmType());
-        entity.setStartDate(req.getStartDate());
-        entity.setEndDate(req.getEndDate());
-        entity.setStatus(req.getStatus());
-        entity.setIcon(req.getIcon());
+        entity.setName(req.name());
+        entity.setFarmType(req.farmType());
+        entity.setStartDate(req.startDate());
+        entity.setEndDate(req.endDate());
+        entity.setStatus(req.status());
+        entity.setIcon(req.icon());
 
         CycleEntity saved = cycleRepository.save(entity);
         return ApiRes.success(toRes(saved), "Update Success");
@@ -87,18 +87,18 @@ public class CycleService {
     }
 
     public ApiRes<CycleCreateRes> createCycle(CycleCreateReq req) {
-        if (cycleRepository.existsByName(req.getName())) {
+        if (cycleRepository.existsByName(req.name())) {
             return ApiRes.failure("Name already exists", TypeError.CONFLICT);
         }
 
         CycleEntity entity = new CycleEntity(
-                req.getUserId(),
-                req.getStartDate(),
-                req.getEndDate(),
-                req.getIcon(),
-                req.getName(),
-                req.getFarmType(),
-                req.getStatus()
+                req.userId(),
+                req.startDate(),
+                req.endDate(),
+                req.icon(),
+                req.name(),
+                req.farmType(),
+                req.status()
         );
 
         CycleEntity saved = cycleRepository.save(entity);

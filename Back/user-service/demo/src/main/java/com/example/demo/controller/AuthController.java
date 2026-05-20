@@ -24,7 +24,7 @@ public class AuthController {
 
     @PostMapping("/line")
     public ResponseEntity<ApiRes<AuthRes>> lineLogin(@RequestBody LineTokenReq req) {
-        ApiRes<AuthRes> res = lineAuthService.loginWithLine(req.getCode()); 
+        ApiRes<AuthRes> res = lineAuthService.loginWithLine(req.code());
         return ApiResMapper.toResponseEntity(res);
     }
 }

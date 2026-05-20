@@ -9,10 +9,10 @@ import com.example.demo.enums.TypeError;
 public class ApiResMapper {
 
     public static <T> ResponseEntity<ApiRes<T>> toResponseEntity(ApiRes<T> res) {
-        if (res.isSuccess()) {
+        if (res.success()) {
             return ResponseEntity.ok(res);
         }
-        HttpStatus status = mapTypeErrorToStatus(res.getTypeError());
+        HttpStatus status = mapTypeErrorToStatus(res.typeError());
         return ResponseEntity.status(status).body(res);
     }
 

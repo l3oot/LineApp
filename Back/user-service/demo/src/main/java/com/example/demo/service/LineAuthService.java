@@ -60,9 +60,9 @@ public class LineAuthService {
 
         LineTokenRes tokenResponse = response.getBody();
 
-        if (tokenResponse == null || tokenResponse.getError() != null) {
+        if (tokenResponse == null || tokenResponse.error() != null) {
             throw new RuntimeException("LINE token exchange failed: "
-                    + (tokenResponse != null ? tokenResponse.getErrorDescription() : "null response"));
+                    + (tokenResponse != null ? tokenResponse.errorDescription() : "null response"));
         }
 
         return tokenResponse;
@@ -87,32 +87,32 @@ public class LineAuthService {
 
         LineVerifyRes verifyResponse = response.getBody();
 
-        if (verifyResponse == null || verifyResponse.getError() != null) {
+        if (verifyResponse == null || verifyResponse.error() != null) {
             throw new RuntimeException("LINE id_token verification failed: "
-                    + (verifyResponse != null ? verifyResponse.getErrorDescription() : "null response"));
+                    + (verifyResponse != null ? verifyResponse.errorDescription() : "null response"));
         }
 
-        UserEntity user = userRepository.findByUserSub(verifyResponse.getSub()).orElse(null);
+        UserEntity user = userRepository.findByUserSub(verifyResponse.sub()).orElse(null);
 
         if (user == null) {
             user = new UserEntity(
-                    verifyResponse.getEmail(),
-                    verifyResponse.getPicture(),
-                    verifyResponse.getSub(),
-                    verifyResponse.getName(),
+                    verifyResponse.email(),
+                    verifyResponse.picture(),
+                    verifyResponse.sub(),
+                    verifyResponse.name(),
                     LocalDateTime.now()
             );
         } else {
             user.setLastLoginAt(LocalDateTime.now());
             // อัปเดต profile ล่าสุดจาก LINE เผื่อผู้ใช้แก้รูป/ชื่อ
-            if (verifyResponse.getEmail() != null) {
-                user.setUserEmail(verifyResponse.getEmail());
+            if (verifyResponse.email() != null) {
+                user.setUserEmail(verifyResponse.email());
             }
-            if (verifyResponse.getPicture() != null) {
-                user.setUserPicture(verifyResponse.getPicture());
+            if (verifyResponse.picture() != null) {
+                user.setUserPicture(verifyResponse.picture());
             }
-            if (verifyResponse.getName() != null) {
-                user.setUserName(verifyResponse.getName());
+            if (verifyResponse.name() != null) {
+                user.setUserName(verifyResponse.name());
             }
         }
 
@@ -134,7 +134,7 @@ public class LineAuthService {
 
         LineProfileRes profile = response.getBody();
 
-        if (profile == null || profile.getUserId() == null) {
+        if (profile == null || profile.userId() == null) {
             throw new RuntimeException("Failed to fetch LINE profile");
         }
 
@@ -145,18 +145,18 @@ public class LineAuthService {
     public ApiRes<AuthRes> loginWithLine(String code) {
         try {
             LineTokenRes tokenResponse = exchangeToken(code);
-            UserEntity user = verifyIdTokenAndUpsertUser(tokenResponse.getIdToken());
-            LineProfileRes profile = getProfile(tokenResponse.getAccessToken());
+            UserEntity user = verifyIdTokenAndUpsertUser(tokenResponse.idToken());
+            LineProfileRes profile = getProfile(tokenResponse.accessToken());
 
             // JWT subject = UUID ของระบบ (ไม่ใช่ LINE userId) — ใช้ระบุ user เวลา validate token
-            String jwt = jwtUtil.generateToken(user.getUserId().toString(), profile.getDisplayName());
+            String jwt = jwtUtil.generateToken(user.getUserId().toString(), profile.displayName());
 
             AuthRes response = new AuthRes(
                     jwt,
                     user.getUserId(),
-                    profile.getUserId(),
-                    profile.getDisplayName(),
-                    profile.getPictureUrl()
+                    profile.userId(),
+                    profile.displayName(),
+                    profile.pictureUrl()
             );
 
             return ApiRes.success(response, "Login Success");

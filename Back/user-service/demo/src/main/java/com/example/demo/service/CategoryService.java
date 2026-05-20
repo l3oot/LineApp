@@ -60,49 +60,49 @@ public class CategoryService {
     }
 
     public ApiRes<CategoryRes> createCategory(CategoryCreateReq req) {
-        if (req.getUserId() == null) {
+        if (req.userId() == null) {
             return ApiRes.failure("userId is required", TypeError.VALIDATION_ERROR);
         }
-        String name = normalizeName(req.getName());
+        String name = normalizeName(req.name());
         if (name == null) {
             return ApiRes.failure("name is required", TypeError.VALIDATION_ERROR);
         }
-        Optional<String> normalizedType = normalizeType(req.getType());
+        Optional<String> normalizedType = normalizeType(req.type());
         if (normalizedType.isEmpty()) {
             return ApiRes.failure("type is required (income or expense)", TypeError.VALIDATION_ERROR);
         }
-        if (!userRepository.existsById(req.getUserId())) {
+        if (!userRepository.existsById(req.userId())) {
             return ApiRes.failure("User not found", TypeError.NOT_FOUND);
         }
-        if (categoryRepository.existsByUserIdAndName(req.getUserId(), name)) {
+        if (categoryRepository.existsByUserIdAndName(req.userId(), name)) {
             return ApiRes.failure("Category name already exists for this user", TypeError.CONFLICT);
         }
         CategoryEntity saved = categoryRepository.save(
-                new CategoryEntity(req.getUserId(), name, normalizedType.get()));
+                new CategoryEntity(req.userId(), name, normalizedType.get()));
         return ApiRes.success(toRes(saved), "Insert Success");
     }
 
     public ApiRes<CategoryRes> updateCategory(CategoryUpdateReq req) {
-        if (req.getCategoryId() == null || req.getUserId() == null) {
+        if (req.categoryId() == null || req.userId() == null) {
             return ApiRes.failure("categoryId and userId are required", TypeError.VALIDATION_ERROR);
         }
-        String name = normalizeName(req.getName());
+        String name = normalizeName(req.name());
         if (name == null) {
             return ApiRes.failure("name is required", TypeError.VALIDATION_ERROR);
         }
-        Optional<String> normalizedType = normalizeType(req.getType());
+        Optional<String> normalizedType = normalizeType(req.type());
         if (normalizedType.isEmpty()) {
             return ApiRes.failure("type is required (income or expense)", TypeError.VALIDATION_ERROR);
         }
-        Optional<CategoryEntity> opt = categoryRepository.findById(req.getCategoryId());
+        Optional<CategoryEntity> opt = categoryRepository.findById(req.categoryId());
         if (opt.isEmpty()) {
             return ApiRes.failure("Category not found", TypeError.NOT_FOUND);
         }
         CategoryEntity entity = opt.get();
-        if (!entity.getUserId().equals(req.getUserId())) {
+        if (!entity.getUserId().equals(req.userId())) {
             return ApiRes.failure("Forbidden", TypeError.FORBIDDEN);
         }
-        if (categoryRepository.existsByUserIdAndNameAndCategoryIdNot(req.getUserId(), name, req.getCategoryId())) {
+        if (categoryRepository.existsByUserIdAndNameAndCategoryIdNot(req.userId(), name, req.categoryId())) {
             return ApiRes.failure("Category name already exists for this user", TypeError.CONFLICT);
         }
         entity.setName(name);

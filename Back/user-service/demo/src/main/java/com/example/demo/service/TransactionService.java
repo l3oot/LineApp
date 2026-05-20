@@ -62,57 +62,57 @@ public class TransactionService {
     }
 
     public ApiRes<TransactionRes> createTransaction(TransactionCreateReq req) {
-        ApiRes<Void> validation = validateCommonFields(req.getUserId(), req.getTxType(), req.getAmount(), req.getTxDate());
+        ApiRes<Void> validation = validateCommonFields(req.userId(), req.txType(), req.amount(), req.txDate());
         if (validation != null) {
             return failureFrom(validation);
         }
-        if (!userRepository.existsById(req.getUserId())) {
+        if (!userRepository.existsById(req.userId())) {
             return ApiRes.failure("User not found", TypeError.NOT_FOUND);
         }
-        String normalizedType = normalizeTxType(req.getTxType()).orElseThrow();
-        if (req.getCycleId() != null && !cycleOwnedByUser(req.getCycleId(), req.getUserId())) {
+        String normalizedType = normalizeTxType(req.txType()).orElseThrow();
+        if (req.cycleId() != null && !cycleOwnedByUser(req.cycleId(), req.userId())) {
             return ApiRes.failure("Cycle not found or does not belong to user", TypeError.VALIDATION_ERROR);
         }
 
         TransactionEntity entity = new TransactionEntity(
-                req.getUserId(),
-                req.getCycleId(),
-                req.getCategoryId(),
+                req.userId(),
+                req.cycleId(),
+                req.categoryId(),
                 normalizedType,
-                req.getAmount(),
-                req.getNote(),
-                req.getTxDate());
+                req.amount(),
+                req.note(),
+                req.txDate());
         TransactionEntity saved = transactionRepository.save(entity);
         return ApiRes.success(toRes(saved), "Insert Success");
     }
 
     public ApiRes<TransactionRes> updateTransaction(TransactionUpdateReq req) {
-        if (req.getTxId() == null || req.getUserId() == null) {
+        if (req.txId() == null || req.userId() == null) {
             return ApiRes.failure("txId and userId are required", TypeError.VALIDATION_ERROR);
         }
-        ApiRes<Void> validation = validateCommonFields(req.getUserId(), req.getTxType(), req.getAmount(), req.getTxDate());
+        ApiRes<Void> validation = validateCommonFields(req.userId(), req.txType(), req.amount(), req.txDate());
         if (validation != null) {
             return failureFrom(validation);
         }
-        Optional<TransactionEntity> opt = transactionRepository.findById(req.getTxId());
+        Optional<TransactionEntity> opt = transactionRepository.findById(req.txId());
         if (opt.isEmpty()) {
             return ApiRes.failure("Transaction not found", TypeError.NOT_FOUND);
         }
         TransactionEntity entity = opt.get();
-        if (!entity.getUserId().equals(req.getUserId())) {
+        if (!entity.getUserId().equals(req.userId())) {
             return ApiRes.failure("Forbidden", TypeError.FORBIDDEN);
         }
-        String normalizedType = normalizeTxType(req.getTxType()).orElseThrow();
-        if (req.getCycleId() != null && !cycleOwnedByUser(req.getCycleId(), req.getUserId())) {
+        String normalizedType = normalizeTxType(req.txType()).orElseThrow();
+        if (req.cycleId() != null && !cycleOwnedByUser(req.cycleId(), req.userId())) {
             return ApiRes.failure("Cycle not found or does not belong to user", TypeError.VALIDATION_ERROR);
         }
 
-        entity.setCycleId(req.getCycleId());
-        entity.setCategoryId(req.getCategoryId());
+        entity.setCycleId(req.cycleId());
+        entity.setCategoryId(req.categoryId());
         entity.setTxType(normalizedType);
-        entity.setAmount(req.getAmount());
-        entity.setNote(req.getNote());
-        entity.setTxDate(req.getTxDate());
+        entity.setAmount(req.amount());
+        entity.setNote(req.note());
+        entity.setTxDate(req.txDate());
 
         TransactionEntity saved = transactionRepository.save(entity);
         return ApiRes.success(toRes(saved), "Update Success");
@@ -153,7 +153,7 @@ public class TransactionService {
     }
 
     private static <T> ApiRes<T> failureFrom(ApiRes<?> v) {
-        return ApiRes.failure(v.getMessage(), v.getTypeError());
+        return ApiRes.failure(v.message(), v.typeError());
     }
 
     private Optional<String> normalizeTxType(String raw) {
