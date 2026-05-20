@@ -38,6 +38,14 @@ public class CategoryController {
         return ApiResMapper.toResponseEntity(categoryService.listCategories(userId, type));
     }
 
+    /** GET /api/category/user/{userId} — รายการหมวดของผู้ใช้ (type กรองได้ผ่าน query) */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<ApiRes<List<CategoryRes>>> listCategoriesByUser(
+            @PathVariable UUID userId,
+            @RequestParam(required = false) String type) {
+        return ApiResMapper.toResponseEntity(categoryService.listCategories(userId, type));
+    }
+
     @GetMapping("/{categoryId}")
     public ResponseEntity<ApiRes<CategoryRes>> getCategory(
             @PathVariable UUID categoryId,

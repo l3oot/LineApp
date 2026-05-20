@@ -6,18 +6,37 @@ type IconName = keyof typeof icons;
 
 type AddcycleProps = {
     title: string;
-    balance: number;
+    income: number;
+    expense: number;
     length: string;
-    balanceused: number;
+    budget?: number | null;
     icon: IconName;
+    onEdit?: () => void;
+    onDelete?: () => void;
+    deleting?: boolean;
 }
 
-export default function Addcycle({ title, balance, length, balanceused, icon }: AddcycleProps) {
+export default function Addcycle({
+    title,
+    income,
+    expense,
+    length,
+    budget,
+    icon,
+    onEdit,
+    onDelete,
+    deleting = false,
+}: AddcycleProps) {
     const { t } = useTranslation();
-    const percent = calpercentused(balanceused, balance);
-    let bgcolor = calbgcolor(percent);
-    let PnL = calPnL(percent);
-    const safePercent = Math.min(100, Math.max(0, percent));
+    const capital = budget ?? 0;
+    const remaining = capital - (expense - income);
+    const budgetBase = capital > 0 ? capital : income;
+    const percent = calpercentused(expense, budgetBase);
+    const remainingColor = remaining >= 0 ? "var(--primary)" : "var(--danger)";
+    const bgcolor = calbgcolor(percent);
+    const PnL = calPnL(percent);
+    const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
+    const displayPercent = Number.isFinite(percent) ? percent : 0;
 
     return (
         <div
@@ -45,22 +64,22 @@ export default function Addcycle({ title, balance, length, balanceused, icon }: 
                 <p className='text-sm text-[var(--text-soft)] font-medium'>{length}</p>
             </div>
             <div className="mt-3 flex bg-white/60 backdrop-blur-sm border border-[var(--border)] rounded-[16px] overflow-hidden shadow-inner">
-                <div className="flex-1 p-2 text-center ">
-                    <p className='text-xs text-[var(--text-soft)]'>{t("addcycle.income")}</p>
-                    <p className="font-bold text-[var(--primary)]">
-                        {balance.toLocaleString()}
+                <div className="flex-1 p-2 text-center">
+                    <p className="text-xs text-[var(--text-soft)]">{t("addcycle.capital")}</p>
+                    <p className="font-bold text-[#2d6fbe]">{capital.toLocaleString()}</p>
+                </div>
+                <div className="flex-1 border-l border-[var(--border)] p-2 text-center">
+                    <p className="text-xs text-[var(--text-soft)]">{t("addcycle.incomeExpense")}</p>
+                    <p className="mt-0.5 text-sm font-bold text-[var(--text)]">
+                        <span className="text-[var(--primary)]">{income.toLocaleString()}</span>
+                        <span className="mx-1 text-[var(--text-soft)]">-</span>
+                        <span className="text-[var(--danger)]">{expense.toLocaleString()}</span>
                     </p>
                 </div>
-                <div className="flex-1 p-2 text-center border-l border-[var(--border)]">
-                    <p className='text-xs text-[var(--text-soft)]'>{t("addcycle.expense")}</p>
-                    <p className="font-bold text-[var(--danger)]">
-                        {balanceused.toLocaleString()}
-                    </p>
-                </div>
-                <div className="flex-1 p-2 text-center border-l border-[var(--border)]">
-                    <p className='text-xs text-[var(--text-soft)]'>{t("addcycle.profit")}</p>
-                    <p className="font-bold text-[#2d6fbe]">
-                        {(balance - balanceused).toLocaleString()}
+                <div className="flex-1 border-l border-[var(--border)] p-2 text-center">
+                    <p className="text-xs text-[var(--text-soft)]">{t("addcycle.remaining")}</p>
+                    <p className="font-bold" style={{ color: remainingColor }}>
+                        {remaining.toLocaleString()}
                     </p>
                 </div>
             </div>
@@ -78,15 +97,25 @@ export default function Addcycle({ title, balance, length, balanceused, icon }: 
             </div>
             <div className="mt-1 w-full flex flex-row mb-1 items-center justify-between">
                 <p className="text-xs font-bold text-[var(--text-soft)]">{t("addcycle.usedBudget")}</p>
-                <p className='text-xs font-bold' style={{ color: bgcolor }}>{percent.toFixed(0)}%</p>
+                <p className='text-xs font-bold' style={{ color: bgcolor }}>{displayPercent.toFixed(0)}%</p>
             </div>
             <hr className="border-[var(--border)] mt-3 mb-3" />
             <div className="flex flex-row justify-end gap-3">
-                <button className="bg-white/70 text-[var(--text-soft)] font-bold text-xs py-1.5 px-6 rounded-[var(--radius-control)] border border-[var(--border)] hover:bg-white hover:shadow-sm transition-all">
+                <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={onEdit}
+                    className="bg-white/70 text-[var(--text-soft)] font-bold text-xs py-1.5 px-6 rounded-[var(--radius-control)] border border-[var(--border)] hover:bg-white hover:shadow-sm transition-all disabled:opacity-50"
+                >
                     {t("addcycle.edit")}
                 </button>
-                <button className="bg-red-50 text-[var(--danger)] font-bold text-xs py-1.5 px-6 rounded-[var(--radius-control)] border border-red-100 hover:bg-red-100 hover:shadow-sm transition-all">
-                    {t("addcycle.delete")}
+                <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={onDelete}
+                    className="bg-red-50 text-[var(--danger)] font-bold text-xs py-1.5 px-6 rounded-[var(--radius-control)] border border-red-100 hover:bg-red-100 hover:shadow-sm transition-all disabled:opacity-50"
+                >
+                    {deleting ? "..." : t("addcycle.delete")}
                 </button>
             </div>
         </div>

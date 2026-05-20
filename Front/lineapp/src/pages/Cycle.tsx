@@ -13,7 +13,9 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { ApiError } from "../lib/api";
 import { auth } from "../lib/auth";
-import { cycleApi, type Cycle } from "../lib/userService";
+import { cycleApi, transactionApi, type Cycle } from "../lib/userService";
+import { aggregateTransactionsByCycle } from "../utils/cycleStats";
+import { formatCycleDateRange } from "../utils/formatMonthYear";
 
 type IconName = keyof typeof icons;
 
@@ -21,17 +23,10 @@ function isIconName(value: string | null | undefined): value is IconName {
     return Boolean(value && Object.prototype.hasOwnProperty.call(icons, value));
 }
 
-function formatMonth(value: Dayjs | null): string {
-    if (!value) return "";
-    return value
-        .toDate()
-        .toLocaleDateString(undefined, { month: "short", year: "numeric" });
-}
-
-function cycleLengthLabel(c: Cycle): string {
-    const start = c.startDate ? dayjs(c.startDate) : null;
-    const end = c.endDate ? dayjs(c.endDate) : null;
-    return `${formatMonth(start)} - ${formatMonth(end)}`;
+function cycleLengthLabel(c: Cycle, lang: string): string {
+    const start = c.startDate ? dayjs(c.startDate).toDate() : null;
+    const end = c.endDate ? dayjs(c.endDate).toDate() : null;
+    return formatCycleDateRange(start, end, lang);
 }
 
 const datePickerTextFieldSx = {
@@ -49,12 +44,17 @@ const datePickerTextFieldSx = {
 };
 
 export default function CyclePage() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const [cycles, setCycles] = useState<Cycle[]>([]);
+    const [statsByCycleId, setStatsByCycleId] = useState<
+        Record<string, { income: number; expense: number }>
+    >({});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [deletingCycleId, setDeletingCycleId] = useState<string | null>(null);
+    const [editingCycle, setEditingCycle] = useState<Cycle | null>(null);
 
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [title, setTitle] = useState("");
@@ -64,6 +64,7 @@ export default function CyclePage() {
     const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
     const [startDate, setStartDate] = useState<Dayjs | null>(null);
     const [endDate, setEndDate] = useState<Dayjs | null>(null);
+    const [budget, setBudget] = useState("");
     const [isStartPickerOpen, setIsStartPickerOpen] = useState(false);
     const [isEndPickerOpen, setIsEndPickerOpen] = useState(false);
     const startPickerRef = useRef<HTMLLabelElement>(null);
@@ -82,13 +83,16 @@ export default function CyclePage() {
         let cancelled = false;
         setLoading(true);
         setError(null);
-        cycleApi
-            .list()
-            .then((data) => {
-                if (!cancelled) setCycles(data ?? []);
+        Promise.all([cycleApi.list(), transactionApi.list()])
+            .then(([cycleRows, txRows]) => {
+                if (cancelled) return;
+                setCycles(cycleRows ?? []);
+                setStatsByCycleId(aggregateTransactionsByCycle(txRows ?? []));
             })
             .catch((err: unknown) => {
                 if (cancelled) return;
+                setCycles([]);
+                setStatsByCycleId({});
                 setError(err instanceof ApiError ? err.message : (err as Error).message);
             })
             .finally(() => {
@@ -107,12 +111,37 @@ export default function CyclePage() {
         setIsIconPickerOpen(false);
         setStartDate(null);
         setEndDate(null);
+        setBudget("");
         setIsStartPickerOpen(false);
         setIsEndPickerOpen(false);
     };
 
+    const openAddSheet = () => {
+        resetForm();
+        setEditingCycle(null);
+        setError(null);
+        setIsSheetOpen(true);
+    };
+
+    const openEditSheet = (cycle: Cycle) => {
+        setEditingCycle(cycle);
+        setTitle(cycle.name);
+        setFarmType(cycle.farmType ?? "ทั่วไป");
+        setSelectedIcon(isIconName(cycle.icon) ? cycle.icon : "corn");
+        setStartDate(cycle.startDate ? dayjs(cycle.startDate) : null);
+        setEndDate(cycle.endDate ? dayjs(cycle.endDate) : null);
+        setBudget("");
+        setIconQuery("");
+        setIsIconPickerOpen(false);
+        setIsStartPickerOpen(false);
+        setIsEndPickerOpen(false);
+        setError(null);
+        setIsSheetOpen(true);
+    };
+
     const handleCloseSheet = () => {
         setIsSheetOpen(false);
+        setEditingCycle(null);
         setIsStartPickerOpen(false);
         setIsEndPickerOpen(false);
     };
@@ -126,6 +155,24 @@ export default function CyclePage() {
         if (!insideEnd && !insidePopper) setIsEndPickerOpen(false);
     };
 
+    const handleDeleteCycle = async (cycle: Cycle) => {
+        if (!window.confirm(`ลบรอบ "${cycle.name}" ?\nงบประมาณจะถูกลบด้วย รายการธุรกรรมจะไม่ผูกรอบนี้แล้ว`)) {
+            return;
+        }
+        setDeletingCycleId(cycle.cycleId);
+        setError(null);
+        try {
+            await cycleApi.delete(cycle.cycleId);
+            setCycles((prev) => prev.filter((c) => c.cycleId !== cycle.cycleId));
+            const txRows = await transactionApi.list();
+            setStatsByCycleId(aggregateTransactionsByCycle(txRows ?? []));
+        } catch (err) {
+            setError(err instanceof ApiError ? err.message : (err as Error).message);
+        } finally {
+            setDeletingCycleId(null);
+        }
+    };
+
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const nextTitle = title.trim();
@@ -134,15 +181,37 @@ export default function CyclePage() {
         setSubmitting(true);
         setError(null);
         try {
-            const created = await cycleApi.create({
-                name: nextTitle,
-                farmType: farmType.trim() || "ทั่วไป",
-                startDate: startDate.format("YYYY-MM-DD"),
-                endDate: endDate.format("YYYY-MM-DD"),
-                status: "active",
-                icon: selectedIcon,
-            });
-            setCycles((prev) => [created, ...prev]);
+            if (editingCycle) {
+                const updated = await cycleApi.update({
+                    cycleId: editingCycle.cycleId,
+                    name: nextTitle,
+                    farmType: editingCycle.farmType ?? "ทั่วไป",
+                    startDate: startDate.format("YYYY-MM-DD"),
+                    endDate: endDate.format("YYYY-MM-DD"),
+                    status: editingCycle.status ?? "active",
+                    icon: selectedIcon,
+                });
+                setCycles((prev) =>
+                    prev.map((c) => (c.cycleId === updated.cycleId ? updated : c)),
+                );
+            } else {
+                const budgetNumber = budget.trim() === "" ? null : Number(budget);
+                if (budgetNumber !== null && (Number.isNaN(budgetNumber) || budgetNumber < 0)) {
+                    return;
+                }
+                const created = await cycleApi.create({
+                    name: nextTitle,
+                    farmType: farmType.trim() || "ทั่วไป",
+                    startDate: startDate.format("YYYY-MM-DD"),
+                    endDate: endDate.format("YYYY-MM-DD"),
+                    status: "active",
+                    icon: selectedIcon,
+                    budgetAmount: budgetNumber,
+                });
+                setCycles((prev) => [created, ...prev]);
+                const txRows = await transactionApi.list();
+                setStatsByCycleId(aggregateTransactionsByCycle(txRows ?? []));
+            }
             resetForm();
             handleCloseSheet();
         } catch (err) {
@@ -152,12 +221,14 @@ export default function CyclePage() {
         }
     };
 
+    const isEditMode = editingCycle !== null;
+
     return (
         <MainLayout>
             <div className="flex flex-col gap-4 px-5 pb-3">
                 <button
                     type="button"
-                    onClick={() => setIsSheetOpen(true)}
+                    onClick={openAddSheet}
                     className="addbutton group transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
                 >
                     <FaPlus size={14} color="var(--primary)" className="group-hover:rotate-90 transition-transform" />
@@ -175,16 +246,23 @@ export default function CyclePage() {
                 )}
 
                 <div className="flex flex-col gap-3">
-                    {cycles.map((cycle) => (
-                        <Addcycle
-                            key={cycle.cycleId}
-                            title={cycle.name}
-                            balance={0}
-                            balanceused={0}
-                            length={cycleLengthLabel(cycle)}
-                            icon={isIconName(cycle.icon) ? cycle.icon : "corn"}
-                        />
-                    ))}
+                    {cycles.map((cycle) => {
+                        const stats = statsByCycleId[cycle.cycleId] ?? { income: 0, expense: 0 };
+                        return (
+                            <Addcycle
+                                key={cycle.cycleId}
+                                title={cycle.name}
+                                income={stats.income}
+                                expense={stats.expense}
+                                budget={cycle.budgetAmount}
+                                length={cycleLengthLabel(cycle, i18n.language)}
+                                icon={isIconName(cycle.icon) ? cycle.icon : "corn"}
+                                deleting={deletingCycleId === cycle.cycleId}
+                                onEdit={() => openEditSheet(cycle)}
+                                onDelete={() => handleDeleteCycle(cycle)}
+                            />
+                        );
+                    })}
                     {!loading && cycles.length === 0 && !error && (
                         <p className="text-center text-sm text-[var(--text-soft)]">
                             ยังไม่มีรอบปลูก กดปุ่ม + เพื่อเริ่มต้น
@@ -200,7 +278,9 @@ export default function CyclePage() {
                         onClick={(event) => event.stopPropagation()}
                     >
                         <div className="mb-3 flex items-center justify-between">
-                            <p className="text-base font-bold text-[var(--text)]">{t("cycle.formTitle")}</p>
+                            <p className="text-base font-bold text-[var(--text)]">
+                                {isEditMode ? t("cycle.editFormTitle") : t("cycle.formTitle")}
+                            </p>
                             <button
                                 type="button"
                                 aria-label={t("common.close")}
@@ -239,16 +319,31 @@ export default function CyclePage() {
                                 </button>
                             </div>
 
-                            <label className="text-sm font-semibold text-[var(--text)]">
-                                ประเภท (farmType)
-                                <input
-                                    type="text"
-                                    value={farmType}
-                                    onChange={(event) => setFarmType(event.target.value)}
-                                    placeholder="เช่น พืชไร่ / ประมง / ปศุสัตว์"
-                                    className="mt-1.5 w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
-                                />
-                            </label>
+                            {!isEditMode && (
+                                <>
+                                    <label className="text-sm font-semibold text-[var(--text)]">
+                                        ประเภท (farmType)
+                                        <input
+                                            type="text"
+                                            value={farmType}
+                                            onChange={(event) => setFarmType(event.target.value)}
+                                            placeholder="เช่น พืชไร่ / ประมง / ปศุสัตว์"
+                                            className="mt-1.5 w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
+                                        />
+                                    </label>
+                                    <label className="text-sm font-semibold text-[var(--text)]">
+                                        {t("cycle.budgetLabel")}
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            value={budget}
+                                            onChange={(event) => setBudget(event.target.value)}
+                                            placeholder={t("cycle.budgetPlaceholder")}
+                                            className="mt-1.5 w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
+                                        />
+                                    </label>
+                                </>
+                            )}
 
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <div className="grid grid-cols-2 gap-2">

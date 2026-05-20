@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.dto.ApiRes;
 import com.example.demo.dto.req.TransactionCreateReq;
@@ -131,6 +132,18 @@ public class TransactionService {
         }
         transactionRepository.deleteById(txId);
         return ApiRes.success(null, "Delete Success");
+    }
+
+    @Transactional
+    public ApiRes<Void> deleteAllTransactionsByUser(UUID userId) {
+        if (userId == null) {
+            return ApiRes.failure("userId is required", TypeError.VALIDATION_ERROR);
+        }
+        if (!userRepository.existsById(userId)) {
+            return ApiRes.failure("User not found", TypeError.NOT_FOUND);
+        }
+        transactionRepository.deleteByUserId(userId);
+        return ApiRes.success(null, "Delete All Success");
     }
 
     private ApiRes<Void> validateCommonFields(UUID userId, String txType, BigDecimal amount, LocalDateTime txDate) {

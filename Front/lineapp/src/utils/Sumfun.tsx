@@ -1,5 +1,9 @@
+/** สัดส่วนรายจ่ายต่อรายรับ (%) — ใช้แสดง progress / PnL badge */
 export function calpercentused(balanceused: number, balance: number) {
-    return balanceused / balance * 100;
+    if (balance <= 0) {
+        return balanceused > 0 ? 101 : 0;
+    }
+    return (balanceused / balance) * 100;
 }
 
 export function calbgcolor(percent: number) {
@@ -12,14 +16,18 @@ export function calbgcolor(percent: number) {
     }
 }
 
-export function calPnL(percent: number) {
+export function calPnL(percent: number): "profit" | "nearBreakEven" | "breakEven" | "loss" {
+    if (!Number.isFinite(percent) || percent < 0) {
+        return "profit";
+    }
     if (percent < 90) {
         return "profit";
-    } else if (percent >= 90 && percent < 100) {
-        return "nearBreakEven";
-    } else if (percent === 100) {
-        return "breakEven";
-    } else if (percent > 100) {
-        return "loss";
     }
+    if (percent >= 90 && percent < 100) {
+        return "nearBreakEven";
+    }
+    if (percent === 100) {
+        return "breakEven";
+    }
+    return "loss";
 }

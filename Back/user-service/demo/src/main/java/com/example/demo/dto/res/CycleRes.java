@@ -1,5 +1,6 @@
 package com.example.demo.dto.res;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -13,5 +14,6 @@ public record CycleRes(
         LocalDate endDate,
         String status,
         String icon,
-        LocalDateTime createdAt) {
+        LocalDateTime createdAt,
+        BigDecimal budgetAmount) {
 }

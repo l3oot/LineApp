@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
 import {
     Button,
@@ -24,12 +24,96 @@ import { FiCalendar, FiCheck, FiChevronDown, FiX } from "react-icons/fi";
 import { FaPlus } from "react-icons/fa";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { useTranslation } from "react-i18next";
-import { initialGroupedTransactions, type GroupedTransaction } from "../data/listMockData";
+import type { GroupedTransaction } from "../data/listMockData";
+import { ApiError } from "../lib/api";
+import { categoryApi, cycleApi, transactionApi, type Category, type Cycle, type Transaction } from "../lib/userService";
+import { auth } from "../lib/auth";
 
 const getDateTimeLocalValue = (date: Date) => {
     const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
     return localDate.toISOString().slice(0, 16);
 };
+
+function isIconName(value: string | null | undefined): value is keyof typeof icons {
+    return Boolean(value && Object.prototype.hasOwnProperty.call(icons, value));
+}
+
+/** datetime-local → LocalDateTime สำหรับ Spring (yyyy-MM-ddTHH:mm:ss) */
+function formatTxDateForApi(datetimeLocal: string): string {
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(datetimeLocal)) {
+        return `${datetimeLocal}:00`;
+    }
+    return datetimeLocal;
+}
+
+function calendarDateStart(cd: CalendarDate): Date {
+    return new Date(cd.year, cd.month - 1, cd.day, 0, 0, 0, 0);
+}
+
+function calendarDateEnd(cd: CalendarDate): Date {
+    return new Date(cd.year, cd.month - 1, cd.day, 23, 59, 59, 999);
+}
+
+function isTxInDateRange(txDate: string, start: CalendarDate, end: CalendarDate): boolean {
+    const d = new Date(txDate);
+    if (Number.isNaN(d.getTime())) return false;
+    return d >= calendarDateStart(start) && d <= calendarDateEnd(end);
+}
+
+function toDisplayTransaction(
+    tx: Transaction,
+    categoryById: Record<string, string>,
+    fallbackCategory: string,
+): TransactionProps {
+    const txDate = new Date(tx.txDate);
+    return {
+        title: tx.note?.trim() || "—",
+        type: tx.txType,
+        category: tx.categoryId ? (categoryById[tx.categoryId] ?? fallbackCategory) : fallbackCategory,
+        amount: Number(tx.amount),
+        time: txDate.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
+        icon: icons.bill,
+    };
+}
+
+function categoryNameForTx(
+    tx: Transaction,
+    categoryById: Record<string, string>,
+    fallbackCategory: string,
+): string {
+    return tx.categoryId ? (categoryById[tx.categoryId] ?? fallbackCategory) : fallbackCategory;
+}
+
+function groupTransactionsByDate(rows: Transaction[]): GroupedTransaction[] {
+    const sorted = [...rows].sort(
+        (a, b) => new Date(b.txDate).getTime() - new Date(a.txDate).getTime(),
+    );
+    const groups: GroupedTransaction[] = [];
+    let currentDate = "";
+    let currentItems: Transaction[] = [];
+
+    for (const tx of sorted) {
+        const txDate = new Date(tx.txDate);
+        const dateLabel = txDate.toLocaleDateString("th-TH", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+        });
+        if (dateLabel !== currentDate) {
+            if (currentItems.length > 0) {
+                groups.push({ date: currentDate, transactions: currentItems });
+            }
+            currentDate = dateLabel;
+            currentItems = [tx];
+        } else {
+            currentItems.push(tx);
+        }
+    }
+    if (currentItems.length > 0) {
+        groups.push({ date: currentDate, transactions: currentItems });
+    }
+    return groups;
+}
 
 export default function List() {
     const { t } = useTranslation();
@@ -45,21 +129,73 @@ export default function List() {
         end: initialEnd,
     });
 
-    const [groupedTransactions, setGroupedTransactions] = useState<GroupedTransaction[]>(initialGroupedTransactions);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [categoryById, setCategoryById] = useState<Record<string, string>>({});
+    const [listLoading, setListLoading] = useState(true);
+    const [listError, setListError] = useState<string | null>(null);
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+    const [editingTxId, setEditingTxId] = useState<string | null>(null);
     const [newTitle, setNewTitle] = useState("");
     const [newType, setNewType] = useState<"income" | "expense">("expense");
-    const [newCategory, setNewCategory] = useState("");
+    const [formCategories, setFormCategories] = useState<Category[]>([]);
+    const [newCategoryId, setNewCategoryId] = useState("");
+    const [newCycleId, setNewCycleId] = useState<string>("");
     const [newAmount, setNewAmount] = useState("0");
     const [newDateTime, setNewDateTime] = useState(getDateTimeLocalValue(new Date()));
     const [newIcon, setNewIcon] = useState<keyof typeof icons>("bill");
     const [iconQuery, setIconQuery] = useState("");
     const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
     const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+    const [isAddCycleOpen, setIsAddCycleOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [addError, setAddError] = useState<string | null>(null);
+    const [cycles, setCycles] = useState<Cycle[]>([]);
+    const fallbackCategory = t("list.quickAddCategory");
+
+    const loadTransactions = useCallback(async () => {
+        if (!auth.isAuthed()) {
+            setTransactions([]);
+            setCategoryById({});
+            setListLoading(false);
+            return;
+        }
+        setListLoading(true);
+        setListError(null);
+        try {
+            const [txRows, categories] = await Promise.all([
+                transactionApi.list(),
+                categoryApi.list(),
+            ]);
+            setCategoryById(
+                Object.fromEntries((categories ?? []).map((c) => [c.categoryId, c.name])),
+            );
+            setTransactions(txRows ?? []);
+        } catch (err) {
+            setTransactions([]);
+            setListError(err instanceof ApiError ? err.message : (err as Error).message);
+        } finally {
+            setListLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadTransactions();
+    }, [loadTransactions]);
+
+    const groupedTransactions = useMemo(() => {
+        const inRange = transactions.filter((tx) =>
+            isTxInDateRange(tx.txDate, dateRange.start, dateRange.end),
+        );
+        return groupTransactionsByDate(inRange);
+    }, [transactions, dateRange]);
+
     const categoryOptions = useMemo(() => {
-        return Array.from(new Set(groupedTransactions.flatMap((group) => group.transactions.map((tx) => tx.category))));
-    }, [groupedTransactions]);
-    const defaultCategory = categoryOptions[0] ?? t("list.quickAddCategory");
+        const fromList = transactions.map((tx) =>
+            categoryNameForTx(tx, categoryById, fallbackCategory),
+        );
+        return Array.from(new Set([...Object.values(categoryById), ...fromList]));
+    }, [transactions, categoryById, fallbackCategory]);
+    const selectedFormCategory = formCategories.find((c) => c.categoryId === newCategoryId) ?? null;
     const iconOptions = Object.entries(icons) as [keyof typeof icons, string][];
     const filteredIcons = iconOptions.filter(([key]) => key.toLowerCase().includes(iconQuery.trim().toLowerCase()));
 
@@ -78,18 +214,62 @@ export default function List() {
         };
     }, [isCategoryDropdownOpen]);
 
+    useEffect(() => {
+        if (!auth.isAuthed()) return;
+        let cancelled = false;
+        cycleApi
+            .list()
+            .then((data) => {
+                if (!cancelled) setCycles(data ?? []);
+            })
+            .catch(() => {
+                if (!cancelled) setCycles([]);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!isAddSheetOpen || !auth.isAuthed()) return;
+        let cancelled = false;
+        categoryApi
+            .list(newType)
+            .then((data) => {
+                if (cancelled) return;
+                const list = data ?? [];
+                setFormCategories(list);
+                setNewCategoryId((prev) =>
+                    prev && list.some((c) => c.categoryId === prev) ? prev : (list[0]?.categoryId ?? ""),
+                );
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setFormCategories([]);
+                    setNewCategoryId("");
+                }
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [isAddSheetOpen, newType]);
+
+    const selectedCycle = cycles.find((c) => c.cycleId === newCycleId) ?? null;
+
     const filteredGroups = useMemo(() => {
         return groupedTransactions
             .map((group) => ({
                 ...group,
                 transactions: group.transactions.filter((tx) => {
-                    const isTypeMatch = activeFilter === "all" || tx.type === activeFilter;
-                    const isCategoryMatch = activeCategories.length === 0 || activeCategories.includes(tx.category);
+                    const isTypeMatch = activeFilter === "all" || tx.txType === activeFilter;
+                    const name = categoryNameForTx(tx, categoryById, fallbackCategory);
+                    const isCategoryMatch =
+                        activeCategories.length === 0 || activeCategories.includes(name);
                     return isTypeMatch && isCategoryMatch;
                 }),
             }))
             .filter((group) => group.transactions.length > 0);
-    }, [activeCategories, activeFilter]);
+    }, [activeCategories, activeFilter, groupedTransactions, categoryById, fallbackCategory]);
 
     const filterButtons = [
         { key: "all", label: t("list.all") },
@@ -98,61 +278,99 @@ export default function List() {
     ] as const;
 
     const resetAddForm = () => {
+        setEditingTxId(null);
         setNewTitle("");
         setNewType("expense");
-        setNewCategory(defaultCategory);
+        setFormCategories([]);
+        setNewCategoryId("");
+        setNewCycleId("");
         setNewAmount("0");
         setNewDateTime(getDateTimeLocalValue(new Date()));
         setNewIcon("bill");
         setIconQuery("");
         setIsIconPickerOpen(false);
         setIsAddCategoryOpen(false);
+        setIsAddCycleOpen(false);
     };
 
     const openAddSheet = () => {
         resetAddForm();
+        setAddError(null);
         setIsAddSheetOpen(true);
     };
 
-    const handleAddTransaction = (event: FormEvent<HTMLFormElement>) => {
+    const openEditSheet = (tx: Transaction) => {
+        setEditingTxId(tx.txId);
+        setNewTitle(tx.note?.trim() ?? "");
+        setNewType(tx.txType);
+        setNewCategoryId(tx.categoryId ?? "");
+        setNewCycleId(tx.cycleId ?? "");
+        setNewAmount(String(tx.amount));
+        setNewDateTime(getDateTimeLocalValue(new Date(tx.txDate)));
+        setNewIcon("bill");
+        setAddError(null);
+        setIsAddSheetOpen(true);
+    };
+
+    const handleDeleteTransaction = async () => {
+        if (!editingTxId) return;
+        if (!window.confirm(t("list.deleteConfirm"))) return;
+
+        setSubmitting(true);
+        setAddError(null);
+        try {
+            await transactionApi.delete(editingTxId);
+            await loadTransactions();
+            resetAddForm();
+            setIsAddSheetOpen(false);
+        } catch (err) {
+            setAddError(err instanceof ApiError ? err.message : (err as Error).message);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleSaveTransaction = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         const selectedDate = newDateTime ? new Date(newDateTime) : new Date();
         if (Number.isNaN(selectedDate.getTime())) {
             return;
         }
-        const dateLabel = selectedDate.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
         const amountNumber = Number(newAmount);
         const title = newTitle.trim();
-        const category = newCategory.trim();
-        const timeLabel = selectedDate.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+        const categoryName = selectedFormCategory?.name?.trim() ?? "";
 
-        if (!title || !category || Number.isNaN(amountNumber) || amountNumber <= 0) {
+        if (!title || !newCategoryId || !categoryName || Number.isNaN(amountNumber) || amountNumber <= 0) {
             return;
         }
 
-        const newItem: TransactionProps = {
-            title,
-            type: newType,
-            category,
-            amount: amountNumber,
-            time: timeLabel,
-            icon: icons[newIcon],
-        };
+        setSubmitting(true);
+        setAddError(null);
+        try {
+            const payload = {
+                txType: newType,
+                amount: amountNumber,
+                note: title,
+                txDate: formatTxDateForApi(newDateTime),
+                cycleId: newCycleId || null,
+                categoryId: newCategoryId,
+            };
 
-        setGroupedTransactions((prev) => {
-            const targetIndex = prev.findIndex((group) => group.date === dateLabel);
-            if (targetIndex === -1) {
-                return [{ date: dateLabel, transactions: [newItem] }, ...prev];
+            if (editingTxId) {
+                await transactionApi.update({ txId: editingTxId, ...payload });
+            } else {
+                await transactionApi.create(payload);
             }
-            return prev.map((group, index) =>
-                index === targetIndex
-                    ? { ...group, transactions: [newItem, ...group.transactions] }
-                    : group
-            );
-        });
-        resetAddForm();
-        setIsAddSheetOpen(false);
+
+            await loadTransactions();
+            resetAddForm();
+            setIsAddSheetOpen(false);
+        } catch (err) {
+            setAddError(err instanceof ApiError ? err.message : (err as Error).message);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -292,10 +510,22 @@ export default function List() {
                     </div>
                 </div>
 
+                {listError && (
+                    <div className="rounded-[var(--radius-card)] border border-[var(--danger)] bg-red-50 px-4 py-3 text-sm text-[var(--danger)]">
+                        {listError}
+                    </div>
+                )}
+
                 <div className="flex flex-col gap-6">
-                    {filteredGroups.map((group, index) => {
+                    {listLoading && (
+                        <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] px-4 py-5 text-center text-[var(--text-soft)] shadow-[var(--shadow-soft)]">
+                            กำลังโหลดรายการ...
+                        </div>
+                    )}
+                    {!listLoading && filteredGroups.map((group, index) => {
                         const dailyTotal = group.transactions.reduce((sum, tx) => {
-                            return sum + (tx.type === 'income' ? tx.amount : -tx.amount);
+                            const amount = Number(tx.amount);
+                            return sum + (tx.txType === "income" ? amount : -amount);
                         }, 0);
                         const isPositive = dailyTotal >= 0;
                         const totalColor = isPositive ? 'text-[var(--primary)]' : 'text-[var(--danger)]';
@@ -312,22 +542,25 @@ export default function List() {
                                 </div>
                                 
                                 <div className="flex flex-col gap-3">
-                                    {group.transactions.map((tx, idx) => (
-                                        <TransactionCard 
-                                            key={idx} 
-                                            title={tx.title} 
-                                            type={tx.type} 
-                                            category={tx.category} 
-                                            amount={tx.amount} 
-                                            time={tx.time}
-                                            icon={tx.icon}
-                                        />
-                                    ))}
+                                    {group.transactions.map((tx) => {
+                                        const display = toDisplayTransaction(
+                                            tx,
+                                            categoryById,
+                                            fallbackCategory,
+                                        );
+                                        return (
+                                            <TransactionCard
+                                                key={tx.txId}
+                                                {...display}
+                                                onOpen={() => openEditSheet(tx)}
+                                            />
+                                        );
+                                    })}
                                 </div>
                             </div>
                         );
                     })}
-                    {filteredGroups.length === 0 && (
+                    {!listLoading && filteredGroups.length === 0 && (
                         <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] px-4 py-5 text-center text-[var(--text-soft)] shadow-[var(--shadow-soft)]">
                             {t("list.empty")}
                         </div>
@@ -349,18 +582,34 @@ export default function List() {
                         onClick={(event) => event.stopPropagation()}
                     >
                         <div className="mb-3 flex items-center justify-between">
-                            <p className="text-base font-bold text-[var(--text)]">{t("list.addFormTitle")}</p>
+                            {editingTxId ? (
+                                <button
+                                    type="button"
+                                    disabled={submitting}
+                                    onClick={handleDeleteTransaction}
+                                    className="text-sm font-bold text-[var(--danger)] transition-all hover:brightness-90 disabled:opacity-50"
+                                >
+                                    {t("list.deleteButton")}
+                                </button>
+                            ) : (
+                                <p className="text-base font-bold text-[var(--text)]">
+                                    {t("list.addFormTitle")}
+                                </p>
+                            )}
                             <button
                                 type="button"
                                 aria-label={t("common.close")}
-                                onClick={() => setIsAddSheetOpen(false)}
+                                onClick={() => {
+                                    resetAddForm();
+                                    setIsAddSheetOpen(false);
+                                }}
                                 className="rounded-full p-1 text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)]"
                             >
                                 <FiX size={18} />
                             </button>
                         </div>
 
-                        <form className="flex flex-1 flex-col gap-4 overflow-y-auto pb-1" onSubmit={handleAddTransaction}>
+                        <form className="flex flex-1 flex-col gap-4 overflow-y-auto pb-1" onSubmit={handleSaveTransaction}>
                             <div>
                                 <p className="text-sm font-bold text-[var(--text)]">{t("list.typeLabel")}</p>
                                 <div className="grid grid-cols-2 gap-2">
@@ -390,29 +639,46 @@ export default function List() {
                             </div>
 
                             <label className="text-sm font-bold text-[var(--text)]">
-                                {t("list.categoryTitle")}
+                                {t("list.cycleLabel")}
                                 <button
                                     type="button"
-                                    onClick={() => setIsAddCategoryOpen((prev) => !prev)}
+                                    onClick={() => setIsAddCycleOpen((prev) => !prev)}
                                     className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm font-medium text-[var(--text)] transition-all hover:border-[var(--primary)]"
                                 >
-                                    <span>{newCategory || defaultCategory}</span>
+                                    <span className={selectedCycle ? "text-[var(--text)]" : "text-[var(--text-soft)]"}>
+                                        {selectedCycle ? selectedCycle.name : t("list.cycleNone")}
+                                    </span>
                                     <FiChevronDown
                                         size={18}
-                                        className={`text-[var(--text-soft)] transition-transform ${isAddCategoryOpen ? "rotate-180" : ""}`}
+                                        className={`text-[var(--text-soft)] transition-transform ${isAddCycleOpen ? "rotate-180" : ""}`}
                                     />
                                 </button>
-                                {isAddCategoryOpen && (
-                                    <div className="mt-2 overflow-hidden rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)]">
-                                        {[...new Set([defaultCategory, ...categoryOptions])].map((category) => {
-                                            const isSelected = newCategory === category;
+                                {isAddCycleOpen && (
+                                    <div className="mt-2 max-h-[180px] overflow-y-auto rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)]">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setNewCycleId("");
+                                                setIsAddCycleOpen(false);
+                                            }}
+                                            className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-all ${
+                                                !newCycleId
+                                                    ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                                                    : "text-[var(--text-soft)] hover:bg-[var(--surface-soft)]"
+                                            }`}
+                                        >
+                                            <span>{t("list.cycleNone")}</span>
+                                            {!newCycleId && <FiCheck size={18} className="text-[var(--text-soft)]" />}
+                                        </button>
+                                        {cycles.map((cycle) => {
+                                            const isSelected = newCycleId === cycle.cycleId;
                                             return (
                                                 <button
-                                                    key={category}
+                                                    key={cycle.cycleId}
                                                     type="button"
                                                     onClick={() => {
-                                                        setNewCategory(category);
-                                                        setIsAddCategoryOpen(false);
+                                                        setNewCycleId(cycle.cycleId);
+                                                        setIsAddCycleOpen(false);
                                                     }}
                                                     className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-all ${
                                                         isSelected
@@ -420,11 +686,62 @@ export default function List() {
                                                             : "text-[var(--text)] hover:bg-[var(--surface-soft)]"
                                                     }`}
                                                 >
-                                                    <span>{category}</span>
+                                                    <span className="flex items-center gap-2">
+                                                        {isIconName(cycle.icon) && (
+                                                            <span className="text-base leading-none">{icons[cycle.icon]}</span>
+                                                        )}
+                                                        <span>{cycle.name}</span>
+                                                    </span>
                                                     {isSelected && <FiCheck size={18} className="text-[var(--text-soft)]" />}
                                                 </button>
                                             );
                                         })}
+                                    </div>
+                                )}
+                            </label>
+
+                            <label className="text-sm font-bold text-[var(--text)]">
+                                {t("list.categoryTitle")}
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAddCategoryOpen((prev) => !prev)}
+                                    className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm font-medium text-[var(--text)] transition-all hover:border-[var(--primary)]"
+                                >
+                                    <span className={selectedFormCategory ? "text-[var(--text)]" : "text-[var(--text-soft)]"}>
+                                        {selectedFormCategory?.name ?? t("list.quickAddCategory")}
+                                    </span>
+                                    <FiChevronDown
+                                        size={18}
+                                        className={`text-[var(--text-soft)] transition-transform ${isAddCategoryOpen ? "rotate-180" : ""}`}
+                                    />
+                                </button>
+                                {isAddCategoryOpen && (
+                                    <div className="mt-2 overflow-hidden rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)]">
+                                        {formCategories.length === 0 ? (
+                                            <p className="px-4 py-3 text-sm text-[var(--text-soft)]">{t("list.empty")}</p>
+                                        ) : (
+                                            formCategories.map((category) => {
+                                                const isSelected = newCategoryId === category.categoryId;
+                                                return (
+                                                    <button
+                                                        key={category.categoryId}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setNewCategoryId(category.categoryId);
+                                                            setIsAddCategoryOpen(false);
+                                                        }}
+                                                        className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-all ${
+                                                            isSelected
+                                                                ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                                                                : "text-[var(--text)] hover:bg-[var(--surface-soft)]"
+                                                        }`}
+                                                    >
+                                                        <span>{category.name}</span>
+                                                        {isSelected && <FiCheck size={18} className="text-[var(--text-soft)]" />}
+                                                    </button>
+                                                );
+                                            })
+                                        )}
                                     </div>
                                 )}
                             </label>
@@ -481,19 +798,27 @@ export default function List() {
                                 </div>
                             </label>
 
+                            {addError && (
+                                <p className="text-sm text-[var(--danger)]">{addError}</p>
+                            )}
                             <div className="mt-auto grid grid-cols-2 gap-2 pt-2">
                                 <button
                                     type="button"
-                                    onClick={() => setIsAddSheetOpen(false)}
-                                    className="rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)]"
+                                    disabled={submitting}
+                                    onClick={() => {
+                                        resetAddForm();
+                                        setIsAddSheetOpen(false);
+                                    }}
+                                    className="rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)] disabled:opacity-50"
                                 >
                                     {t("cycle.cancel")}
                                 </button>
                                 <button
                                     type="submit"
-                                    className="rounded-[var(--radius-control)] border border-[var(--primary)] bg-[var(--primary-soft)] px-3 py-2 text-sm font-semibold text-[var(--primary)] transition-all hover:brightness-95"
+                                    disabled={submitting}
+                                    className="rounded-[var(--radius-control)] border border-[var(--primary)] bg-[var(--primary-soft)] px-3 py-2 text-sm font-semibold text-[var(--primary)] transition-all hover:brightness-95 disabled:opacity-50"
                                 >
-                                    {t("cycle.save")}
+                                    {submitting ? "กำลังบันทึก..." : t("cycle.save")}
                                 </button>
                             </div>
                         </form>

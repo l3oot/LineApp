@@ -12,4 +12,6 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
     List<TransactionEntity> findByUserIdOrderByTxDateDesc(UUID userId);
 
     List<TransactionEntity> findByUserIdAndCycleIdOrderByTxDateDesc(UUID userId, UUID cycleId);
+
+    void deleteByUserId(UUID userId);
 }

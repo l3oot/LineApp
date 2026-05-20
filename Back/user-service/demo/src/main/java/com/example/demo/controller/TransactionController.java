@@ -39,6 +39,15 @@ public class TransactionController {
         return ApiResMapper.toResponseEntity(res);
     }
 
+    /** GET /api/transaction/user/{userId} — รายการธุรกรรมของผู้ใช้ (cycleId กรองได้ผ่าน query) */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<ApiRes<List<TransactionRes>>> listTransactionsByUser(
+            @PathVariable UUID userId,
+            @RequestParam(required = false) UUID cycleId) {
+        ApiRes<List<TransactionRes>> res = transactionService.listTransactions(userId, cycleId);
+        return ApiResMapper.toResponseEntity(res);
+    }
+
     @GetMapping("/{txId}")
     public ResponseEntity<ApiRes<TransactionRes>> getTransaction(
             @PathVariable UUID txId,
@@ -64,6 +73,13 @@ public class TransactionController {
             @RequestParam UUID txId,
             @RequestParam UUID userId) {
         ApiRes<Void> res = transactionService.deleteTransaction(txId, userId);
+        return ApiResMapper.toResponseEntity(res);
+    }
+
+    /** DELETE /api/transaction/user/{userId} — ลบธุรกรรมทั้งหมดของผู้ใช้ */
+    @DeleteMapping("/user/{userId}")
+    public ResponseEntity<ApiRes<Void>> deleteAllTransactionsByUser(@PathVariable UUID userId) {
+        ApiRes<Void> res = transactionService.deleteAllTransactionsByUser(userId);
         return ApiResMapper.toResponseEntity(res);
     }
 }

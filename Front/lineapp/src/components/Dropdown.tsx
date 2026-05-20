@@ -12,13 +12,25 @@ type DropdownItem = {
 type DropdownProps = {
     label: string;
     data: DropdownItem[];
+    value?: string;
+    onValueChange?: (value: string) => void;
 };
 
-export default function Dropdown({ label, data }: DropdownProps) {
-    const [value, setValue] = React.useState("");
+export default function Dropdown({ label, data, value: valueProp, onValueChange }: DropdownProps) {
+    const [internal, setInternal] = React.useState("");
+    const controlled = valueProp !== undefined;
+    const value = controlled ? valueProp : internal;
+
+    React.useEffect(() => {
+        if (!controlled && data[0]?.value && !internal) {
+            setInternal(data[0].value);
+        }
+    }, [controlled, data, internal]);
 
     const handleChange = (event: SelectChangeEvent) => {
-        setValue(event.target.value);
+        const next = event.target.value;
+        if (!controlled) setInternal(next);
+        onValueChange?.(next);
     };
 
     return (

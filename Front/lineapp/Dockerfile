@@ -1,6 +1,31 @@
 # syntax=docker/dockerfile:1.7
 
-# ---------- Stage 1: build static assets ----------
+# =====================================================================
+# Multi-stage Dockerfile — สลับ stage ได้จาก docker-compose `target:`
+#   - dev      → Vite dev server + HMR (bind mount source code)
+#   - builder  → build static assets ด้วย Vite
+#   - runner   → nginx serve build (production)
+# =====================================================================
+
+# ---------- Stage: dev (Vite HMR + polling สำหรับ Windows bind mount) ----------
+FROM node:20-alpine AS dev
+WORKDIR /app
+
+# install dependency ก่อน — layer นี้จะถูก cache จนกว่า package.json/lock จะเปลี่ยน
+COPY package.json package-lock.json* ./
+RUN npm ci --no-audit --no-fund
+
+# source code จะ bind-mount มาจาก host ตอน runtime (ไม่ COPY ใน dev stage)
+EXPOSE 5173
+
+# บังคับใช้ polling — bind mount บน Windows/macOS host ไม่ส่ง inotify event ตามจริง
+ENV CHOKIDAR_USEPOLLING=true
+ENV WATCHPACK_POLLING=true
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+
+
+# ---------- Stage: builder (production build) ----------
 FROM node:20-alpine AS builder
 WORKDIR /app
 
@@ -19,7 +44,7 @@ ENV VITE_LINE_REDIRECT_URI=$VITE_LINE_REDIRECT_URI
 COPY . .
 RUN npm run build
 
-# ---------- Stage 2: serve via nginx (SPA fallback) ----------
+# ---------- Stage: runner (production via nginx) ----------
 FROM nginx:1.27-alpine AS runner
 COPY --from=builder /app/dist /usr/share/nginx/html
 

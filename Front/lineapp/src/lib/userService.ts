@@ -26,6 +26,7 @@ export type Cycle = {
     status: string | null;
     icon: string | null;
     createdAt: string;
+    budgetAmount: number | null;
 };
 
 export type CycleCreatePayload = {
@@ -35,6 +36,7 @@ export type CycleCreatePayload = {
     endDate: string;
     status: string;
     icon: string;
+    budgetAmount?: number | null;
 };
 
 export type CycleUpdatePayload = CycleCreatePayload & { cycleId: string };
@@ -48,7 +50,8 @@ export const cycleApi = {
     update: (payload: CycleUpdatePayload) =>
         api.put<Cycle>("/api/cycle", payload),
 
-    delete: (cycleId: string) => api.delete<void>("/api/cycle", { cycleId }),
+    delete: (cycleId: string) =>
+        api.delete<void>("/api/cycle", { cycleId, userId: requireUserId() }),
 };
 
 // ============ Category ============
@@ -70,7 +73,7 @@ export type CategoryUpdatePayload = CategoryCreatePayload & { categoryId: string
 
 export const categoryApi = {
     list: (typeFilter?: "expense" | "income") =>
-        api.get<Category[]>("/api/category", { userId: requireUserId(), type: typeFilter }),
+        api.get<Category[]>(`/api/category/user/${requireUserId()}`, { type: typeFilter }),
 
     get: (categoryId: string) =>
         api.get<Category>(`/api/category/${categoryId}`, { userId: requireUserId() }),
@@ -111,8 +114,24 @@ export type TransactionCreatePayload = {
 export type TransactionUpdatePayload = TransactionCreatePayload & { txId: string };
 
 export const transactionApi = {
-    list: (cycleId?: string) =>
-        api.get<Transaction[]>("/api/transaction", { userId: requireUserId(), cycleId }),
+    /** GET /api/transaction/user/{userId} — fallback ?userId= ถ้า server ยังไม่ restart */
+    list: async (cycleId?: string) => {
+        const userId = requireUserId();
+        const query = { cycleId };
+        const path = `/api/transaction/user/${encodeURIComponent(userId)}`;
+        try {
+            return await api.get<Transaction[]>(path, query);
+        } catch (err) {
+            const msg = err instanceof ApiError ? err.message : "";
+            if (
+                err instanceof ApiError &&
+                (err.status === 404 || msg.includes("static resource") || msg.includes("No static resource"))
+            ) {
+                return api.get<Transaction[]>("/api/transaction", { userId, cycleId });
+            }
+            throw err;
+        }
+    },
 
     get: (txId: string) =>
         api.get<Transaction>(`/api/transaction/${txId}`, { userId: requireUserId() }),
@@ -125,4 +144,10 @@ export const transactionApi = {
 
     delete: (txId: string) =>
         api.delete<void>("/api/transaction", { txId, userId: requireUserId() }),
+
+    /** DELETE /api/transaction/user/{userId} — ลบธุรกรรมทั้งหมดของผู้ใช้ */
+    deleteAllByUser: () => {
+        const userId = requireUserId();
+        return api.delete<void>(`/api/transaction/user/${encodeURIComponent(userId)}`);
+    },
 };

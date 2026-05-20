@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
 import {
   Button,
@@ -22,10 +22,35 @@ import Cyclecard from "../components/Cyclecard";
 import { icons } from "../assets/Iconlist";
 import { FiCalendar } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
-import { sumCycleCards, sumOverviewCards } from "../data/sumMockData";
+import dayjs from "dayjs";
+import { ApiError } from "../lib/api";
+import { auth } from "../lib/auth";
+import { cycleApi, transactionApi, type Cycle, type Transaction } from "../lib/userService";
+import { aggregateTransactionsByCycle } from "../utils/cycleStats";
+import { formatCycleDateRange } from "../utils/formatMonthYear";
+import {
+  filterTransactionsInRange,
+  sumTransactionTotals,
+} from "../utils/transactionDateRange";
+
+type IconName = keyof typeof icons;
+
+function isIconName(value: string | null | undefined): value is IconName {
+  return Boolean(value && Object.prototype.hasOwnProperty.call(icons, value));
+}
+
+function cycleLengthLabel(c: Cycle, lang: string): string {
+  return formatCycleDateRange(c.startDate, c.endDate, lang);
+}
+
+const overviewCardConfig = [
+  { icon: "money" as IconName, titleKey: "sum.totalIncome", color: "#2f8f4e", field: "income" as const },
+  { icon: "bill" as IconName, titleKey: "sum.totalExpense", color: "#b23a3a", field: "expense" as const },
+  { icon: "bank" as IconName, titleKey: "sum.totalBalance", color: "#2d6fbe", field: "balance" as const },
+];
 
 export default function Sum() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const localTimeZone = getLocalTimeZone();
   const initialEnd = today(localTimeZone);
   const initialStart = initialEnd.add({ days: -29 });
@@ -34,7 +59,63 @@ export default function Sum() {
     start: initialStart,
     end: initialEnd,
   });
-  const visibleCycleCards = isExpanded ? sumCycleCards : sumCycleCards.slice(0, 2);
+  const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!auth.isAuthed()) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    Promise.all([cycleApi.list(), transactionApi.list()])
+      .then(([cycleRows, txRows]) => {
+        if (cancelled) return;
+        setCycles(cycleRows ?? []);
+        setTransactions(txRows ?? []);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setCycles([]);
+        setTransactions([]);
+        setError(err instanceof ApiError ? err.message : (err as Error).message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const txsInRange = useMemo(
+    () => filterTransactionsInRange(transactions, dateRange.start, dateRange.end),
+    [transactions, dateRange],
+  );
+
+  const overviewTotals = useMemo(() => sumTransactionTotals(txsInRange), [txsInRange]);
+
+  const cycleCards = useMemo(() => {
+    const statsByCycle = aggregateTransactionsByCycle(txsInRange);
+    return cycles.map((cycle) => {
+      const stats = statsByCycle[cycle.cycleId] ?? { income: 0, expense: 0 };
+      return {
+        cycleId: cycle.cycleId,
+        icon: isIconName(cycle.icon) ? cycle.icon : ("corn" as IconName),
+        title: cycle.name,
+        balance: stats.income,
+        balanceused: stats.expense,
+        budget: cycle.budgetAmount,
+        length: cycleLengthLabel(cycle, i18n.language),
+      };
+    });
+  }, [cycles, txsInRange, i18n.language]);
+
+  const visibleCycleCards = isExpanded ? cycleCards : cycleCards.slice(0, 2);
 
   return (
     <MainLayout>
@@ -102,43 +183,59 @@ export default function Sum() {
             </Dialog>
           </Popover>
         </DateRangePicker>
+
+        {error && (
+          <p className="rounded-[var(--radius-control)] border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+            {error}
+          </p>
+        )}
+
         <div>
           <p className="text-[var(--text-soft)] text-sm font-semibold">{t("sum.financeOverview")}</p>
           <div className="grid grid-cols-3 gap-4 mt-2">
-            {sumOverviewCards.map((card) => (
+            {overviewCardConfig.map((card) => (
               <Sumcard
                 key={card.titleKey}
                 icon={icons[card.icon]}
                 title={t(card.titleKey)}
-                balance={card.balance}
+                balance={overviewTotals[card.field]}
                 color={card.color}
               />
             ))}
           </div>
         </div>
+
         <div>
           <p className="text-[var(--text-soft)] text-sm font-semibold mb-2">{t("sum.farmingCycle")}</p>
-          <div className="flex flex-col gap-4">
-            {visibleCycleCards.map((card) => (
-              <Cyclecard
-                key={card.title}
-                icon={card.icon}
-                title={card.title}
-                balance={card.balance}
-                length={card.length}
-                balanceused={card.balanceused}
-              />
-            ))}
-            {sumCycleCards.length > 1 && (
-              <button
-                type="button"
-                onClick={() => setIsExpanded((prev) => !prev)}
-                className="self-center rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-1.5 text-sm font-semibold text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)]"
-              >
-                {isExpanded ? t("sum.hide") : t("sum.viewMore")}
-              </button>
-            )}
-          </div>
+          {loading ? (
+            <p className="text-center text-sm text-[var(--text-soft)]">กำลังโหลด...</p>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {visibleCycleCards.map((card) => (
+                <Cyclecard
+                  key={card.cycleId}
+                  icon={card.icon}
+                  title={card.title}
+                  balance={card.balance}
+                  length={card.length}
+                  balanceused={card.balanceused}
+                  budget={card.budget}
+                />
+              ))}
+              {!loading && cycleCards.length === 0 && (
+                <p className="text-center text-sm text-[var(--text-soft)]">ยังไม่มีรอบปลูก</p>
+              )}
+              {cycleCards.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setIsExpanded((prev) => !prev)}
+                  className="self-center rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-1.5 text-sm font-semibold text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)]"
+                >
+                  {isExpanded ? t("sum.hide") : t("sum.viewMore")}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </MainLayout>

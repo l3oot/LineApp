@@ -9,11 +9,17 @@ type CyclecardProps = {
     balance: number;
     length: string;
     balanceused: number;
+    budget?: number | null;
 };
 
-export default function Cyclecard({ icon, title, balance, length, balanceused }: CyclecardProps) {
+export default function Cyclecard({ icon, title, balance, length, balanceused, budget }: CyclecardProps) {
     const { t } = useTranslation();
-    const percent = calpercentused(balanceused, balance);
+    const income = balance;
+    const expense = balanceused;
+    const capital = budget ?? 0;
+    const remaining = capital - (expense - income);
+    const budgetBase = capital > 0 ? capital : income;
+    const percent = calpercentused(expense, budgetBase);
     let bgcolor = calbgcolor(percent);
     let PnL = calPnL(percent);
     const safePercent = Math.min(100, Math.max(0, percent));
@@ -31,7 +37,8 @@ export default function Cyclecard({ icon, title, balance, length, balanceused }:
                     <p className="text-xs font-bold text-white">{t(`pnl.${PnL}`)}</p>
                 </div>
             </div>
-            <h1 className="text-4xl font-bold ml-4 mb-1 text-white">{balance.toLocaleString()}</h1>
+            <p className="ml-4 mt-2 text-sm text-white/85">{t("addcycle.remaining")}</p>
+            <h1 className="text-4xl font-bold ml-4 mb-1 text-white">{remaining.toLocaleString()}</h1>
             <p className='ml-4 text-sm text-white/85'>{length}</p>
             <div className="mt-2 w-full px-4 flex flex-row mb-1 items-center justify-between">
                 <p className="text-sm text-white/90">{t("cyclecard.usedBudgetLine", { amount: balanceused.toLocaleString() })}</p>

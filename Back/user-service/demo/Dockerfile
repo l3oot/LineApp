@@ -1,6 +1,35 @@
 # syntax=docker/dockerfile:1.7
 
-# ---------- Stage 1: build JAR ด้วย Maven wrapper ----------
+# =====================================================================
+# Multi-stage Dockerfile — สลับ stage ได้จาก docker-compose `target:`
+#   - dev      → JDK + Maven wrapper + spring-boot:run + DevTools hot reload
+#   - builder  → build JAR (skipTests)
+#   - runtime  → JRE + JAR (production)
+# =====================================================================
+
+# ---------- Stage: dev (hot reload via spring-boot-devtools + bind mount) ----------
+FROM eclipse-temurin:25-jdk AS dev
+WORKDIR /app
+
+# ติดตั้ง dependency ล่วงหน้า — layer นี้จะถูก cache จนกว่า pom.xml จะเปลี่ยน
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
+RUN chmod +x mvnw
+RUN --mount=type=cache,target=/root/.m2 \
+    ./mvnw -B -ntp \
+        -Dmaven.wagon.http.retryHandler.count=5 \
+        dependency:go-offline -DskipTests || true
+
+# source code จะ bind-mount มาจาก host ตอน runtime (ไม่ COPY ใน dev stage)
+EXPOSE 8080
+
+# spring-boot:run จะรวม spring-boot-devtools ให้อัตโนมัติ (ไม่เหมือน mvn package)
+# DevTools จะ watch /app/target/classes — IDE บน host compile-on-save → bind mount → restart
+CMD ["./mvnw", "-B", "-ntp", "spring-boot:run"]
+
+
+# ---------- Stage: builder (production JAR build) ----------
 FROM eclipse-temurin:25-jdk AS builder
 WORKDIR /app
 
@@ -24,8 +53,8 @@ RUN --mount=type=cache,target=/root/.m2 \
         -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
         clean package -DskipTests
 
-# ---------- Stage 2: runtime ----------
-FROM eclipse-temurin:25-jre
+# ---------- Stage: runtime (production) ----------
+FROM eclipse-temurin:25-jre AS runtime
 WORKDIR /app
 
 # คัดลอก JAR ที่ build ได้ (ใช้ wildcard เพราะชื่อมี version)

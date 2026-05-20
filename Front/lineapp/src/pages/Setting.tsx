@@ -6,7 +6,9 @@ import TimezoneBottomSheet from "../components/TimezoneBottomSheet";
 import CategoryCenterModal from "../components/CategoryCenterModal";
 import { LuUserRound, LuLogOut } from "react-icons/lu";
 import { useTranslation } from "react-i18next";
+import { ApiError } from "../lib/api";
 import { auth } from "../lib/auth";
+import { transactionApi } from "../lib/userService";
 
 type SettingItem = {
     key: "category" | "timezone" | "language" | "deleteAll";
@@ -21,6 +23,8 @@ export default function Setting() {
     const [isTimezoneSheetOpen, setIsTimezoneSheetOpen] = useState(false);
     const [activeTimezone, setActiveTimezone] = useState<string>(() => localStorage.getItem("timezone") ?? "Asia/Bangkok");
     const [avatarBroken, setAvatarBroken] = useState(false);
+    const [deleteAllBusy, setDeleteAllBusy] = useState(false);
+    const [deleteAllError, setDeleteAllError] = useState<string | null>(null);
 
     const currentUser = useMemo(() => auth.getUser(), []);
 
@@ -64,8 +68,22 @@ export default function Setting() {
         window.location.replace("/");
     };
 
+    const handleDeleteAllTransactions = async () => {
+        if (!auth.isAuthed()) return;
+        if (!window.confirm(t("settings.deleteAllConfirm"))) return;
+
+        setDeleteAllBusy(true);
+        setDeleteAllError(null);
+        try {
+            await transactionApi.deleteAllByUser();
+        } catch (err) {
+            setDeleteAllError(err instanceof ApiError ? err.message : (err as Error).message);
+        } finally {
+            setDeleteAllBusy(false);
+        }
+    };
+
     const displayName = currentUser?.displayName?.trim() || t("settings.userTitle");
-    const subtitle = currentUser ? t("settings.loggedInAs") : t("settings.userSubtitle");
     const canShowAvatar = Boolean(currentUser?.pictureUrl) && !avatarBroken;
 
     return (
@@ -87,7 +105,6 @@ export default function Setting() {
                     )}
                     <div className="leading-tight">
                         <p className="text-base font-semibold text-[var(--text)]">{displayName}</p>
-                        <p className="text-xs text-[var(--text-soft)]">{subtitle}</p>
                     </div>
                 </div>
 
@@ -97,6 +114,7 @@ export default function Setting() {
                         label={t(`settings.item.${item.key}`)}
                         value={item.value}
                         danger={item.danger}
+                        disabled={item.key === "deleteAll" && deleteAllBusy}
                         onClick={
                             item.key === "category"
                                 ? () => setIsCategoryModalOpen(true)
@@ -104,10 +122,16 @@ export default function Setting() {
                                 ? () => setIsLanguageSheetOpen(true)
                                 : item.key === "timezone"
                                     ? () => setIsTimezoneSheetOpen(true)
-                                    : undefined
+                                    : item.key === "deleteAll"
+                                      ? handleDeleteAllTransactions
+                                      : undefined
                         }
                     />
                 ))}
+
+                {deleteAllError && (
+                    <p className="px-2 text-sm text-[var(--danger)]">{deleteAllError}</p>
+                )}
 
                 {currentUser && (
                     <button
