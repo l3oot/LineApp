@@ -3,9 +3,18 @@ spring:
     import: optional:file:.env[.properties]
 
 line:
+  # LINE Login (OAuth 2.1)
   client-id: ${LINE_CLIENT_ID}
   client-secret: ${LINE_CLIENT_SECRET}
   redirect-uri: ${LINE_REDIRECT_URI}
+  # Messaging API (Webhook + Reply/Push)
+  channel-access-token: ${LINE_CHANNEL_ACCESS_TOKEN:}
+  channel-secret: ${LINE_CHANNEL_SECRET:}
+
+ai:
+  base-url: ${AI_SERVICE_URL:http://localhost:8000}
+  parse-path: ${AI_PARSE_PATH:/parse}
+  timeout-seconds: ${AI_TIMEOUT_SECONDS:60}
 
 jwt:
   secret: ${JWT_SECRET}

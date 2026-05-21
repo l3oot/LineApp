@@ -6,10 +6,17 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "line")
 @Component
 public class LineProperties {
-    
+
+    // ===== LINE Login (OAuth 2.1) =====
     private String clientId;
     private String clientSecret;
     private String redirectUri;
+
+    // ===== Messaging API (Webhook + Reply/Push) =====
+    // channelAccessToken: ใช้ใน Authorization: Bearer ตอนเรียก /v2/bot/message/{reply,push}
+    // channelSecret: ใช้ verify x-line-signature ของ webhook request (HMAC-SHA256 ของ raw body)
+    private String channelAccessToken;
+    private String channelSecret;
 
     public String getClientId() {
         return clientId;
@@ -33,5 +40,21 @@ public class LineProperties {
 
     public void setRedirectUri(String redirectUri) {
         this.redirectUri = redirectUri;
+    }
+
+    public String getChannelAccessToken() {
+        return channelAccessToken;
+    }
+
+    public void setChannelAccessToken(String channelAccessToken) {
+        this.channelAccessToken = channelAccessToken;
+    }
+
+    public String getChannelSecret() {
+        return channelSecret;
+    }
+
+    public void setChannelSecret(String channelSecret) {
+        this.channelSecret = channelSecret;
     }
 }
