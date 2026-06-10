@@ -18,6 +18,7 @@ import com.example.demo.dto.ApiRes;
 import com.example.demo.dto.req.TransactionCreateReq;
 import com.example.demo.dto.req.TransactionUpdateReq;
 import com.example.demo.dto.res.TransactionRes;
+import com.example.demo.service.LineTransactionNotifyService;
 import com.example.demo.service.TransactionService;
 import com.example.demo.util.ApiResMapper;
 
@@ -26,9 +27,13 @@ import com.example.demo.util.ApiResMapper;
 public class TransactionController {
 
     private final TransactionService transactionService;
+    private final LineTransactionNotifyService lineTransactionNotifyService;
 
-    public TransactionController(TransactionService transactionService) {
+    public TransactionController(
+            TransactionService transactionService,
+            LineTransactionNotifyService lineTransactionNotifyService) {
         this.transactionService = transactionService;
+        this.lineTransactionNotifyService = lineTransactionNotifyService;
     }
 
     @GetMapping("")
@@ -65,6 +70,9 @@ public class TransactionController {
     @PutMapping("")
     public ResponseEntity<ApiRes<TransactionRes>> updateTransaction(@RequestBody TransactionUpdateReq req) {
         ApiRes<TransactionRes> res = transactionService.updateTransaction(req);
+        if (res.success() && res.data() != null) {
+            lineTransactionNotifyService.pushUpdatedTransactionCard(res.data());
+        }
         return ApiResMapper.toResponseEntity(res);
     }
 

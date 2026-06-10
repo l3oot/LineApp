@@ -50,6 +50,34 @@ public class LineMessagingService {
     }
 
     /**
+     * ตอบกลับด้วย Flex Message bubble
+     */
+    public void replyFlex(String replyToken, String altText, Map<String, Object> contents) {
+        if (replyToken == null || replyToken.isBlank()) {
+            log.warn("replyFlex skipped: empty replyToken");
+            return;
+        }
+        Map<String, Object> flexMessage = Map.of(
+                "type", "flex",
+                "altText", truncate(altText),
+                "contents", contents
+        );
+        Map<String, Object> body = Map.of(
+                "replyToken", replyToken,
+                "messages", List.of(flexMessage)
+        );
+        post(REPLY_URL, body);
+    }
+
+    public void send(LineReply reply, String replyToken) {
+        if (reply.isFlex()) {
+            replyFlex(replyToken, reply.flexAltText(), reply.flexContents());
+        } else {
+            reply(replyToken, reply.text());
+        }
+    }
+
+    /**
      * Push message หา user โดยตรง (ใช้ userId จาก source.userId / userSub)
      */
     public void push(String userId, String text) {
@@ -60,6 +88,24 @@ public class LineMessagingService {
         Map<String, Object> body = Map.of(
                 "to", userId,
                 "messages", List.of(Map.of("type", "text", "text", truncate(text)))
+        );
+        post(PUSH_URL, body);
+    }
+
+    /** Push Flex Message bubble หา user โดยตรง */
+    public void pushFlex(String userId, String altText, Map<String, Object> contents) {
+        if (userId == null || userId.isBlank()) {
+            log.warn("pushFlex skipped: empty userId");
+            return;
+        }
+        Map<String, Object> flexMessage = Map.of(
+                "type", "flex",
+                "altText", truncate(altText),
+                "contents", contents
+        );
+        Map<String, Object> body = Map.of(
+                "to", userId,
+                "messages", List.of(flexMessage)
         );
         post(PUSH_URL, body);
     }

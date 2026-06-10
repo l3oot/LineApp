@@ -17,6 +17,8 @@ public class LineProperties {
     // channelSecret: ใช้ verify x-line-signature ของ webhook request (HMAC-SHA256 ของ raw body)
     private String channelAccessToken;
     private String channelSecret;
+    /** URL ฐานของ LIFF / Web app — ใช้เปิดหน้าแก้ไขจาก Flex (เช่น https://liff.line.me/xxx หรือ https://app.example.com) */
+    private String liffUrl;
 
     public String getClientId() {
         return clientId;
@@ -56,5 +58,24 @@ public class LineProperties {
 
     public void setChannelSecret(String channelSecret) {
         this.channelSecret = channelSecret;
+    }
+
+    public String getLiffUrl() {
+        return liffUrl;
+    }
+
+    public void setLiffUrl(String liffUrl) {
+        this.liffUrl = liffUrl;
+    }
+
+    /** คืน base URL ของแอป — ใช้ liff-url ก่อน ถ้าไม่ตั้งจะ derive จาก redirect-uri */
+    public String resolveLiffBaseUrl() {
+        if (liffUrl != null && !liffUrl.isBlank()) {
+            return liffUrl.replaceAll("/+$", "");
+        }
+        if (redirectUri != null && redirectUri.contains("/callback")) {
+            return redirectUri.replaceAll("/callback/?$", "");
+        }
+        return null;
     }
 }

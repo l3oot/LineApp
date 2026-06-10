@@ -2,6 +2,10 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
+app:
+  # URL สาธารณะของ backend — LINE ใช้โหลดรูป static ใน Flex (ต้องเป็น HTTPS ใน production)
+  public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:8080}
+
 line:
   # LINE Login (OAuth 2.1)
   client-id: ${LINE_CLIENT_ID}
@@ -10,6 +14,8 @@ line:
   # Messaging API (Webhook + Reply/Push)
   channel-access-token: ${LINE_CHANNEL_ACCESS_TOKEN:}
   channel-secret: ${LINE_CHANNEL_SECRET:}
+  # URL ฐาน LIFF/Web app สำหรับปุ่ม "แก้ไข" ใน Flex card (เช่น https://liff.line.me/1234567890-AbCdEfGh)
+  liff-url: ${LINE_LIFF_URL:}
 
 ai:
   base-url: ${AI_SERVICE_URL:http://localhost:8000}

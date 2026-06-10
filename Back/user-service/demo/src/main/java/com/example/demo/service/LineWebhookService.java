@@ -2,6 +2,9 @@ package com.example.demo.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +12,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.config.LineProperties;
 import com.example.demo.dto.ApiRes;
 import com.example.demo.dto.req.LineWebhookReq;
 import com.example.demo.dto.req.TransactionCreateReq;
@@ -23,7 +27,7 @@ import com.example.demo.repository.UserRepository;
  * <ol>
  *   <li>upsert UserEntity ตาม LINE userId (source.userId → user_sub)</li>
  *   <li>เรียก ai-service /parse?text=&userId= → AiParseRes</li>
- *   <li>{@code structured_ok=true} → map → insert ลง public.transaction</li>
+ *   <li>{@code structured_ok=true} → map → insert ลง public.transaction → ส่ง Flex Message</li>
  *   <li>มี {@code message} (ยายตอบ) → reply ข้อความนั้นกลับ</li>
  *   <li>error → reply fallback</li>
  * </ol>
@@ -49,17 +53,23 @@ public class LineWebhookService {
     private final UserRepository userRepository;
     private final AiClientService aiClientService;
     private final LineMessagingService lineMessagingService;
+    private final LineFlexMessageBuilder lineFlexMessageBuilder;
     private final TransactionService transactionService;
+    private final LineProperties lineProperties;
 
     public LineWebhookService(
             UserRepository userRepository,
             AiClientService aiClientService,
             LineMessagingService lineMessagingService,
-            TransactionService transactionService) {
+            LineFlexMessageBuilder lineFlexMessageBuilder,
+            TransactionService transactionService,
+            LineProperties lineProperties) {
         this.userRepository = userRepository;
         this.aiClientService = aiClientService;
         this.lineMessagingService = lineMessagingService;
+        this.lineFlexMessageBuilder = lineFlexMessageBuilder;
         this.transactionService = transactionService;
+        this.lineProperties = lineProperties;
     }
 
     @Async("lineWebhookExecutor")
@@ -67,15 +77,7 @@ public class LineWebhookService {
         if (event == null) {
             return;
         }
-        if (!"message".equals(event.type())) {
-            log.debug("skip non-message event: type={}", event.type());
-            return;
-        }
-        LineWebhookReq.Message msg = event.message();
-        if (msg == null || !"text".equals(msg.type()) || msg.text() == null || msg.text().isBlank()) {
-            log.debug("skip non-text/empty message: {}", msg);
-            return;
-        }
+
         LineWebhookReq.Source src = event.source();
         if (src == null || src.userId() == null) {
             log.debug("skip event without source.userId");
@@ -83,21 +85,81 @@ public class LineWebhookService {
         }
 
         String userSub = src.userId();
-        String userText = msg.text();
         String replyToken = event.replyToken();
+
+        if ("postback".equals(event.type())) {
+            handlePostback(userSub, event.postback(), replyToken);
+            return;
+        }
+
+        if (!"message".equals(event.type())) {
+            log.debug("skip unsupported event: type={}", event.type());
+            return;
+        }
+        LineWebhookReq.Message msg = event.message();
+        if (msg == null || !"text".equals(msg.type()) || msg.text() == null || msg.text().isBlank()) {
+            log.debug("skip non-text/empty message: {}", msg);
+            return;
+        }
+
+        String userText = msg.text();
+        long timestampMs = event.timestamp() != null ? event.timestamp() : System.currentTimeMillis();
 
         try {
             UserEntity user = upsertUserBySub(userSub);
 
             AiParseRes parsed = aiClientService.parse(userText, user.getUserId());
-            String replyText = decideReply(user, parsed);
+            LineReply reply = decideReply(user, parsed, timestampMs);
 
-            lineMessagingService.reply(replyToken, replyText);
+            lineMessagingService.send(reply, replyToken);
 
         } catch (Exception e) {
             log.error("LINE webhook handle failed for user={}: {}", userSub, e.getMessage(), e);
             lineMessagingService.reply(replyToken, "ขออภัย ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้งจ้ะ");
         }
+    }
+
+    private void handlePostback(String userSub, LineWebhookReq.Postback postback, String replyToken) {
+        if (postback == null || postback.data() == null || postback.data().isBlank()) {
+            log.debug("skip empty postback");
+            return;
+        }
+
+        Map<String, String> params = parsePostbackData(postback.data());
+        String action = params.get("action");
+        String id = params.get("id");
+
+        if (!"delete".equals(action) || id == null || id.isBlank()) {
+            lineMessagingService.reply(replyToken, "ไม่เข้าใจคำสั่ง กรุณาลองใหม่อีกครั้ง");
+            return;
+        }
+
+        try {
+            UserEntity user = upsertUserBySub(userSub);
+            UUID txId = UUID.fromString(id);
+            ApiRes<Void> res = transactionService.deleteTransaction(txId, user.getUserId());
+            if (res.success()) {
+                lineMessagingService.reply(replyToken, "ลบรายการเรียบร้อยแล้ว");
+            } else {
+                lineMessagingService.reply(replyToken, "ลบไม่สำเร็จ: " + res.message());
+            }
+        } catch (IllegalArgumentException e) {
+            lineMessagingService.reply(replyToken, "รหัสรายการไม่ถูกต้อง");
+        } catch (Exception e) {
+            log.error("postback delete failed for user={}: {}", userSub, e.getMessage(), e);
+            lineMessagingService.reply(replyToken, "ขออภัย ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง");
+        }
+    }
+
+    private static Map<String, String> parsePostbackData(String data) {
+        Map<String, String> out = new HashMap<>();
+        for (String part : data.split("&")) {
+            int eq = part.indexOf('=');
+            if (eq > 0) {
+                out.put(part.substring(0, eq), part.substring(eq + 1));
+            }
+        }
+        return out;
     }
 
     /** หา UserEntity ตาม LINE userId — สร้างใหม่ถ้ายังไม่เคย OAuth login */
@@ -110,26 +172,26 @@ public class LineWebhookService {
     }
 
     /** ตัดสินว่าจะ reply อะไรกลับ LINE — และถ้า AI extract ได้ครบ ให้ insert transaction ที่นี่ */
-    private String decideReply(UserEntity user, AiParseRes parsed) {
+    private LineReply decideReply(UserEntity user, AiParseRes parsed, long timestampMs) {
         if (parsed == null) {
-            return "ขออภัย ระบบ AI ขัดข้องชั่วคราว ลองพิมพ์ใหม่อีกครั้งนะจ๊ะ";
+            return LineReply.text("ขออภัย ระบบ AI ขัดข้องชั่วคราว ลองพิมพ์ใหม่อีกครั้งนะจ๊ะ");
         }
 
         if (parsed.structured_ok() && parsed.data() != null) {
-            return insertTransactionAndBuildReply(user, parsed.data());
+            return insertTransactionAndBuildReply(user, parsed.data(), timestampMs);
         }
 
         // ai-service ตอบเป็นข้อความถาม (ยายตอบหลาน) — ใช้ตามนั้น
         if (parsed.message() != null && !parsed.message().isBlank()) {
-            return parsed.message();
+            return LineReply.text(parsed.message());
         }
 
-        return "ขออภัย ฉันยังไม่เข้าใจ ช่วยพิมพ์ใหม่อีกครั้งนะจ๊ะ";
+        return LineReply.text("ขออภัย ฉันยังไม่เข้าใจ ช่วยพิมพ์ใหม่อีกครั้งนะจ๊ะ");
     }
 
-    private String insertTransactionAndBuildReply(UserEntity user, AiParseRes.Data data) {
+    private LineReply insertTransactionAndBuildReply(UserEntity user, AiParseRes.Data data, long timestampMs) {
         if (data.price() == null || data.type() == null || data.main() == null) {
-            return "ขออภัย ฉันยังแยกข้อมูลไม่ครบ ช่วยพิมพ์ใหม่อีกครั้งนะจ๊ะ";
+            return LineReply.text("ขออภัย ฉันยังแยกข้อมูลไม่ครบ ช่วยพิมพ์ใหม่อีกครั้งนะจ๊ะ");
         }
 
         TransactionCreateReq req = new TransactionCreateReq(
@@ -144,27 +206,15 @@ public class LineWebhookService {
         ApiRes<TransactionRes> res = transactionService.createTransaction(req);
         if (!res.success() || res.data() == null) {
             log.warn("createTransaction failed: {}", res.message());
-            return "บันทึกไม่สำเร็จ: " + res.message();
+            return LineReply.text("บันทึกไม่สำเร็จ: " + res.message());
         }
 
-        String label = "expense".equalsIgnoreCase(data.type()) ? "รายจ่าย" : "รายรับ";
-        StringBuilder reply = new StringBuilder();
-        reply.append("บันทึก").append(label).append("เรียบร้อยจ๊ะ\n");
-        reply.append("• รายการ: ").append(data.main()).append("\n");
-        reply.append("• ราคา: ").append(formatPrice(data.price())).append(" บาท");
-        if (data.cycleName() != null) {
-            reply.append("\n• รอบ: ").append(data.cycleName());
-        }
-        if (data.categoryName() != null) {
-            reply.append("\n• หมวด: ").append(data.categoryName());
-        }
-        return reply.toString();
-    }
-
-    private static String formatPrice(double price) {
-        if (price == Math.floor(price)) {
-            return String.format("%,d", (long) price);
-        }
-        return String.format("%,.2f", price);
+        return LineReply.flex(
+                lineFlexMessageBuilder.buildTransactionBubble(
+                        data,
+                        res.data(),
+                        timestampMs,
+                        lineProperties.resolveLiffBaseUrl()),
+                lineFlexMessageBuilder.buildAltText(data));
     }
 }

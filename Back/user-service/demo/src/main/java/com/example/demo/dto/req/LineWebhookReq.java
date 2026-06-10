@@ -36,6 +36,7 @@ public record LineWebhookReq(
             String replyToken,
             Source source,
             Message message,
+            Postback postback,
             Long timestamp,
             String mode) {
     }
@@ -51,5 +52,10 @@ public record LineWebhookReq(
             String id,
             String type,
             String text) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Postback(
+            String data) {
     }
 }

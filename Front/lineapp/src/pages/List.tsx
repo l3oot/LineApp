@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
 import {
     Button,
@@ -117,6 +118,8 @@ function groupTransactionsByDate(rows: Transaction[]): GroupedTransaction[] {
 
 export default function List() {
     const { t } = useTranslation();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const pendingEditTxId = searchParams.get("editTxId");
     const [activeFilter, setActiveFilter] = useState<"all" | "expense" | "income">("all");
     const [activeCategories, setActiveCategories] = useState<string[]>([]);
     const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
@@ -293,13 +296,7 @@ export default function List() {
         setIsAddCycleOpen(false);
     };
 
-    const openAddSheet = () => {
-        resetAddForm();
-        setAddError(null);
-        setIsAddSheetOpen(true);
-    };
-
-    const openEditSheet = (tx: Transaction) => {
+    const openEditSheet = useCallback((tx: Transaction) => {
         setEditingTxId(tx.txId);
         setNewTitle(tx.note?.trim() ?? "");
         setNewType(tx.txType);
@@ -308,6 +305,41 @@ export default function List() {
         setNewAmount(String(tx.amount));
         setNewDateTime(getDateTimeLocalValue(new Date(tx.txDate)));
         setNewIcon("bill");
+        setAddError(null);
+        setIsAddSheetOpen(true);
+    }, []);
+
+    useEffect(() => {
+        if (!pendingEditTxId || listLoading || !auth.isAuthed()) return;
+
+        const fromList = transactions.find((tx) => tx.txId === pendingEditTxId);
+        if (fromList) {
+            openEditSheet(fromList);
+            setSearchParams({}, { replace: true });
+            return;
+        }
+
+        let cancelled = false;
+        transactionApi
+            .get(pendingEditTxId)
+            .then((tx) => {
+                if (cancelled) return;
+                openEditSheet(tx);
+                setSearchParams({}, { replace: true });
+            })
+            .catch((err) => {
+                if (cancelled) return;
+                setListError(err instanceof ApiError ? err.message : (err as Error).message);
+                setSearchParams({}, { replace: true });
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [pendingEditTxId, listLoading, transactions, openEditSheet, setSearchParams]);
+
+    const openAddSheet = () => {
+        resetAddForm();
         setAddError(null);
         setIsAddSheetOpen(true);
     };
