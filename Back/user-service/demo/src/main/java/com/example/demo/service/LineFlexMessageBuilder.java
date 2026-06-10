@@ -33,6 +33,8 @@ public class LineFlexMessageBuilder {
             "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
             "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
     };
+    private static final String INCOME_TEMPLATE = "line/flex/income.json";
+    private static final String EXPENSE_TEMPLATE = "line/flex/expense.json";
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /**
@@ -48,7 +50,7 @@ public class LineFlexMessageBuilder {
         String txId = tx.txId().toString();
         return fillBubble(
                 templateForType(data.type()),
-                data.type(),
+                resolveTypeLabel(data.type()),
                 cycleSubtitle(data.cycleName()),
                 categorySubtitle(data.categoryName()),
                 data.main(),
@@ -58,7 +60,7 @@ public class LineFlexMessageBuilder {
                 liffBaseUrl);
     }
 
-    /** Flex card หลังแก้ไขรายการ — ใช้ template ตามประเภท (รายรับ/รายจ่าย) */
+    /** Flex card หลังแก้ไขรายการ */
     public Map<String, Object> buildUpdatedTransactionBubble(
             TransactionRes tx,
             String cycleName,
@@ -69,7 +71,7 @@ public class LineFlexMessageBuilder {
         String note = tx.note() != null ? tx.note() : "";
         return fillBubble(
                 templateForType(tx.txType()),
-                tx.txType(),
+                resolveTypeLabel(tx.txType()),
                 cycleSubtitle(cycleName),
                 categorySubtitle(categoryName),
                 note,
@@ -80,17 +82,17 @@ public class LineFlexMessageBuilder {
     }
 
     public String buildAltText(AiParseRes.Data data) {
-        return "บันทึก" + typeLabel(data.type()) + " " + data.main() + " " + formatPrice(data.price()) + " บาท";
+        return "บันทึก" + resolveTypeLabel(data.type()) + " " + data.main() + " " + formatPrice(data.price()) + " บาท";
     }
 
     public String buildUpdatedAltText(TransactionRes tx) {
         String note = tx.note() != null ? tx.note() : "";
-        return "แก้ไข" + typeLabel(tx.txType()) + " " + note + " " + formatPrice(tx.amount()) + " บาท";
+        return "แก้ไข" + resolveTypeLabel(tx.txType()) + " " + note + " " + formatPrice(tx.amount()) + " บาท";
     }
 
     private Map<String, Object> fillBubble(
             String templatePath,
-            String type,
+            String typeLabel,
             String cycleName,
             String categoryName,
             String main,
@@ -102,7 +104,7 @@ public class LineFlexMessageBuilder {
         String editUri = buildEditUri(liffBaseUrl, txId);
 
         String filled = template
-                .replace("{{typeLabel}}", jsonEscape(typeLabel(type)))
+                .replace("{{typeLabel}}", jsonEscape(typeLabel))
                 .replace("{{cycleName}}", jsonEscape(cycleName))
                 .replace("{{categoryName}}", jsonEscape(categoryName))
                 .replace("{{main}}", jsonEscape(main != null ? main : ""))
@@ -124,12 +126,14 @@ public class LineFlexMessageBuilder {
     }
 
     private static String templateForType(String type) {
-        return "income".equalsIgnoreCase(type)
-                ? "line/flex/income.json"
-                : "line/flex/expense.json";
+        return "income".equalsIgnoreCase(type) ? INCOME_TEMPLATE : EXPENSE_TEMPLATE;
     }
 
-    private static String typeLabel(String type) {
+    /** แปลง tx type code → ข้อความแสดงใน card (ไม่ hardcode ใน template) */
+    private static String resolveTypeLabel(String type) {
+        if (type == null || type.isBlank()) {
+            return "-";
+        }
         return "income".equalsIgnoreCase(type) ? "รายรับ" : "รายจ่าย";
     }
 
@@ -154,7 +158,7 @@ public class LineFlexMessageBuilder {
     }
 
     private static String formatThaiDateTime(LocalDateTime dt) {
-        return formatThaiDate(dt) + " l " + dt.format(TIME_FMT);
+        return formatThaiDate(dt) + "〡" + dt.format(TIME_FMT) + " น.";
     }
 
     private static String formatPrice(Double price) {

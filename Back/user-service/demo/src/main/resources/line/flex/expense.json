@@ -1,263 +1,602 @@
 {
   "type": "bubble",
-  "size": "mega",
-  "header": {
-    "type": "box",
-    "layout": "horizontal",
-    "paddingAll": "16px",
-    "alignItems": "center",
-    "contents": [
-      {
-        "type": "box",
-        "layout": "vertical",
-        "width": "52px",
-        "height": "52px",
-        "cornerRadius": "26px",
-        "contents": [
-          {
-            "type": "image",
-            "size": "xxs",
-            "aspectRatio": "1:1",
-            "url": "https://chatgpt.com/backend-api/estuary/public_content/enc/eyJpZCI6Im1fNmEyMmJhNWRjM2QwODE5MTk0MmJmMmZjMTUxZDMyMzY6ZmlsZV8wMDAwMDAwMDk2ZTg3MjA2OGU4YzdkYjM4YzBiZjc5MSIsInRzIjoiMjA2MDkiLCJwIjoicHlpIiwiY2lkIjoiMSIsInNpZyI6IjMwMTVmMWIwODJiMzRkNjE3Y2UxMjdiYzczZTJkZDBiMzA4NjQwMjRlNzI2NjVhYmJlNzJmODhkN2YyOTg5NDAiLCJ2IjoiMCIsImdpem1vX2lkIjpudWxsLCJjcyI6bnVsbCwiY2RuIjpudWxsLCJmbiI6bnVsbCwiY2QiOm51bGwsImNwIjpudWxsLCJtYSI6bnVsbH0=",
-            "aspectMode": "cover"
-          }
-        ]
-      },
-      {
-        "type": "box",
-        "layout": "vertical",
-        "flex": 1,
-        "margin": "md",
-        "contents": [
-          {
-            "type": "box",
-            "layout": "horizontal",
-            "alignItems": "center",
-            "contents": [
-              {
-                "type": "box",
-                "layout": "vertical",
-                "width": "22px",
-                "height": "22px",
-                "cornerRadius": "11px",
-                "backgroundColor": "#d9534f",
-                "justifyContent": "center",
-                "alignItems": "center",
-                "contents": [
-                  {
-                    "type": "image",
-                    "url": "https://cdn-icons-png.flaticon.com/512/5468/5468049.png"
-                  }
-                ]
-              },
-              {
-                "type": "text",
-                "text": "{{typeLabel}}",
-                "size": "xl",
-                "weight": "bold",
-                "color": "#1a1a1a",
-                "margin": "sm"
-              }
-            ]
-          },
-          {
-            "type": "text",
-            "text": "{{cycleName}}",
-            "size": "sm",
-            "color": "#d9534f",
-            "weight": "regular",
-            "margin": "xs"
-          }
-        ]
-      },
-      {
-        "type": "box",
-        "layout": "vertical",
-        "backgroundColor": "#fdecea",
-        "cornerRadius": "20px",
-        "paddingStart": "5px",
-        "paddingEnd": "5px",
-        "paddingTop": "4px",
-        "paddingBottom": "4px",
-        "justifyContent": "center",
-        "contents": [
-          {
-            "type": "text",
-            "text": "{{txDisplayId}}",
-            "size": "xxs",
-            "color": "#a94442",
-            "weight": "regular"
-          }
-        ],
-        "width": "90px"
-      }
-    ]
-  },
+  "size": "giga",
   "body": {
     "type": "box",
     "layout": "vertical",
-    "paddingAll": "0px",
     "contents": [
       {
-        "type": "separator",
-        "color": "#f5c6cb"
+        "type": "image",
+        "url": "https://lh3.googleusercontent.com/d/12T_wW233jf2Mx-A7Jl-JS6aPyF2aOo2n",
+        "size": "full",
+        "aspectMode": "cover",
+        "aspectRatio": "20:7",
+        "gravity": "center",
+        "offsetTop": "none"
       },
       {
         "type": "box",
         "layout": "horizontal",
-        "paddingAll": "16px",
         "contents": [
           {
             "type": "box",
             "layout": "vertical",
-            "flex": 3,
             "contents": [
               {
                 "type": "box",
                 "layout": "horizontal",
-                "alignItems": "center",
                 "contents": [
                   {
                     "type": "box",
+                    "layout": "baseline",
+                    "contents": [
+                      {
+                        "type": "icon",
+                        "url": "https://lh3.googleusercontent.com/d/101s_2M3D-xHLFX2sdxz3w7odcbSpVfXD",
+                        "size": "5xl",
+                        "position": "absolute",
+                        "offsetTop": "lg"
+                      }
+                    ],
+                    "position": "relative",
+                    "spacing": "none",
+                    "margin": "none",
+                    "cornerRadius": "none",
+                    "width": "80px",
+                    "flex": 0,
+                    "justifyContent": "flex-start",
+                    "offsetTop": "md",
+                    "offsetBottom": "none",
+                    "height": "100px"
+                  },
+                  {
+                    "type": "box",
                     "layout": "vertical",
-                    "width": "36px",
-                    "height": "36px",
-                    "backgroundColor": "#fdecea",
-                    "cornerRadius": "18px",
-                    "justifyContent": "center",
-                    "alignItems": "center",
                     "contents": [
                       {
                         "type": "text",
-                        "text": "🛒",
-                        "align": "center",
-                        "gravity": "center"
+                        "text": "ทำรายการแล้วจ้า",
+                        "size": "xl",
+                        "offsetTop": "lg",
+                        "weight": "bold"
+                      },
+                      {
+                        "type": "box",
+                        "layout": "baseline",
+                        "contents": [
+                          {
+                            "type": "icon",
+                            "url": "https://cdn-icons-png.flaticon.com/512/3504/3504490.png",
+                            "offsetTop": "xs",
+                            "offsetStart": "md"
+                          },
+                          {
+                            "type": "text",
+                            "text": "ค่อยหาใหม่น้า",
+                            "color": "#CA3E2B",
+                            "offsetStart": "lg"
+                          }
+                        ],
+                        "backgroundColor": "#FFF6F3",
+                        "cornerRadius": "xl",
+                        "width": "120px",
+                        "justifyContent": "center",
+                        "height": "23px",
+                        "offsetTop": "xl"
                       }
-                    ]
+                    ],
+                    "spacing": "none",
+                    "margin": "none",
+                    "position": "relative",
+                    "offsetStart": "md",
+                    "offsetBottom": "none",
+                    "offsetTop": "lg",
+                    "paddingBottom": "none",
+                    "width": "200px"
                   },
+                  {
+                    "type": "box",
+                    "layout": "vertical",
+                    "contents": [
+                      {
+                        "type": "text",
+                        "text": "{{txDisplayId}}",
+                        "offsetTop": "xxl",
+                        "offsetBottom": "none"
+                      }
+                    ],
+                    "alignItems": "flex-end",
+                    "offsetTop": "md"
+                  }
+                ],
+                "position": "relative",
+                "offsetBottom": "xxl",
+                "height": "100px",
+                "paddingBottom": "none"
+              }
+            ],
+            "spacing": "xs",
+            "offsetTop": "none",
+            "offsetBottom": "xxl",
+            "paddingBottom": "xxl"
+          }
+        ],
+        "position": "absolute",
+        "offsetBottom": "xxl",
+        "offsetStart": "0px",
+        "offsetEnd": "0px",
+        "paddingAll": "lg",
+        "paddingBottom": "xxl",
+        "height": "440px"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "image",
+                    "url": "https://lh3.googleusercontent.com/d/1drRuoSsg0PmWZVnrpvyi6T32TDBknNDC",
+                    "size": "40px",
+                    "align": "start"
+                  }
+                ],
+                "width": "40px"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "ประเภท",
+                    "size": "lg",
+                    "offsetStart": "sm",
+                    "color": "#818180"
+                  }
+                ],
+                "width": "80px",
+                "alignItems": "flex-start"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "{{typeLabel}}",
+                    "offsetStart": "md",
+                    "size": "lg",
+                    "color": "#CA3E2B"
+                  }
+                ],
+                "borderColor": "#CA3E2B",
+                "borderWidth": "1px",
+                "cornerRadius": "md",
+                "height": "40px",
+                "justifyContent": "center"
+              }
+            ],
+            "height": "55px",
+            "offsetTop": "none",
+            "alignItems": "center",
+            "offsetBottom": "none"
+          }
+        ],
+        "paddingAll": "none",
+        "paddingStart": "xl",
+        "paddingEnd": "xl",
+        "offsetTop": "none",
+        "offsetBottom": "sm"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "image",
+                    "url": "https://lh3.googleusercontent.com/d/1c5d2eyPxZN7fZ_dyzRpmI-Jm6PRDQJZb",
+                    "size": "40px",
+                    "align": "start"
+                  }
+                ],
+                "width": "40px"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "รายการ",
+                    "size": "lg",
+                    "offsetStart": "sm",
+                    "color": "#818180"
+                  }
+                ],
+                "width": "80px",
+                "alignItems": "flex-start"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
                   {
                     "type": "text",
                     "text": "{{main}}",
-                    "margin": "md",
-                    "size": "md",
-                    "color": "#1a1a1a"
+                    "offsetStart": "md",
+                    "size": "lg",
+                    "color": "#CA3E2B"
                   }
-                ]
+                ],
+                "borderColor": "#CA3E2B",
+                "borderWidth": "1px",
+                "cornerRadius": "md",
+                "height": "40px",
+                "justifyContent": "center"
+              }
+            ],
+            "height": "55px",
+            "offsetTop": "none",
+            "alignItems": "center",
+            "offsetBottom": "none"
+          }
+        ],
+        "paddingAll": "none",
+        "paddingStart": "xl",
+        "paddingEnd": "xl",
+        "offsetTop": "none",
+        "offsetBottom": "sm"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "image",
+                    "url": "https://lh3.googleusercontent.com/d/1uov4OWTPfxRShf7II49tNw_7cfzO5iz5",
+                    "size": "40px",
+                    "align": "start"
+                  }
+                ],
+                "width": "40px"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "หมวดหมู่",
+                    "size": "lg",
+                    "offsetStart": "sm",
+                    "color": "#818180"
+                  }
+                ],
+                "width": "80px",
+                "alignItems": "flex-start"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "{{categoryName}}",
+                    "offsetStart": "md",
+                    "size": "lg",
+                    "color": "#CA3E2B"
+                  }
+                ],
+                "borderColor": "#CA3E2B",
+                "borderWidth": "1px",
+                "cornerRadius": "md",
+                "height": "40px",
+                "justifyContent": "center"
+              }
+            ],
+            "height": "55px",
+            "offsetTop": "none",
+            "alignItems": "center",
+            "offsetBottom": "none"
+          }
+        ],
+        "paddingAll": "none",
+        "paddingStart": "xl",
+        "paddingEnd": "xl",
+        "offsetTop": "none",
+        "offsetBottom": "sm"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "image",
+                    "url": "https://lh3.googleusercontent.com/d/15rJegWaBO9_qX4Hr9zVbP3ciMtmqQqMr",
+                    "size": "40px",
+                    "align": "start"
+                  }
+                ],
+                "width": "40px"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "รอบ",
+                    "size": "lg",
+                    "offsetStart": "sm",
+                    "color": "#818180"
+                  }
+                ],
+                "width": "80px",
+                "alignItems": "flex-start"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "{{cycleName}}",
+                    "offsetStart": "md",
+                    "size": "lg",
+                    "color": "#CA3E2B"
+                  }
+                ],
+                "borderColor": "#CA3E2B",
+                "borderWidth": "1px",
+                "cornerRadius": "md",
+                "height": "40px",
+                "justifyContent": "center"
+              }
+            ],
+            "height": "55px",
+            "offsetTop": "none",
+            "alignItems": "center",
+            "offsetBottom": "none"
+          }
+        ],
+        "paddingAll": "none",
+        "paddingStart": "xl",
+        "paddingEnd": "xl",
+        "offsetTop": "none",
+        "offsetBottom": "sm"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "image",
+                    "url": "https://lh3.googleusercontent.com/d/1b5o3XmQ5MhMStJQDwe3X3Ob3aeCUS4oy",
+                    "size": "40px",
+                    "align": "start"
+                  }
+                ],
+                "width": "40px"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "วันที่",
+                    "size": "lg",
+                    "offsetStart": "sm",
+                    "color": "#818180"
+                  }
+                ],
+                "width": "80px",
+                "alignItems": "flex-start"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "{{txDateTime}}",
+                    "offsetStart": "md",
+                    "size": "lg",
+                    "color": "#CA3E2B"
+                  }
+                ],
+                "borderColor": "#CA3E2B",
+                "borderWidth": "1px",
+                "cornerRadius": "md",
+                "height": "40px",
+                "justifyContent": "center"
+              }
+            ],
+            "height": "55px",
+            "offsetTop": "none",
+            "alignItems": "center",
+            "offsetBottom": "none"
+          }
+        ],
+        "paddingAll": "none",
+        "paddingStart": "xl",
+        "paddingEnd": "xl",
+        "offsetTop": "none",
+        "offsetBottom": "sm"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "image",
+                    "url": "https://lh3.googleusercontent.com/d/1Nvo2e4ZhUSPJs-E9kr9WSRwvLcdKtyDY",
+                    "size": "40px",
+                    "align": "start"
+                  }
+                ],
+                "width": "40px"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "จำนวน",
+                    "size": "lg",
+                    "offsetStart": "sm",
+                    "color": "#818180"
+                  }
+                ],
+                "width": "80px",
+                "alignItems": "flex-start"
               },
               {
                 "type": "box",
                 "layout": "horizontal",
-                "alignItems": "center",
-                "margin": "md",
                 "contents": [
                   {
-                    "type": "box",
-                    "layout": "vertical",
-                    "width": "36px",
-                    "height": "36px",
-                    "backgroundColor": "#fdecea",
-                    "cornerRadius": "18px",
-                    "justifyContent": "center",
-                    "alignItems": "center",
-                    "contents": [
-                      {
-                        "type": "text",
-                        "text": "📅",
-                        "align": "center",
-                        "gravity": "center"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "box",
-                    "layout": "vertical",
-                    "margin": "md",
-                    "contents": [
-                      {
-                        "type": "text",
-                        "text": "{{txDate}}",
-                        "size": "md",
-                        "color": "#1a1a1a"
-                      },
-                      {
-                        "type": "text",
-                        "text": "{{txTime}}",
-                        "size": "sm",
-                        "color": "#888780"
-                      }
-                    ]
+                    "type": "text",
+                    "text": "{{price}}",
+                    "offsetStart": "md",
+                    "size": "lg",
+                    "color": "#CA3E2B"
                   }
-                ]
+                ],
+                "borderColor": "#CA3E2B",
+                "borderWidth": "1px",
+                "cornerRadius": "md",
+                "height": "40px",
+                "justifyContent": "center",
+                "alignItems": "center"
               }
-            ]
-          },
-          {
-            "type": "separator",
-            "color": "#f1b0b7"
-          },
-          {
-            "type": "box",
-            "layout": "vertical",
-            "flex": 2,
-            "paddingStart": "16px",
-            "justifyContent": "center",
-            "contents": [
-              {
-                "type": "text",
-                "text": "จำนวนเงิน",
-                "size": "sm",
-                "color": "#888780"
-              },
-              {
-                "type": "text",
-                "text": "{{price}}",
-                "size": "3xl",
-                "weight": "bold",
-                "color": "#c0392b",
-                "margin": "sm"
-              }
-            ]
+            ],
+            "height": "55px",
+            "offsetTop": "none",
+            "alignItems": "center",
+            "offsetBottom": "none"
           }
-        ]
+        ],
+        "paddingAll": "none",
+        "paddingStart": "xl",
+        "paddingEnd": "xl",
+        "offsetTop": "none",
+        "offsetBottom": "sm"
       }
-    ]
+    ],
+    "paddingAll": "0px",
+    "offsetBottom": "none",
+    "paddingBottom": "none",
+    "paddingTop": "none",
+    "height": "480px"
   },
   "footer": {
     "type": "box",
     "layout": "horizontal",
-    "paddingAll": "12px",
-    "backgroundColor": "#fdf8f8",
     "contents": [
       {
-        "type": "button",
-        "flex": 0,
-        "style": "primary",
-        "color": "#d9534f",
-        "adjustMode": "shrink-to-fit",
-        "action": {
-          "type": "uri",
-          "label": "✏ แก้ไข",
-          "uri": "{{editUri}}"
-        },
-        "height": "sm"
+        "type": "box",
+        "layout": "vertical",
+        "contents": []
       },
       {
-        "type": "button",
-        "flex": 0,
-        "style": "primary",
-        "color": "#c0392b",
-        "margin": "xs",
-        "adjustMode": "shrink-to-fit",
-        "action": {
-          "type": "postback",
-          "label": "🗑 ลบ",
-          "data": "{{deleteData}}",
-          "displayText": "ลบรายการ"
-        },
-        "height": "sm"
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "button",
+            "action": {
+              "type": "uri",
+              "label": "แก้ไข",
+              "uri": "{{editUri}}"
+            },
+            "style": "primary",
+            "color": "#669C5B"
+          }
+        ],
+        "justifyContent": "center",
+        "cornerRadius": "lg",
+        "height": "40px",
+        "paddingBottom": "none",
+        "paddingEnd": "xs"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "button",
+            "action": {
+              "type": "postback",
+              "label": "ลบ",
+              "data": "{{deleteData}}",
+              "displayText": "ลบรายการ"
+            },
+            "style": "primary",
+            "color": "#C82333"
+          }
+        ],
+        "height": "40px",
+        "justifyContent": "center",
+        "cornerRadius": "lg",
+        "paddingStart": "xs"
       }
     ],
-    "position": "relative",
-    "justifyContent": "flex-end"
+    "height": "70px",
+    "paddingAll": "xl"
+  },
+  "styles": {
+    "footer": {
+      "separator": true
+    }
   }
 }
