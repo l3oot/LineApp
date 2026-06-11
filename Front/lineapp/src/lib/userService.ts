@@ -3,8 +3,19 @@
  * ต้อง login ก่อน (auth.getUser()) แล้วใช้ user.userId ในการเรียก
  */
 
-import { api } from "./api";
+import { api, ApiError } from "./api";
 import { auth } from "./auth";
+
+export type PageRes<T> = {
+    items: T[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+    hasNext: boolean;
+};
+
+export const TRANSACTION_PAGE_SIZE = 10;
 
 function requireUserId(): string {
     const user = auth.getUser();
@@ -114,20 +125,40 @@ export type TransactionCreatePayload = {
 export type TransactionUpdatePayload = TransactionCreatePayload & { txId: string };
 
 export const transactionApi = {
-    /** GET /api/transaction/user/{userId} — fallback ?userId= ถ้า server ยังไม่ restart */
-    list: async (cycleId?: string) => {
+    /** GET /api/transaction?userId= — รายการทั้งหมด (ใช้กับหน้า analytic/sum) */
+    list: (cycleId?: string) => {
         const userId = requireUserId();
-        const query = { cycleId };
+        return api.get<Transaction[]>("/api/transaction", { userId, cycleId });
+    },
+
+    /** GET /api/transaction/user/{userId}?page=&size=10 — แบ่งหน้าทีละ 10 รายการ */
+    listPage: async (page = 0, cycleId?: string, size = TRANSACTION_PAGE_SIZE) => {
+        const userId = requireUserId();
+        const query = { page, size, cycleId };
         const path = `/api/transaction/user/${encodeURIComponent(userId)}`;
         try {
-            return await api.get<Transaction[]>(path, query);
+            return await api.get<PageRes<Transaction>>(path, query);
         } catch (err) {
             const msg = err instanceof ApiError ? err.message : "";
             if (
                 err instanceof ApiError &&
                 (err.status === 404 || msg.includes("static resource") || msg.includes("No static resource"))
             ) {
-                return api.get<Transaction[]>("/api/transaction", { userId, cycleId });
+                const rows = await api.get<Transaction[]>("/api/transaction", { userId, cycleId });
+                const safePage = Math.max(page, 0);
+                const safeSize = size > 0 ? size : TRANSACTION_PAGE_SIZE;
+                const start = safePage * safeSize;
+                const items = (rows ?? []).slice(start, start + safeSize);
+                const totalElements = rows?.length ?? 0;
+                const totalPages = safeSize > 0 ? Math.ceil(totalElements / safeSize) : 0;
+                return {
+                    items,
+                    page: safePage,
+                    size: safeSize,
+                    totalElements,
+                    totalPages,
+                    hasNext: start + items.length < totalElements,
+                } satisfies PageRes<Transaction>;
             }
             throw err;
         }

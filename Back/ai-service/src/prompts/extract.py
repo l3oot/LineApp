@@ -1,5 +1,4 @@
-from src.dto.res.extract import EXTRACT_JSON_SHAPE_FOR_PROMPT
-
+from src.dto.extract import EXTRACT_JSON_SHAPE_FOR_PROMPT
 
 EXTRACT_PROMPT_TEMPLATE = (
     """

@@ -135,6 +135,9 @@ export default function List() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [categoryById, setCategoryById] = useState<Record<string, string>>({});
     const [listLoading, setListLoading] = useState(true);
+    const [listLoadingMore, setListLoadingMore] = useState(false);
+    const [hasMoreTransactions, setHasMoreTransactions] = useState(false);
+    const [nextPage, setNextPage] = useState(0);
     const [listError, setListError] = useState<string | null>(null);
     const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
     const [editingTxId, setEditingTxId] = useState<string | null>(null);
@@ -159,27 +162,60 @@ export default function List() {
         if (!auth.isAuthed()) {
             setTransactions([]);
             setCategoryById({});
+            setHasMoreTransactions(false);
+            setNextPage(0);
             setListLoading(false);
             return;
         }
         setListLoading(true);
         setListError(null);
         try {
-            const [txRows, categories] = await Promise.all([
-                transactionApi.list(),
+            const [txPage, categories] = await Promise.all([
+                transactionApi.listPage(0),
                 categoryApi.list(),
             ]);
             setCategoryById(
                 Object.fromEntries((categories ?? []).map((c) => [c.categoryId, c.name])),
             );
-            setTransactions(txRows ?? []);
+            setTransactions(txPage?.items ?? []);
+            setHasMoreTransactions(txPage?.hasNext ?? false);
+            setNextPage((txPage?.page ?? 0) + 1);
         } catch (err) {
             setTransactions([]);
+            setHasMoreTransactions(false);
+            setNextPage(0);
             setListError(err instanceof ApiError ? err.message : (err as Error).message);
         } finally {
             setListLoading(false);
         }
     }, []);
+
+    const loadMoreTransactions = useCallback(async () => {
+        if (!auth.isAuthed() || listLoading || listLoadingMore || !hasMoreTransactions) {
+            return;
+        }
+        setListLoadingMore(true);
+        setListError(null);
+        try {
+            const txPage = await transactionApi.listPage(nextPage);
+            setTransactions((prev) => {
+                const seen = new Set(prev.map((tx) => tx.txId));
+                const merged = [...prev];
+                for (const tx of txPage?.items ?? []) {
+                    if (!seen.has(tx.txId)) {
+                        merged.push(tx);
+                    }
+                }
+                return merged;
+            });
+            setHasMoreTransactions(txPage?.hasNext ?? false);
+            setNextPage((txPage?.page ?? nextPage) + 1);
+        } catch (err) {
+            setListError(err instanceof ApiError ? err.message : (err as Error).message);
+        } finally {
+            setListLoadingMore(false);
+        }
+    }, [hasMoreTransactions, listLoading, listLoadingMore, nextPage]);
 
     useEffect(() => {
         loadTransactions();
@@ -596,6 +632,16 @@ export default function List() {
                         <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] px-4 py-5 text-center text-[var(--text-soft)] shadow-[var(--shadow-soft)]">
                             {t("list.empty")}
                         </div>
+                    )}
+                    {!listLoading && hasMoreTransactions && (
+                        <button
+                            type="button"
+                            disabled={listLoadingMore}
+                            onClick={loadMoreTransactions}
+                            className="rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-semibold text-[var(--text)] transition-all hover:bg-[var(--surface-soft)] disabled:opacity-50"
+                        >
+                            {listLoadingMore ? t("list.loadingMore") : t("list.loadMore")}
+                        </button>
                     )}
                 </div>
             </div>

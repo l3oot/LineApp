@@ -7,12 +7,12 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.example.demo.dto.ApiRes;
 import com.example.demo.dto.req.CategoryCreateReq;
 import com.example.demo.dto.req.CategoryUpdateReq;
 import com.example.demo.dto.res.CategoryRes;
 import com.example.demo.entity.CategoryEntity;
-import com.example.demo.enums.TypeError;
+import com.example.demo.enums.ErrorCode;
+import com.example.demo.exception.ApiException;
 import com.example.demo.repository.CategoryRepository;
 import com.example.demo.repository.UserRepository;
 
@@ -27,103 +27,87 @@ public class CategoryService {
         this.userRepository = userRepository;
     }
 
-    public ApiRes<List<CategoryRes>> listCategories(UUID userId, String type) {
+    public List<CategoryRes> listCategories(UUID userId, String type) {
         if (userId == null) {
-            return ApiRes.failure("userId is required", TypeError.VALIDATION_ERROR);
+            throw new ApiException(ErrorCode.USER_ID_REQUIRED, "userId is required");
         }
         List<CategoryEntity> rows;
         if (type == null || type.isBlank()) {
             rows = categoryRepository.findByUserIdOrderByNameAsc(userId);
         } else {
-            Optional<String> normalized = normalizeType(type);
-            if (normalized.isEmpty()) {
-                return ApiRes.failure("type must be income or expense", TypeError.VALIDATION_ERROR);
-            }
-            rows = categoryRepository.findByUserIdAndTypeOrderByNameAsc(userId, normalized.get());
+            String normalized = normalizeType(type)
+                    .orElseThrow(() -> new ApiException(ErrorCode.CATEGORY_TYPE_INVALID, "type must be income or expense"));
+            rows = categoryRepository.findByUserIdAndTypeOrderByNameAsc(userId, normalized);
         }
-        return ApiRes.success(rows.stream().map(this::toRes).toList(), "OK");
+        return rows.stream().map(this::toRes).toList();
     }
 
-    public ApiRes<CategoryRes> getCategory(UUID categoryId, UUID userId) {
+    public CategoryRes getCategory(UUID categoryId, UUID userId) {
         if (categoryId == null || userId == null) {
-            return ApiRes.failure("categoryId and userId are required", TypeError.VALIDATION_ERROR);
+            throw new ApiException(ErrorCode.CATEGORY_ID_USER_ID_REQUIRED, "categoryId and userId are required");
         }
-        Optional<CategoryEntity> opt = categoryRepository.findById(categoryId);
-        if (opt.isEmpty()) {
-            return ApiRes.failure("Category not found", TypeError.NOT_FOUND);
+        CategoryEntity entity = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CATEGORY_NOT_FOUND, "Category not found"));
+        if (!entity.getUserId().equals(userId)) {
+            throw new ApiException(ErrorCode.FORBIDDEN, "Forbidden");
         }
-        CategoryEntity e = opt.get();
-        if (!e.getUserId().equals(userId)) {
-            return ApiRes.failure("Forbidden", TypeError.FORBIDDEN);
-        }
-        return ApiRes.success(toRes(e), "OK");
+        return toRes(entity);
     }
 
-    public ApiRes<CategoryRes> createCategory(CategoryCreateReq req) {
+    public CategoryRes createCategory(CategoryCreateReq req) {
         if (req.userId() == null) {
-            return ApiRes.failure("userId is required", TypeError.VALIDATION_ERROR);
+            throw new ApiException(ErrorCode.USER_ID_REQUIRED, "userId is required");
         }
         String name = normalizeName(req.name());
         if (name == null) {
-            return ApiRes.failure("name is required", TypeError.VALIDATION_ERROR);
+            throw new ApiException(ErrorCode.CATEGORY_NAME_REQUIRED, "name is required");
         }
-        Optional<String> normalizedType = normalizeType(req.type());
-        if (normalizedType.isEmpty()) {
-            return ApiRes.failure("type is required (income or expense)", TypeError.VALIDATION_ERROR);
-        }
+        String normalizedType = normalizeType(req.type())
+                .orElseThrow(() -> new ApiException(ErrorCode.CATEGORY_TYPE_REQUIRED, "type is required (income or expense)"));
         if (!userRepository.existsById(req.userId())) {
-            return ApiRes.failure("User not found", TypeError.NOT_FOUND);
+            throw new ApiException(ErrorCode.USER_NOT_FOUND, "User not found");
         }
         if (categoryRepository.existsByUserIdAndName(req.userId(), name)) {
-            return ApiRes.failure("Category name already exists for this user", TypeError.CONFLICT);
+            throw new ApiException(ErrorCode.CATEGORY_NAME_EXISTS, "Category name already exists for this user");
         }
         CategoryEntity saved = categoryRepository.save(
-                new CategoryEntity(req.userId(), name, normalizedType.get()));
-        return ApiRes.success(toRes(saved), "Insert Success");
+                new CategoryEntity(req.userId(), name, normalizedType));
+        return toRes(saved);
     }
 
-    public ApiRes<CategoryRes> updateCategory(CategoryUpdateReq req) {
+    public CategoryRes updateCategory(CategoryUpdateReq req) {
         if (req.categoryId() == null || req.userId() == null) {
-            return ApiRes.failure("categoryId and userId are required", TypeError.VALIDATION_ERROR);
+            throw new ApiException(ErrorCode.CATEGORY_ID_USER_ID_REQUIRED, "categoryId and userId are required");
         }
         String name = normalizeName(req.name());
         if (name == null) {
-            return ApiRes.failure("name is required", TypeError.VALIDATION_ERROR);
+            throw new ApiException(ErrorCode.CATEGORY_NAME_REQUIRED, "name is required");
         }
-        Optional<String> normalizedType = normalizeType(req.type());
-        if (normalizedType.isEmpty()) {
-            return ApiRes.failure("type is required (income or expense)", TypeError.VALIDATION_ERROR);
-        }
-        Optional<CategoryEntity> opt = categoryRepository.findById(req.categoryId());
-        if (opt.isEmpty()) {
-            return ApiRes.failure("Category not found", TypeError.NOT_FOUND);
-        }
-        CategoryEntity entity = opt.get();
+        String normalizedType = normalizeType(req.type())
+                .orElseThrow(() -> new ApiException(ErrorCode.CATEGORY_TYPE_REQUIRED, "type is required (income or expense)"));
+        CategoryEntity entity = categoryRepository.findById(req.categoryId())
+                .orElseThrow(() -> new ApiException(ErrorCode.CATEGORY_NOT_FOUND, "Category not found"));
         if (!entity.getUserId().equals(req.userId())) {
-            return ApiRes.failure("Forbidden", TypeError.FORBIDDEN);
+            throw new ApiException(ErrorCode.FORBIDDEN, "Forbidden");
         }
         if (categoryRepository.existsByUserIdAndNameAndCategoryIdNot(req.userId(), name, req.categoryId())) {
-            return ApiRes.failure("Category name already exists for this user", TypeError.CONFLICT);
+            throw new ApiException(ErrorCode.CATEGORY_NAME_EXISTS, "Category name already exists for this user");
         }
         entity.setName(name);
-        entity.setType(normalizedType.get());
-        CategoryEntity saved = categoryRepository.save(entity);
-        return ApiRes.success(toRes(saved), "Update Success");
+        entity.setType(normalizedType);
+        return toRes(categoryRepository.save(entity));
     }
 
-    public ApiRes<Void> deleteCategory(UUID categoryId, UUID userId) {
+    public void deleteCategory(UUID categoryId, UUID userId) {
         if (categoryId == null || userId == null) {
-            return ApiRes.failure("categoryId and userId are required", TypeError.VALIDATION_ERROR);
+            throw new ApiException(ErrorCode.CATEGORY_ID_USER_ID_REQUIRED, "categoryId and userId are required");
         }
-        Optional<CategoryEntity> opt = categoryRepository.findById(categoryId);
-        if (opt.isEmpty()) {
-            return ApiRes.failure("Category not found", TypeError.NOT_FOUND);
-        }
-        if (!opt.get().getUserId().equals(userId)) {
-            return ApiRes.failure("Forbidden", TypeError.FORBIDDEN);
+        CategoryEntity entity = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ApiException(ErrorCode.CATEGORY_NOT_FOUND, "Category not found"));
+        if (!entity.getUserId().equals(userId)) {
+            throw new ApiException(ErrorCode.FORBIDDEN, "Forbidden");
         }
         categoryRepository.deleteById(categoryId);
-        return ApiRes.success(null, "Delete Success");
     }
 
     private static String normalizeName(String raw) {

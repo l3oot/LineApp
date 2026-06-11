@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.dto.ApiRes;
 import com.example.demo.dto.req.TransactionCreateReq;
 import com.example.demo.dto.req.TransactionUpdateReq;
+import com.example.demo.dto.res.PageRes;
 import com.example.demo.dto.res.TransactionRes;
 import com.example.demo.service.LineTransactionNotifyService;
 import com.example.demo.service.TransactionService;
-import com.example.demo.util.ApiResMapper;
 
 @RestController
 @RequestMapping("/api/transaction")
@@ -40,54 +40,54 @@ public class TransactionController {
     public ResponseEntity<ApiRes<List<TransactionRes>>> listTransactions(
             @RequestParam UUID userId,
             @RequestParam(required = false) UUID cycleId) {
-        ApiRes<List<TransactionRes>> res = transactionService.listTransactions(userId, cycleId);
-        return ApiResMapper.toResponseEntity(res);
+        List<TransactionRes> data = transactionService.listTransactions(userId, cycleId);
+        return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 
-    /** GET /api/transaction/user/{userId} — รายการธุรกรรมของผู้ใช้ (cycleId กรองได้ผ่าน query) */
+    /** GET /api/transaction/user/{userId}?page=0&size=10 — รายการธุรกรรมแบบแบ่งหน้า (cycleId กรองได้ผ่าน query) */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<ApiRes<List<TransactionRes>>> listTransactionsByUser(
+    public ResponseEntity<ApiRes<PageRes<TransactionRes>>> listTransactionsByUser(
             @PathVariable UUID userId,
-            @RequestParam(required = false) UUID cycleId) {
-        ApiRes<List<TransactionRes>> res = transactionService.listTransactions(userId, cycleId);
-        return ApiResMapper.toResponseEntity(res);
+            @RequestParam(required = false) UUID cycleId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PageRes<TransactionRes> data = transactionService.listTransactionsByUserPage(userId, cycleId, page, size);
+        return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 
     @GetMapping("/{txId}")
     public ResponseEntity<ApiRes<TransactionRes>> getTransaction(
             @PathVariable UUID txId,
             @RequestParam UUID userId) {
-        ApiRes<TransactionRes> res = transactionService.getTransaction(txId, userId);
-        return ApiResMapper.toResponseEntity(res);
+        TransactionRes data = transactionService.getTransaction(txId, userId);
+        return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 
     @PostMapping("")
     public ResponseEntity<ApiRes<TransactionRes>> createTransaction(@RequestBody TransactionCreateReq req) {
-        ApiRes<TransactionRes> res = transactionService.createTransaction(req);
-        return ApiResMapper.toResponseEntity(res);
+        TransactionRes data = transactionService.createTransaction(req);
+        return ResponseEntity.ok(ApiRes.success(data, "Insert Success"));
     }
 
     @PutMapping("")
     public ResponseEntity<ApiRes<TransactionRes>> updateTransaction(@RequestBody TransactionUpdateReq req) {
-        ApiRes<TransactionRes> res = transactionService.updateTransaction(req);
-        if (res.success() && res.data() != null) {
-            lineTransactionNotifyService.pushUpdatedTransactionCard(res.data());
-        }
-        return ApiResMapper.toResponseEntity(res);
+        TransactionRes data = transactionService.updateTransaction(req);
+        lineTransactionNotifyService.pushUpdatedTransactionCard(data);
+        return ResponseEntity.ok(ApiRes.success(data, "Update Success"));
     }
 
     @DeleteMapping("")
     public ResponseEntity<ApiRes<Void>> deleteTransaction(
             @RequestParam UUID txId,
             @RequestParam UUID userId) {
-        ApiRes<Void> res = transactionService.deleteTransaction(txId, userId);
-        return ApiResMapper.toResponseEntity(res);
+        transactionService.deleteTransaction(txId, userId);
+        return ResponseEntity.ok(ApiRes.success(null, "Delete Success"));
     }
 
     /** DELETE /api/transaction/user/{userId} — ลบธุรกรรมทั้งหมดของผู้ใช้ */
     @DeleteMapping("/user/{userId}")
     public ResponseEntity<ApiRes<Void>> deleteAllTransactionsByUser(@PathVariable UUID userId) {
-        ApiRes<Void> res = transactionService.deleteAllTransactionsByUser(userId);
-        return ApiResMapper.toResponseEntity(res);
+        transactionService.deleteAllTransactionsByUser(userId);
+        return ResponseEntity.ok(ApiRes.success(null, "Delete All Success"));
     }
 }

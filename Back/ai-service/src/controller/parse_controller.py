@@ -1,10 +1,10 @@
-"""HTTP layer สำหรับการ extract — เรียก service เท่านั้น ไม่ทำ business logic เอง"""
+"""HTTP layer สำหรับการ extract — เรียก service เท่านั้น"""
 
 from __future__ import annotations
 
 from fastapi import APIRouter, Query
 
-from src.dto.res.extract import AiParseResponse
+from src.dto.extract import AiParseResponse
 from src.service.extract_service import extract_transaction
 
 router = APIRouter()

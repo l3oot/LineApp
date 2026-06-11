@@ -19,7 +19,6 @@ import com.example.demo.dto.req.CategoryCreateReq;
 import com.example.demo.dto.req.CategoryUpdateReq;
 import com.example.demo.dto.res.CategoryRes;
 import com.example.demo.service.CategoryService;
-import com.example.demo.util.ApiResMapper;
 
 @RestController
 @RequestMapping("/api/category")
@@ -35,38 +34,43 @@ public class CategoryController {
     public ResponseEntity<ApiRes<List<CategoryRes>>> listCategories(
             @RequestParam UUID userId,
             @RequestParam(required = false) String type) {
-        return ApiResMapper.toResponseEntity(categoryService.listCategories(userId, type));
+        List<CategoryRes> data = categoryService.listCategories(userId, type);
+        return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 
-    /** GET /api/category/user/{userId} — รายการหมวดของผู้ใช้ (type กรองได้ผ่าน query) */
     @GetMapping("/user/{userId}")
     public ResponseEntity<ApiRes<List<CategoryRes>>> listCategoriesByUser(
             @PathVariable UUID userId,
             @RequestParam(required = false) String type) {
-        return ApiResMapper.toResponseEntity(categoryService.listCategories(userId, type));
+        List<CategoryRes> data = categoryService.listCategories(userId, type);
+        return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 
     @GetMapping("/{categoryId}")
     public ResponseEntity<ApiRes<CategoryRes>> getCategory(
             @PathVariable UUID categoryId,
             @RequestParam UUID userId) {
-        return ApiResMapper.toResponseEntity(categoryService.getCategory(categoryId, userId));
+        CategoryRes data = categoryService.getCategory(categoryId, userId);
+        return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 
     @PostMapping("")
     public ResponseEntity<ApiRes<CategoryRes>> createCategory(@RequestBody CategoryCreateReq req) {
-        return ApiResMapper.toResponseEntity(categoryService.createCategory(req));
+        CategoryRes data = categoryService.createCategory(req);
+        return ResponseEntity.ok(ApiRes.success(data, "Insert Success"));
     }
 
     @PutMapping("")
     public ResponseEntity<ApiRes<CategoryRes>> updateCategory(@RequestBody CategoryUpdateReq req) {
-        return ApiResMapper.toResponseEntity(categoryService.updateCategory(req));
+        CategoryRes data = categoryService.updateCategory(req);
+        return ResponseEntity.ok(ApiRes.success(data, "Update Success"));
     }
 
     @DeleteMapping("")
     public ResponseEntity<ApiRes<Void>> deleteCategory(
             @RequestParam UUID categoryId,
             @RequestParam UUID userId) {
-        return ApiResMapper.toResponseEntity(categoryService.deleteCategory(categoryId, userId));
+        categoryService.deleteCategory(categoryId, userId);
+        return ResponseEntity.ok(ApiRes.success(null, "Delete Success"));
     }
 }

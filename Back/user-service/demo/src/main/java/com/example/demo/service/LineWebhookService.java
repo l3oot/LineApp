@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.config.LineProperties;
-import com.example.demo.dto.ApiRes;
 import com.example.demo.dto.req.LineWebhookReq;
+import com.example.demo.exception.ApiException;
 import com.example.demo.dto.req.TransactionCreateReq;
 import com.example.demo.dto.res.AiParseRes;
 import com.example.demo.dto.res.TransactionRes;
@@ -137,12 +137,10 @@ public class LineWebhookService {
         try {
             UserEntity user = upsertUserBySub(userSub);
             UUID txId = UUID.fromString(id);
-            ApiRes<Void> res = transactionService.deleteTransaction(txId, user.getUserId());
-            if (res.success()) {
-                lineMessagingService.reply(replyToken, "ลบรายการเรียบร้อยแล้ว");
-            } else {
-                lineMessagingService.reply(replyToken, "ลบไม่สำเร็จ: " + res.message());
-            }
+            transactionService.deleteTransaction(txId, user.getUserId());
+            lineMessagingService.reply(replyToken, "ลบรายการเรียบร้อยแล้ว");
+        } catch (ApiException e) {
+            lineMessagingService.reply(replyToken, "ลบไม่สำเร็จ: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             lineMessagingService.reply(replyToken, "รหัสรายการไม่ถูกต้อง");
         } catch (Exception e) {
@@ -203,18 +201,18 @@ public class LineWebhookService {
                 data.main(),
                 LocalDateTime.now());
 
-        ApiRes<TransactionRes> res = transactionService.createTransaction(req);
-        if (!res.success() || res.data() == null) {
-            log.warn("createTransaction failed: {}", res.message());
-            return LineReply.text("บันทึกไม่สำเร็จ: " + res.message());
+        try {
+            TransactionRes saved = transactionService.createTransaction(req);
+            return LineReply.flex(
+                    lineFlexMessageBuilder.buildTransactionBubble(
+                            data,
+                            saved,
+                            timestampMs,
+                            lineProperties.resolveLiffBaseUrl()),
+                    lineFlexMessageBuilder.buildAltText(data));
+        } catch (ApiException e) {
+            log.warn("createTransaction failed: {}", e.getMessage());
+            return LineReply.text("บันทึกไม่สำเร็จ: " + e.getMessage());
         }
-
-        return LineReply.flex(
-                lineFlexMessageBuilder.buildTransactionBubble(
-                        data,
-                        res.data(),
-                        timestampMs,
-                        lineProperties.resolveLiffBaseUrl()),
-                lineFlexMessageBuilder.buildAltText(data));
     }
 }

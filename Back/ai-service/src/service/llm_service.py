@@ -9,22 +9,18 @@ from typing import Any
 import requests
 from openai import OpenAI
 
-from src.config import (
-    OPENAI_API_KEY,
-    OPENTYPHOON_BASE_URL,
-    OPENTYPHOON_MODEL,
-    THAILLM_API_KEY,
-    THAILLM_KBTG_URL,
-    THAILLM_TYPHOON_URL,
-)
+from src.config import settings
 
 logger = logging.getLogger(__name__)
 
-THAILLM_HEADERS = {"Content-Type": "application/json", "apikey": THAILLM_API_KEY}
+_LLM = settings.llm
+_THAILLM_HEADERS = {"Content-Type": "application/json", "apikey": _LLM.thaillm_api_key}
 
 
 def _is_rate_limited(exc: BaseException) -> bool:
-    return (hasattr(exc, "status_code") and getattr(exc, "status_code", None) == 429) or "429" in str(exc)
+    return (hasattr(exc, "status_code") and getattr(exc, "status_code", None) == 429) or "429" in str(
+        exc
+    )
 
 
 def _try_json(text: str) -> Any:
@@ -35,9 +31,9 @@ def _try_json(text: str) -> Any:
 
 
 def _call_opentyphoon(prompt: str) -> str:
-    client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENTYPHOON_BASE_URL)
+    client = OpenAI(api_key=_LLM.openai_api_key, base_url=_LLM.opentyphoon_base_url)
     stream = client.chat.completions.create(
-        model=OPENTYPHOON_MODEL,
+        model=_LLM.opentyphoon_model,
         messages=[{"role": "system", "content": prompt}],
         temperature=0.3,
         max_completion_tokens=730,
@@ -59,31 +55,31 @@ def _call_thaillm(url: str, prompt: str) -> str:
         "max_tokens": 2048,
         "temperature": 0.3,
     }
-    r = requests.post(url, headers=THAILLM_HEADERS, json=body, timeout=60)
-    r.raise_for_status()
-    return r.json()["choices"][0]["message"]["content"]
+    response = requests.post(url, headers=_THAILLM_HEADERS, json=body, timeout=60)
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
 
 
 def run_llm(prompt: str) -> dict[str, Any]:
-    """รัน LLM ตาม fallback chain — คืน {"source_model", "result"}; result เป็น dict (JSON) หรือ str (ข้อความ)"""
+    """รัน LLM ตาม fallback chain — คืน {"source_model", "result"}"""
     try:
         text = _call_opentyphoon(prompt)
         return {
-            "source_model": f"api.opentyphoon.ai / {OPENTYPHOON_MODEL}",
+            "source_model": f"api.opentyphoon.ai / {_LLM.opentyphoon_model}",
             "result": _try_json(text),
         }
-    except Exception as e:
-        if not _is_rate_limited(e):
+    except Exception as exc:
+        if not _is_rate_limited(exc):
             raise
         logger.warning("opentyphoon rate-limited — fallback to thaillm typhoon")
 
     try:
-        text = _call_thaillm(THAILLM_TYPHOON_URL, prompt)
+        text = _call_thaillm(_LLM.thaillm_typhoon_url, prompt)
         return {"source_model": "thaillm / typhoon", "result": _try_json(text)}
-    except Exception as e:
-        if not _is_rate_limited(e):
+    except Exception as exc:
+        if not _is_rate_limited(exc):
             raise
         logger.warning("thaillm typhoon rate-limited — fallback to thaillm kbtg")
 
-    text = _call_thaillm(THAILLM_KBTG_URL, prompt)
+    text = _call_thaillm(_LLM.thaillm_kbtg_url, prompt)
     return {"source_model": "thaillm / kbtg", "result": _try_json(text)}

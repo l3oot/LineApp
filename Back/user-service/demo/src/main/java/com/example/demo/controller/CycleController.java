@@ -19,7 +19,6 @@ import com.example.demo.dto.req.CycleCreateReq;
 import com.example.demo.dto.req.CycleUpdateReq;
 import com.example.demo.dto.res.CycleRes;
 import com.example.demo.service.CycleService;
-import com.example.demo.util.ApiResMapper;
 
 @RestController
 @RequestMapping("/api/cycle")
@@ -33,38 +32,41 @@ public class CycleController {
 
     @GetMapping("")
     public ResponseEntity<ApiRes<List<CycleRes>>> getCycles(@RequestParam UUID userId) {
-        return ApiResMapper.toResponseEntity(cycleService.getCyclesByUserId(userId));
+        List<CycleRes> data = cycleService.getCyclesByUserId(userId);
+        return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 
-    /** GET /api/cycle/user/{userId} — รายการรอบของผู้ใช้ */
     @GetMapping("/user/{userId}")
     public ResponseEntity<ApiRes<List<CycleRes>>> getCyclesByUser(@PathVariable UUID userId) {
-        return ApiResMapper.toResponseEntity(cycleService.getCyclesByUserId(userId));
+        List<CycleRes> data = cycleService.getCyclesByUserId(userId);
+        return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 
     @GetMapping("/{cycleId}")
     public ResponseEntity<ApiRes<CycleRes>> getCycle(
             @PathVariable UUID cycleId,
             @RequestParam UUID userId) {
-        return ApiResMapper.toResponseEntity(cycleService.getCycle(cycleId, userId));
+        CycleRes data = cycleService.getCycle(cycleId, userId);
+        return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 
     @PostMapping("")
-    public ResponseEntity<ApiRes<CycleRes>> CreateCycle(@RequestBody CycleCreateReq req) {
-        return ApiResMapper.toResponseEntity(cycleService.createCycle(req));
+    public ResponseEntity<ApiRes<CycleRes>> createCycle(@RequestBody CycleCreateReq req) {
+        CycleRes data = cycleService.createCycle(req);
+        return ResponseEntity.ok(ApiRes.success(data, "Insert Success"));
     }
 
     @PutMapping("")
     public ResponseEntity<ApiRes<CycleRes>> updateCycle(@RequestBody CycleUpdateReq req) {
-        ApiRes<CycleRes> res = cycleService.updateCycle(req);
-        return ApiResMapper.toResponseEntity(res);
+        CycleRes data = cycleService.updateCycle(req);
+        return ResponseEntity.ok(ApiRes.success(data, "Update Success"));
     }
 
     @DeleteMapping("")
     public ResponseEntity<ApiRes<Void>> deleteCycle(
             @RequestParam UUID cycleId,
             @RequestParam UUID userId) {
-        return ApiResMapper.toResponseEntity(cycleService.deleteCycle(cycleId, userId));
+        cycleService.deleteCycle(cycleId, userId);
+        return ResponseEntity.ok(ApiRes.success(null, "Delete Success"));
     }
-
 }

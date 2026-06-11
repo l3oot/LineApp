@@ -1,7 +1,4 @@
-"""DTO สำหรับ AI extract — สอดคล้องกับ prompt ใน src.prompt.mgs
-
-หมายเหตุ: business logic (parse / resolve / sanitize) อยู่ที่ src/service/extract_service.py
-"""
+"""DTO สำหรับ AI extract — สอดคล้องกับ prompt ใน src.prompts.extract"""
 
 from __future__ import annotations
 
@@ -11,7 +8,6 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
-# โครงสร้าง JSON ที่ใส่ใน prompt ให้ LLM ตอบกลับ
 EXTRACT_JSON_SHAPE_FOR_PROMPT = """{
   "main": "...",
   "price": 0,

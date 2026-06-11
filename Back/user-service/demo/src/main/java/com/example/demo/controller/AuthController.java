@@ -10,12 +10,11 @@ import com.example.demo.dto.ApiRes;
 import com.example.demo.dto.req.LineTokenReq;
 import com.example.demo.dto.res.AuthRes;
 import com.example.demo.service.LineAuthService;
-import com.example.demo.util.ApiResMapper;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    
+
     private final LineAuthService lineAuthService;
 
     public AuthController(LineAuthService lineAuthService) {
@@ -24,7 +23,7 @@ public class AuthController {
 
     @PostMapping("/line")
     public ResponseEntity<ApiRes<AuthRes>> lineLogin(@RequestBody LineTokenReq req) {
-        ApiRes<AuthRes> res = lineAuthService.loginWithLine(req.code());
-        return ApiResMapper.toResponseEntity(res);
+        AuthRes data = lineAuthService.loginWithLine(req.code());
+        return ResponseEntity.ok(ApiRes.success(data, "Login Success"));
     }
 }
