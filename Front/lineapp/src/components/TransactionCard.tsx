@@ -9,6 +9,9 @@ export interface TransactionProps {
     time?: string;
     icon?: string;
     onOpen?: () => void;
+    selectable?: boolean;
+    selected?: boolean;
+    onSelectedChange?: (selected: boolean) => void;
 }
 
 const cardClassName =
@@ -22,6 +25,9 @@ export default function TransactionCard({
     time,
     icon,
     onOpen,
+    selectable = false,
+    selected = false,
+    onSelectedChange,
 }: TransactionProps) {
     const { t } = useTranslation();
     const isIncome = type === 'income';
@@ -62,18 +68,40 @@ export default function TransactionCard({
         </>
     );
 
-    if (onOpen) {
-        return (
-            <button
-                type="button"
-                onClick={onOpen}
-                aria-label={t("list.openDetailAria")}
-                className={`${cardClassName} cursor-pointer active:scale-[0.99]`}
-            >
-                {content}
-            </button>
-        );
+    const card = onOpen ? (
+        <button
+            type="button"
+            onClick={onOpen}
+            aria-label={t("list.openDetailAria")}
+            className={`${cardClassName} flex-1 cursor-pointer active:scale-[0.99] ${selectable && selected ? "border-[var(--danger)] bg-red-50" : ""}`}
+        >
+            {content}
+        </button>
+    ) : (
+        <div className={`${cardClassName} flex-1 ${selectable && selected ? "border-[var(--danger)] bg-red-50" : ""}`}>
+            {content}
+        </div>
+    );
+
+    if (!selectable) {
+        return card;
     }
 
-    return <div className={cardClassName}>{content}</div>;
+    return (
+        <div className="flex items-stretch gap-2">
+            <label
+                className="flex shrink-0 items-center px-1"
+                onClick={(event) => event.stopPropagation()}
+            >
+                <input
+                    type="checkbox"
+                    checked={selected}
+                    onChange={(event) => onSelectedChange?.(event.target.checked)}
+                    aria-label={t("list.selectTransactionAria")}
+                    className="h-4 w-4 rounded border-[var(--border)] accent-[var(--danger)]"
+                />
+            </label>
+            {card}
+        </div>
+    );
 }

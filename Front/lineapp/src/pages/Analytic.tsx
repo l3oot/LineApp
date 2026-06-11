@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
+import { CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
 import MainLayout from "../layouts/MainLayout";
+import AnalyticCalendarCard from "../components/AnalyticCalendarCard";
 import { ApiError } from "../lib/api";
 import { auth } from "../lib/auth";
 import { categoryApi, transactionApi, type Category, type Transaction } from "../lib/userService";
 import dayjs from "dayjs";
 import {
+    buildDailyTotalsFromTransactions,
     buildExpenseShareFromTransactions,
+    buildIncomeShareFromTransactions,
     buildTrendLineFromTransactions,
     buildYearlyBarFromTransactions,
     EXPENSE_PIE_COLORS,
+    INCOME_PIE_COLORS,
     yearOptionsFromTransactions,
 } from "../utils/buildAnalyticTrend";
 import {
@@ -44,46 +49,50 @@ ChartJS.register(
 );
 
 import Dropdown from "../components/Dropdown";
+import { displayYearFromGregorian } from "../utils/formatAppDate";
 
 export default function Analytic() {
     const { t, i18n } = useTranslation();
     const [filter, setFilter] = useState<AnalyticFilter>("1Y");
     const [barYear, setBarYear] = useState(String(dayjs().year()));
     const [pieYear, setPieYear] = useState(String(dayjs().year()));
+    const [calendarFocused, setCalendarFocused] = useState<CalendarDate>(() => today(getLocalTimeZone()));
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
+    const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
+    const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const brandColor = "#2f8f4e";
     const dangerColor = "#b23a3a";
 
-    const locale = i18n.language.startsWith("en")
-        ? "en-US"
-        : i18n.language.startsWith("jp")
-          ? "ja-JP"
-          : "th-TH";
-
     useEffect(() => {
         if (!auth.isAuthed()) {
             setTransactions([]);
-            setCategories([]);
+            setExpenseCategories([]);
+            setIncomeCategories([]);
             setLoading(false);
             return;
         }
         let cancelled = false;
         setLoading(true);
         setLoadError(null);
-        Promise.all([transactionApi.list(), categoryApi.list("expense")])
-            .then(([rows, cats]) => {
+        Promise.all([
+            transactionApi.list(),
+            categoryApi.list("expense"),
+            categoryApi.list("income"),
+        ])
+            .then(([rows, expenseCats, incomeCats]) => {
                 if (!cancelled) {
                     setTransactions(rows ?? []);
-                    setCategories(cats ?? []);
+                    setExpenseCategories(expenseCats ?? []);
+                    setIncomeCategories(incomeCats ?? []);
                 }
             })
             .catch((err) => {
                 if (!cancelled) {
                     setTransactions([]);
-                    setCategories([]);
+                    setExpenseCategories([]);
+                    setIncomeCategories([]);
                     setLoadError(err instanceof ApiError ? err.message : (err as Error).message);
                 }
             })
@@ -96,29 +105,50 @@ export default function Analytic() {
     }, []);
 
     const trendSeries = useMemo(
-        () => buildTrendLineFromTransactions(transactions, filter, locale),
-        [transactions, filter, locale],
+        () => buildTrendLineFromTransactions(transactions, filter, i18n.language),
+        [transactions, filter, i18n.language],
     );
 
     const barYearOptions = useMemo(
-        () => yearOptionsFromTransactions(transactions),
-        [transactions],
+        () => yearOptionsFromTransactions(transactions, i18n.language),
+        [transactions, i18n.language],
     );
+
+    const yearDropdownFallback = (year: string) => ({
+        value: year,
+        label: displayYearFromGregorian(Number(year), i18n.language),
+    });
 
     const barSeries = useMemo(
-        () => buildYearlyBarFromTransactions(transactions, Number(barYear), locale),
-        [transactions, barYear, locale],
+        () => buildYearlyBarFromTransactions(transactions, Number(barYear), i18n.language),
+        [transactions, barYear, i18n.language],
     );
 
-    const pieSlices = useMemo(
+    const expensePieSlices = useMemo(
         () =>
             buildExpenseShareFromTransactions(
                 transactions,
-                categories,
+                expenseCategories,
                 Number(pieYear),
                 t("analytic.other"),
             ),
-        [transactions, categories, pieYear, t],
+        [transactions, expenseCategories, pieYear, t],
+    );
+
+    const dailyTotals = useMemo(
+        () => buildDailyTotalsFromTransactions(transactions),
+        [transactions],
+    );
+
+    const incomePieSlices = useMemo(
+        () =>
+            buildIncomeShareFromTransactions(
+                transactions,
+                incomeCategories,
+                Number(pieYear),
+                t("analytic.other"),
+            ),
+        [transactions, incomeCategories, pieYear, t],
     );
 
     const lineData = {
@@ -215,20 +245,35 @@ export default function Analytic() {
         },
         maintainAspectRatio: false,
     };
-    const pieData = {
-        labels: pieSlices.map((s) => s.label),
+    const buildPieData = (
+        slices: typeof expensePieSlices,
+        label: string,
+        colors: string[],
+    ) => ({
+        labels: slices.map((s) => s.label),
         datasets: [
             {
-                label: t("analytic.expenseShare"),
-                data: pieSlices.map((s) => s.amount),
-                backgroundColor: pieSlices.map((_, i) => EXPENSE_PIE_COLORS[i % EXPENSE_PIE_COLORS.length]),
+                label,
+                data: slices.map((s) => s.amount),
+                backgroundColor: slices.map((_, i) => colors[i % colors.length]),
                 borderColor: "white",
                 borderWidth: 3,
                 hoverOffset: 15,
                 radius: "80%",
             },
         ],
-    };
+    });
+
+    const expensePieData = buildPieData(
+        expensePieSlices,
+        t("analytic.expenseShare"),
+        EXPENSE_PIE_COLORS,
+    );
+    const incomePieData = buildPieData(
+        incomePieSlices,
+        t("analytic.incomeShare"),
+        INCOME_PIE_COLORS,
+    );
 
     const pieOptions = {
         responsive: true,
@@ -289,7 +334,7 @@ export default function Analytic() {
                                     key={f}
                                     onClick={() => setFilter(f)}
                                     className={`px-3 py-1.5 rounded-[10px] text-xs font-bold transition-all ${filter === f ? "bg-[var(--surface)] text-[var(--primary)] shadow-sm" : "text-[var(--text-soft)] hover:text-[var(--text)]"}`}>
-                                    {f}
+                                    {t(`analytic.filter.${f}`)}
                                 </button>
                             ))}
                         </div>
@@ -304,7 +349,7 @@ export default function Analytic() {
                             <div className="flex items-center scale-90 origin-right">
                                 <Dropdown
                                     label={t("analytic.year")}
-                                    data={barYearOptions.length > 0 ? barYearOptions : [{ value: barYear }]}
+                                    data={barYearOptions.length > 0 ? barYearOptions : [yearDropdownFallback(barYear)]}
                                     value={barYear}
                                     onValueChange={setBarYear}
                                 />
@@ -335,55 +380,78 @@ export default function Analytic() {
                     </div>
                 </div>
 
-                <div className="flex flex-col items-center rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)] overflow-hidden">
-                    <div className="flex flex-row justify-between items-center w-full px-5 mt-5">
-                        <p className="font-bold text-[var(--text)] text-lg">{t("analytic.expenseShare")}</p>
-                        <div className="flex items-center">
-                            <Dropdown
-                                label={t("analytic.year")}
-                                data={barYearOptions.length > 0 ? barYearOptions : [{ value: pieYear }]}
-                                value={pieYear}
-                                onValueChange={setPieYear}
-                            />
+                <AnalyticCalendarCard
+                    dailyTotals={dailyTotals}
+                    focusedDate={calendarFocused}
+                    onFocusedDateChange={setCalendarFocused}
+                    loading={loading}
+                />
+
+                {([
+                    {
+                        title: t("analytic.expenseShare"),
+                        slices: expensePieSlices,
+                        pieData: expensePieData,
+                    },
+                    {
+                        title: t("analytic.incomeShare"),
+                        slices: incomePieSlices,
+                        pieData: incomePieData,
+                    },
+                ] as const).map((card) => (
+                    <div
+                        key={card.title}
+                        className="flex flex-col items-center rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)] overflow-hidden"
+                    >
+                        <div className="flex flex-row justify-between items-center w-full px-5 mt-5">
+                            <p className="font-bold text-[var(--text)] text-lg">{card.title}</p>
+                            <div className="flex items-center">
+                                <Dropdown
+                                    label={t("analytic.year")}
+                                    data={barYearOptions.length > 0 ? barYearOptions : [yearDropdownFallback(pieYear)]}
+                                    value={pieYear}
+                                    onValueChange={setPieYear}
+                                />
+                            </div>
+                        </div>
+                        <div className="w-full h-[200px] flex items-center pb-5">
+                            {loading ? (
+                                <div className="flex w-full items-center justify-center py-8 text-sm text-[var(--text-soft)]">
+                                    กำลังโหลด...
+                                </div>
+                            ) : card.slices.length === 0 ? (
+                                <div className="flex w-full items-center justify-center py-8 text-sm text-[var(--text-soft)]">
+                                    {t("list.empty")}
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="w-[30%] flex items-center justify-center">
+                                        <Pie data={card.pieData} options={pieOptions} />
+                                    </div>
+                                    <div className="w-[70%] flex flex-col gap-2 px-6">
+                                        {card.slices.map((item, index) => (
+                                            <div key={`${card.title}-${item.label}-${index}`} className="flex items-center gap-3">
+                                                <div
+                                                    className="w-4 h-4 rounded-sm"
+                                                    style={{
+                                                        backgroundColor:
+                                                            card.pieData.datasets[0].backgroundColor[index],
+                                                    }}
+                                                />
+                                                <p className="text-sm font-semibold text-[var(--text)]">
+                                                    {item.label}
+                                                </p>
+                                                <p className="text-sm text-[var(--text-soft)] ml-auto">
+                                                    {item.percent}%
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
-                    <div className="w-full h-[200px] flex items-center pb-5">
-                        {loading ? (
-                            <div className="flex w-full items-center justify-center py-8 text-sm text-[var(--text-soft)]">
-                                กำลังโหลด...
-                            </div>
-                        ) : pieSlices.length === 0 ? (
-                            <div className="flex w-full items-center justify-center py-8 text-sm text-[var(--text-soft)]">
-                                {t("list.empty")}
-                            </div>
-                        ) : (
-                            <>
-                                <div className="w-[30%] flex items-center justify-center">
-                                    <Pie data={pieData} options={pieOptions} />
-                                </div>
-                                <div className="w-[70%] flex flex-col gap-2 px-6">
-                                    {pieSlices.map((item, index) => (
-                                        <div key={`${item.label}-${index}`} className="flex items-center gap-3">
-                                            <div
-                                                className="w-4 h-4 rounded-sm"
-                                                style={{
-                                                    backgroundColor:
-                                                        pieData.datasets[0].backgroundColor[index],
-                                                }}
-                                            />
-                                            <p className="text-sm font-semibold text-[var(--text)]">
-                                                {item.label}
-                                            </p>
-                                            <p className="text-sm text-[var(--text-soft)] ml-auto">
-                                                {item.percent}%
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
+                ))}
             </div>
         </MainLayout>
     );

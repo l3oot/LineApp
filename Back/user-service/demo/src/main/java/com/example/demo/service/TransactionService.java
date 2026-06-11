@@ -54,16 +54,43 @@ public class TransactionService {
         return rows.stream().map(this::toRes).toList();
     }
 
-    public PageRes<TransactionRes> listTransactionsByUserPage(UUID userId, UUID cycleId, int page, int size) {
+    public PageRes<TransactionRes> listTransactionsByUserPage(
+            UUID userId,
+            UUID cycleId,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            int page,
+            int size) {
         if (userId == null) {
             throw new ApiException(ErrorCode.USER_ID_REQUIRED, "userId is required");
         }
         int safePage = Math.max(page, 0);
         int safeSize = size <= 0 ? DEFAULT_PAGE_SIZE : Math.min(size, MAX_PAGE_SIZE);
         Pageable pageable = PageRequest.of(safePage, safeSize);
-        Page<TransactionEntity> result = cycleId == null
-                ? transactionRepository.findByUserIdOrderByTxDateDesc(userId, pageable)
-                : transactionRepository.findByUserIdAndCycleIdOrderByTxDateDesc(userId, cycleId, pageable);
+        boolean hasDateRange = startDate != null && endDate != null;
+        Page<TransactionEntity> result;
+        if (hasDateRange) {
+            LocalDateTime rangeStart = startDate;
+            LocalDateTime rangeEnd = endDate;
+            if (rangeStart.isAfter(rangeEnd)) {
+                LocalDateTime tmp = rangeStart;
+                rangeStart = rangeEnd;
+                rangeEnd = tmp;
+            }
+            result = cycleId == null
+                    ? transactionRepository.findByUserIdAndTxDateBetweenOrderByTxDateDesc(
+                            userId, rangeStart, rangeEnd, pageable)
+                    : transactionRepository.findByUserIdAndCycleIdAndTxDateBetweenOrderByTxDateDesc(
+                            userId, cycleId, rangeStart, rangeEnd, pageable);
+        } else {
+            result = cycleId == null
+                    ? transactionRepository.findByUserIdOrderByTxDateDesc(userId, pageable)
+                    : transactionRepository.findByUserIdAndCycleIdOrderByTxDateDesc(userId, cycleId, pageable);
+        }
+        return toPageRes(result);
+    }
+
+    private PageRes<TransactionRes> toPageRes(Page<TransactionEntity> result) {
         return new PageRes<>(
                 result.getContent().stream().map(this::toRes).toList(),
                 result.getNumber(),

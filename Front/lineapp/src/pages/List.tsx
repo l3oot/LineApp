@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
+import { CalendarDate, Time, getLocalTimeZone, today } from "@internationalized/date";
 import {
     Button,
     CalendarCell,
@@ -8,9 +8,7 @@ import {
     CalendarGridBody,
     CalendarGridHeader,
     CalendarHeaderCell,
-    DateInput,
     DateRangePicker,
-    DateSegment,
     Dialog,
     Group,
     Heading,
@@ -18,6 +16,7 @@ import {
     RangeCalendar,
 } from "react-aria-components";
 import MainLayout from "../layouts/MainLayout";
+import AppDateTimeField, { initialAppDateTime } from "../components/AppDateTimeField";
 import TransactionCard, { type TransactionProps } from "../components/TransactionCard";
 import FilterChipButton from "../components/FilterChipButton";
 import { icons } from "../assets/Iconlist";
@@ -27,52 +26,47 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import { useTranslation } from "react-i18next";
 import type { GroupedTransaction } from "../data/listMockData";
 import { ApiError } from "../lib/api";
-import { categoryApi, cycleApi, transactionApi, type Category, type Cycle, type Transaction } from "../lib/userService";
+import {
+    categoryApi,
+    cycleApi,
+    transactionApi,
+    type Category,
+    type Cycle,
+    type Transaction,
+    type TransactionListPageQuery,
+} from "../lib/userService";
 import { auth } from "../lib/auth";
-
-const getDateTimeLocalValue = (date: Date) => {
-    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return localDate.toISOString().slice(0, 16);
-};
+import { formatTxTime, parseTxDateTime } from "../utils/parseTxDateTime";
+import {
+    calendarDateTimeFromTx,
+    calendarDateTimeToApi,
+    calendarDateToApiEnd,
+    calendarDateToApiStart,
+    formatAppDate,
+    formatCalendarDate,
+    gregorianKeyFromCalendarDate,
+    intlLocaleForAppLanguage,
+    parseTxToGregorianCalendarDate,
+    toAppCalendarDate,
+    toGregorianCalendarDate,
+} from "../utils/formatAppDate";
 
 function isIconName(value: string | null | undefined): value is keyof typeof icons {
     return Boolean(value && Object.prototype.hasOwnProperty.call(icons, value));
-}
-
-/** datetime-local → LocalDateTime สำหรับ Spring (yyyy-MM-ddTHH:mm:ss) */
-function formatTxDateForApi(datetimeLocal: string): string {
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(datetimeLocal)) {
-        return `${datetimeLocal}:00`;
-    }
-    return datetimeLocal;
-}
-
-function calendarDateStart(cd: CalendarDate): Date {
-    return new Date(cd.year, cd.month - 1, cd.day, 0, 0, 0, 0);
-}
-
-function calendarDateEnd(cd: CalendarDate): Date {
-    return new Date(cd.year, cd.month - 1, cd.day, 23, 59, 59, 999);
-}
-
-function isTxInDateRange(txDate: string, start: CalendarDate, end: CalendarDate): boolean {
-    const d = new Date(txDate);
-    if (Number.isNaN(d.getTime())) return false;
-    return d >= calendarDateStart(start) && d <= calendarDateEnd(end);
 }
 
 function toDisplayTransaction(
     tx: Transaction,
     categoryById: Record<string, string>,
     fallbackCategory: string,
+    dateLocale: string,
 ): TransactionProps {
-    const txDate = new Date(tx.txDate);
     return {
         title: tx.note?.trim() || "—",
         type: tx.txType,
         category: tx.categoryId ? (categoryById[tx.categoryId] ?? fallbackCategory) : fallbackCategory,
         amount: Number(tx.amount),
-        time: txDate.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
+        time: formatTxTime(tx.txDate, dateLocale),
         icon: icons.bill,
     };
 }
@@ -85,39 +79,38 @@ function categoryNameForTx(
     return tx.categoryId ? (categoryById[tx.categoryId] ?? fallbackCategory) : fallbackCategory;
 }
 
-function groupTransactionsByDate(rows: Transaction[]): GroupedTransaction[] {
+function groupTransactionsByDate(rows: Transaction[], lang: string): GroupedTransaction[] {
     const sorted = [...rows].sort(
-        (a, b) => new Date(b.txDate).getTime() - new Date(a.txDate).getTime(),
+        (a, b) => parseTxDateTime(b.txDate).getTime() - parseTxDateTime(a.txDate).getTime(),
     );
     const groups: GroupedTransaction[] = [];
-    let currentDate = "";
+    let currentDateKey = "";
+    let currentDateLabel = "";
     let currentItems: Transaction[] = [];
 
     for (const tx of sorted) {
-        const txDate = new Date(tx.txDate);
-        const dateLabel = txDate.toLocaleDateString("th-TH", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-        });
-        if (dateLabel !== currentDate) {
+        const dateKey = gregorianKeyFromCalendarDate(parseTxToGregorianCalendarDate(tx.txDate));
+        const dateLabel = formatAppDate(tx.txDate, lang);
+        if (dateKey !== currentDateKey) {
             if (currentItems.length > 0) {
-                groups.push({ date: currentDate, transactions: currentItems });
+                groups.push({ date: currentDateLabel, transactions: currentItems });
             }
-            currentDate = dateLabel;
+            currentDateKey = dateKey;
+            currentDateLabel = dateLabel;
             currentItems = [tx];
         } else {
             currentItems.push(tx);
         }
     }
     if (currentItems.length > 0) {
-        groups.push({ date: currentDate, transactions: currentItems });
+        groups.push({ date: currentDateLabel, transactions: currentItems });
     }
     return groups;
 }
 
 export default function List() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const dateLocale = intlLocaleForAppLanguage(i18n.language);
     const [searchParams, setSearchParams] = useSearchParams();
     const pendingEditTxId = searchParams.get("editTxId");
     const [activeFilter, setActiveFilter] = useState<"all" | "expense" | "income">("all");
@@ -147,7 +140,8 @@ export default function List() {
     const [newCategoryId, setNewCategoryId] = useState("");
     const [newCycleId, setNewCycleId] = useState<string>("");
     const [newAmount, setNewAmount] = useState("0");
-    const [newDateTime, setNewDateTime] = useState(getDateTimeLocalValue(new Date()));
+    const [formDate, setFormDate] = useState<CalendarDate>(() => initialAppDateTime(i18n.language).date);
+    const [formTime, setFormTime] = useState<Time>(() => initialAppDateTime(i18n.language).time);
     const [newIcon, setNewIcon] = useState<keyof typeof icons>("bill");
     const [iconQuery, setIconQuery] = useState("");
     const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
@@ -156,7 +150,19 @@ export default function List() {
     const [submitting, setSubmitting] = useState(false);
     const [addError, setAddError] = useState<string | null>(null);
     const [cycles, setCycles] = useState<Cycle[]>([]);
+    const [isBulkSelectMode, setIsBulkSelectMode] = useState(false);
+    const [selectedTxIds, setSelectedTxIds] = useState<string[]>([]);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
+    const selectAllRef = useRef<HTMLInputElement>(null);
     const fallbackCategory = t("list.quickAddCategory");
+
+    const listPageQuery = useMemo<TransactionListPageQuery>(
+        () => ({
+            startDate: calendarDateToApiStart(dateRange.start),
+            endDate: calendarDateToApiEnd(dateRange.end),
+        }),
+        [dateRange],
+    );
 
     const loadTransactions = useCallback(async () => {
         if (!auth.isAuthed()) {
@@ -171,15 +177,15 @@ export default function List() {
         setListError(null);
         try {
             const [txPage, categories] = await Promise.all([
-                transactionApi.listPage(0),
+                transactionApi.listPage(0, listPageQuery),
                 categoryApi.list(),
             ]);
             setCategoryById(
                 Object.fromEntries((categories ?? []).map((c) => [c.categoryId, c.name])),
             );
-            setTransactions(txPage?.items ?? []);
-            setHasMoreTransactions(txPage?.hasNext ?? false);
-            setNextPage((txPage?.page ?? 0) + 1);
+            setTransactions(txPage.items);
+            setHasMoreTransactions(txPage.hasNext);
+            setNextPage(txPage.page + 1);
         } catch (err) {
             setTransactions([]);
             setHasMoreTransactions(false);
@@ -188,7 +194,7 @@ export default function List() {
         } finally {
             setListLoading(false);
         }
-    }, []);
+    }, [listPageQuery]);
 
     const loadMoreTransactions = useCallback(async () => {
         if (!auth.isAuthed() || listLoading || listLoadingMore || !hasMoreTransactions) {
@@ -197,36 +203,34 @@ export default function List() {
         setListLoadingMore(true);
         setListError(null);
         try {
-            const txPage = await transactionApi.listPage(nextPage);
+            const txPage = await transactionApi.listPage(nextPage, listPageQuery);
             setTransactions((prev) => {
                 const seen = new Set(prev.map((tx) => tx.txId));
                 const merged = [...prev];
-                for (const tx of txPage?.items ?? []) {
+                for (const tx of txPage.items) {
                     if (!seen.has(tx.txId)) {
                         merged.push(tx);
                     }
                 }
                 return merged;
             });
-            setHasMoreTransactions(txPage?.hasNext ?? false);
-            setNextPage((txPage?.page ?? nextPage) + 1);
+            setHasMoreTransactions(txPage.hasNext);
+            setNextPage(txPage.page + 1);
         } catch (err) {
             setListError(err instanceof ApiError ? err.message : (err as Error).message);
         } finally {
             setListLoadingMore(false);
         }
-    }, [hasMoreTransactions, listLoading, listLoadingMore, nextPage]);
+    }, [hasMoreTransactions, listLoading, listLoadingMore, listPageQuery, nextPage]);
 
     useEffect(() => {
         loadTransactions();
     }, [loadTransactions]);
 
-    const groupedTransactions = useMemo(() => {
-        const inRange = transactions.filter((tx) =>
-            isTxInDateRange(tx.txDate, dateRange.start, dateRange.end),
-        );
-        return groupTransactionsByDate(inRange);
-    }, [transactions, dateRange]);
+    const groupedTransactions = useMemo(
+        () => groupTransactionsByDate(transactions, i18n.language),
+        [transactions, i18n.language],
+    );
 
     const categoryOptions = useMemo(() => {
         const fromList = transactions.map((tx) =>
@@ -310,6 +314,74 @@ export default function List() {
             .filter((group) => group.transactions.length > 0);
     }, [activeCategories, activeFilter, groupedTransactions, categoryById, fallbackCategory]);
 
+    const visibleTransactions = useMemo(
+        () => filteredGroups.flatMap((group) => group.transactions),
+        [filteredGroups],
+    );
+
+    const visibleTxIdSet = useMemo(
+        () => new Set(visibleTransactions.map((tx) => tx.txId)),
+        [visibleTransactions],
+    );
+
+    const allVisibleSelected =
+        visibleTransactions.length > 0 &&
+        visibleTransactions.every((tx) => selectedTxIds.includes(tx.txId));
+
+    const someVisibleSelected =
+        visibleTransactions.some((tx) => selectedTxIds.includes(tx.txId)) && !allVisibleSelected;
+
+    useEffect(() => {
+        if (selectAllRef.current) {
+            selectAllRef.current.indeterminate = someVisibleSelected;
+        }
+    }, [someVisibleSelected, allVisibleSelected, visibleTransactions.length]);
+
+    useEffect(() => {
+        setSelectedTxIds((prev) => prev.filter((id) => visibleTxIdSet.has(id)));
+    }, [visibleTxIdSet]);
+
+    const exitBulkSelectMode = useCallback(() => {
+        setIsBulkSelectMode(false);
+        setSelectedTxIds([]);
+    }, []);
+
+    const toggleSelectAllVisible = useCallback(() => {
+        if (allVisibleSelected) {
+            setSelectedTxIds([]);
+            return;
+        }
+        setSelectedTxIds(visibleTransactions.map((tx) => tx.txId));
+    }, [allVisibleSelected, visibleTransactions]);
+
+    const toggleTxSelection = useCallback((txId: string, selected: boolean) => {
+        setSelectedTxIds((prev) => {
+            if (selected) {
+                return prev.includes(txId) ? prev : [...prev, txId];
+            }
+            return prev.filter((id) => id !== txId);
+        });
+    }, []);
+
+    const handleDeleteSelected = async () => {
+        if (selectedTxIds.length === 0) return;
+        if (!window.confirm(t("list.deleteSelectedConfirm", { count: selectedTxIds.length }))) {
+            return;
+        }
+
+        setBulkDeleting(true);
+        setListError(null);
+        try {
+            await transactionApi.deleteMany(selectedTxIds);
+            exitBulkSelectMode();
+            await loadTransactions();
+        } catch (err) {
+            setListError(err instanceof ApiError ? err.message : (err as Error).message);
+        } finally {
+            setBulkDeleting(false);
+        }
+    };
+
     const filterButtons = [
         { key: "all", label: t("list.all") },
         { key: "expense", label: t("list.expense") },
@@ -324,7 +396,9 @@ export default function List() {
         setNewCategoryId("");
         setNewCycleId("");
         setNewAmount("0");
-        setNewDateTime(getDateTimeLocalValue(new Date()));
+        const initial = initialAppDateTime(i18n.language);
+        setFormDate(initial.date);
+        setFormTime(initial.time);
         setNewIcon("bill");
         setIconQuery("");
         setIsIconPickerOpen(false);
@@ -339,11 +413,21 @@ export default function List() {
         setNewCategoryId(tx.categoryId ?? "");
         setNewCycleId(tx.cycleId ?? "");
         setNewAmount(String(tx.amount));
-        setNewDateTime(getDateTimeLocalValue(new Date(tx.txDate)));
+        const { date, time } = calendarDateTimeFromTx(tx.txDate, i18n.language);
+        setFormDate(date);
+        setFormTime(time);
         setNewIcon("bill");
         setAddError(null);
         setIsAddSheetOpen(true);
-    }, []);
+    }, [i18n.language]);
+
+    useEffect(() => {
+        setFormDate((current) => toAppCalendarDate(toGregorianCalendarDate(current), i18n.language));
+        setDateRange((current) => ({
+            start: toAppCalendarDate(toGregorianCalendarDate(current.start), i18n.language),
+            end: toAppCalendarDate(toGregorianCalendarDate(current.end), i18n.language),
+        }));
+    }, [i18n.language]);
 
     useEffect(() => {
         if (!pendingEditTxId || listLoading || !auth.isAuthed()) return;
@@ -401,10 +485,6 @@ export default function List() {
     const handleSaveTransaction = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        const selectedDate = newDateTime ? new Date(newDateTime) : new Date();
-        if (Number.isNaN(selectedDate.getTime())) {
-            return;
-        }
         const amountNumber = Number(newAmount);
         const title = newTitle.trim();
         const categoryName = selectedFormCategory?.name?.trim() ?? "";
@@ -420,7 +500,7 @@ export default function List() {
                 txType: newType,
                 amount: amountNumber,
                 note: title,
-                txDate: formatTxDateForApi(newDateTime),
+                txDate: calendarDateTimeToApi(formDate, formTime),
                 cycleId: newCycleId || null,
                 categoryId: newCategoryId,
             };
@@ -462,19 +542,13 @@ export default function List() {
                             className="absolute inset-0 z-10 rounded-[var(--radius-card)]"
                         />
                         <div className="pointer-events-none flex items-center justify-center gap-3">
-                            <DateInput
-                                slot="start"
-                                className="inline-flex flex-nowrap items-center whitespace-nowrap text-base font-semibold text-[var(--text)] data-[placeholder]:text-[var(--text-soft)]"
-                            >
-                                {(segment) => <DateSegment segment={segment} className="rounded-sm px-0 outline-none focus:bg-[var(--primary-soft)]" />}
-                            </DateInput>
+                            <span className="whitespace-nowrap text-base font-semibold text-[var(--text)]">
+                                {formatCalendarDate(dateRange.start, i18n.language)}
+                            </span>
                             <span className="text-base font-semibold text-[var(--text)]">-</span>
-                            <DateInput
-                                slot="end"
-                                className="inline-flex flex-nowrap items-center whitespace-nowrap text-base font-semibold text-[var(--text)] data-[placeholder]:text-[var(--text-soft)]"
-                            >
-                                {(segment) => <DateSegment segment={segment} className="rounded-sm px-0 outline-none focus:bg-[var(--primary-soft)]" />}
-                            </DateInput>
+                            <span className="whitespace-nowrap text-base font-semibold text-[var(--text)]">
+                                {formatCalendarDate(dateRange.end, i18n.language)}
+                            </span>
                             <FiCalendar className="text-xl text-[var(--text-soft)]" />
                         </div>
                     </Group>
@@ -584,6 +658,53 @@ export default function List() {
                     </div>
                 )}
 
+                {!listLoading && visibleTransactions.length > 0 && (
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        {!isBulkSelectMode ? (
+                            <button
+                                type="button"
+                                onClick={() => setIsBulkSelectMode(true)}
+                                className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm font-semibold text-[var(--text)] shadow-[var(--shadow-soft)] transition-all hover:bg-[var(--surface-soft)]"
+                            >
+                                {t("list.bulkSelectMode")}
+                            </button>
+                        ) : (
+                            <>
+                                <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-[var(--text)]">
+                                    <input
+                                        ref={selectAllRef}
+                                        type="checkbox"
+                                        checked={allVisibleSelected}
+                                        onChange={toggleSelectAllVisible}
+                                        className="h-4 w-4 rounded border-[var(--border)] accent-[var(--danger)]"
+                                    />
+                                    {t("list.selectAllLoaded", { count: visibleTransactions.length })}
+                                </label>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <button
+                                        type="button"
+                                        disabled={bulkDeleting}
+                                        onClick={exitBulkSelectMode}
+                                        className="rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-1.5 text-sm font-semibold text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)] disabled:opacity-50"
+                                    >
+                                        {t("list.bulkDeleteCancel")}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={bulkDeleting || selectedTxIds.length === 0}
+                                        onClick={handleDeleteSelected}
+                                        className="rounded-[var(--radius-control)] border border-[var(--danger)] bg-red-50 px-3 py-1.5 text-sm font-semibold text-[var(--danger)] transition-all hover:bg-red-100 disabled:opacity-50"
+                                    >
+                                        {bulkDeleting
+                                            ? t("list.deletingSelected")
+                                            : `${t("list.deleteSelected")} (${selectedTxIds.length})`}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+
                 <div className="flex flex-col gap-6">
                     {listLoading && (
                         <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] px-4 py-5 text-center text-[var(--text-soft)] shadow-[var(--shadow-soft)]">
@@ -615,12 +736,22 @@ export default function List() {
                                             tx,
                                             categoryById,
                                             fallbackCategory,
+                                            dateLocale,
                                         );
                                         return (
                                             <TransactionCard
                                                 key={tx.txId}
                                                 {...display}
-                                                onOpen={() => openEditSheet(tx)}
+                                                selectable={isBulkSelectMode}
+                                                selected={selectedTxIds.includes(tx.txId)}
+                                                onSelectedChange={(selected) =>
+                                                    toggleTxSelection(tx.txId, selected)
+                                                }
+                                                onOpen={
+                                                    isBulkSelectMode
+                                                        ? undefined
+                                                        : () => openEditSheet(tx)
+                                                }
                                             />
                                         );
                                     })}
@@ -864,16 +995,14 @@ export default function List() {
 
                             <label className="text-sm font-bold text-[var(--text)]">
                                 {t("list.dateTimeLabel")}
-                                <div className="mt-2 flex items-center gap-2 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 focus-within:border-[var(--primary)]">
-                                    <FiCalendar className="text-[var(--text-soft)]" />
-                                    <input
-                                        type="datetime-local"
-                                        required
-                                        value={newDateTime}
-                                        onChange={(event) => setNewDateTime(event.target.value)}
-                                        className="w-full bg-transparent text-sm text-[var(--text)] outline-none"
-                                    />
-                                </div>
+                                <AppDateTimeField
+                                    className="mt-2"
+                                    ariaLabel={t("list.dateTimeLabel")}
+                                    date={formDate}
+                                    time={formTime}
+                                    onDateChange={setFormDate}
+                                    onTimeChange={setFormTime}
+                                />
                             </label>
 
                             {addError && (

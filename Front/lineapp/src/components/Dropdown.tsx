@@ -7,6 +7,7 @@ import type { SelectChangeEvent } from "@mui/material";
 
 type DropdownItem = {
     value: string;
+    label?: string;
 };
 
 type DropdownProps = {
@@ -14,9 +15,18 @@ type DropdownProps = {
     data: DropdownItem[];
     value?: string;
     onValueChange?: (value: string) => void;
+    minWidth?: number;
+    margin?: number | string;
 };
 
-export default function Dropdown({ label, data, value: valueProp, onValueChange }: DropdownProps) {
+export default function Dropdown({
+    label,
+    data,
+    value: valueProp,
+    onValueChange,
+    minWidth = 120,
+    margin = 1,
+}: DropdownProps) {
     const [internal, setInternal] = React.useState("");
     const controlled = valueProp !== undefined;
     const value = controlled ? valueProp : internal;
@@ -36,8 +46,8 @@ export default function Dropdown({ label, data, value: valueProp, onValueChange 
     return (
         <FormControl
             sx={{
-                m: 1,
-                minWidth: 120,
+                m: margin,
+                minWidth,
 
                 "& .MuiOutlinedInput-root": {
                     borderRadius: "14px",
@@ -66,10 +76,18 @@ export default function Dropdown({ label, data, value: valueProp, onValueChange 
             size="small"
         >
             <InputLabel>{label}</InputLabel>
-            <Select value={value} label={label} onChange={handleChange}>
+            <Select
+                value={value}
+                label={label}
+                onChange={handleChange}
+                renderValue={(selected) => {
+                    const item = data.find((row) => row.value === selected);
+                    return item?.label ?? selected;
+                }}
+            >
                 {data.map((item) => (
                     <MenuItem key={item.value} value={item.value}>
-                        {item.value}
+                        {item.label ?? item.value}
                     </MenuItem>
                 ))}
             </Select>

@@ -7,9 +7,7 @@ import {
   CalendarGridBody,
   CalendarGridHeader,
   CalendarHeaderCell,
-  DateInput,
   DateRangePicker,
-  DateSegment,
   Dialog,
   Group,
   Heading,
@@ -27,6 +25,7 @@ import { ApiError } from "../lib/api";
 import { auth } from "../lib/auth";
 import { cycleApi, transactionApi, type Cycle, type Transaction } from "../lib/userService";
 import { aggregateTransactionsByCycle } from "../utils/cycleStats";
+import { formatCalendarDate } from "../utils/formatAppDate";
 import { formatCycleDateRange } from "../utils/formatMonthYear";
 import {
   filterTransactionsInRange,
@@ -132,25 +131,19 @@ export default function Sum() {
           }}
           className="w-full"
         >
-          <Group className="relative w-full rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-soft)] transition-all focus-within:border-[var(--primary)] hover:bg-[var(--surface-soft)]">
+          <Group className="relative w-full rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-soft)] transition-all focus-within:border-[var(--primary)] hover:bg-[var(--surface-soft)]">
             <Button
               aria-label={t("sum.dateRangeAria")}
-              className="absolute inset-0 z-10 rounded-[var(--radius-card)]"
+              className="absolute inset-0 z-10 rounded-full"
             />
             <div className="pointer-events-none flex items-center justify-center gap-3">
-              <DateInput
-                slot="start"
-                className="inline-flex flex-nowrap items-center whitespace-nowrap text-base font-semibold text-[var(--text)] data-[placeholder]:text-[var(--text-soft)]"
-              >
-                {(segment) => <DateSegment segment={segment} className="rounded-sm px-0 outline-none focus:bg-[var(--primary-soft)]" />}
-              </DateInput>
+              <span className="whitespace-nowrap text-base font-semibold text-[var(--text)]">
+                {formatCalendarDate(dateRange.start, i18n.language)}
+              </span>
               <span className="text-base font-semibold text-[var(--text)]">-</span>
-              <DateInput
-                slot="end"
-                className="inline-flex flex-nowrap items-center whitespace-nowrap text-base font-semibold text-[var(--text)] data-[placeholder]:text-[var(--text-soft)]"
-              >
-                {(segment) => <DateSegment segment={segment} className="rounded-sm px-0 outline-none focus:bg-[var(--primary-soft)]" />}
-              </DateInput>
+              <span className="whitespace-nowrap text-base font-semibold text-[var(--text)]">
+                {formatCalendarDate(dateRange.end, i18n.language)}
+              </span>
               <FiCalendar className="text-xl text-[var(--text-soft)]" />
             </div>
           </Group>

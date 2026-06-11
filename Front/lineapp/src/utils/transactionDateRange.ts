@@ -1,16 +1,20 @@
 import type { CalendarDate } from "@internationalized/date";
 import type { Transaction } from "../lib/userService";
+import { toGregorianCalendarDate } from "./formatAppDate";
+import { parseTxDateTime } from "./parseTxDateTime";
 
 export function calendarDateStart(cd: CalendarDate): Date {
-    return new Date(cd.year, cd.month - 1, cd.day, 0, 0, 0, 0);
+    const gregorian = toGregorianCalendarDate(cd);
+    return new Date(gregorian.year, gregorian.month - 1, gregorian.day, 0, 0, 0, 0);
 }
 
 export function calendarDateEnd(cd: CalendarDate): Date {
-    return new Date(cd.year, cd.month - 1, cd.day, 23, 59, 59, 999);
+    const gregorian = toGregorianCalendarDate(cd);
+    return new Date(gregorian.year, gregorian.month - 1, gregorian.day, 23, 59, 59, 999);
 }
 
 export function isTxInDateRange(txDate: string, start: CalendarDate, end: CalendarDate): boolean {
-    const d = new Date(txDate);
+    const d = parseTxDateTime(txDate);
     if (Number.isNaN(d.getTime())) return false;
     return d >= calendarDateStart(start) && d <= calendarDateEnd(end);
 }

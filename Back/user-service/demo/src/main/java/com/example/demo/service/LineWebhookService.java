@@ -20,6 +20,7 @@ import com.example.demo.dto.res.AiParseRes;
 import com.example.demo.dto.res.TransactionRes;
 import com.example.demo.entity.UserEntity;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.util.AppTime;
 
 /**
  * Orchestrate flow ของ LINE chatbot:
@@ -40,7 +41,7 @@ import com.example.demo.repository.UserRepository;
  *   tx_type     ← data.type    (expense | income)
  *   amount      ← data.price
  *   note        ← data.main
- *   tx_date     ← now()
+ *   tx_date     ← event timestamp (Asia/Bangkok)
  * </pre>
  *
  * วิ่งบน {@code lineWebhookExecutor} เพื่อไม่ block response 200 ที่ต้องตอบ LINE ทันที
@@ -199,7 +200,7 @@ public class LineWebhookService {
                 data.type(),
                 BigDecimal.valueOf(data.price()),
                 data.main(),
-                LocalDateTime.now());
+                AppTime.fromEpochMilli(timestampMs));
 
         try {
             TransactionRes saved = transactionService.createTransaction(req);

@@ -1,24 +1,15 @@
-import i18n from "i18next";
+import { formatAppMonthYear, intlLocaleForAppLanguage } from "./formatAppDate";
 
 /** map ภาษาในแอป (th/en/jp) → locale สำหรับ Intl date */
 export function localeForAppLanguage(lang?: string): string {
-    const code = (lang ?? i18n.resolvedLanguage ?? "th").split("-")[0];
-    if (code === "en") return "en-US";
-    if (code === "jp") return "ja-JP";
-    return "th-TH";
+    return intlLocaleForAppLanguage(lang);
 }
 
 export function formatMonthYear(
     value: Date | string | null | undefined,
     lang?: string,
 ): string {
-    if (value == null || value === "") return "";
-    const d = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(d.getTime())) return "";
-    return d.toLocaleDateString(localeForAppLanguage(lang), {
-        month: "short",
-        year: "numeric",
-    });
+    return formatAppMonthYear(value, lang);
 }
 
 export function formatCycleDateRange(

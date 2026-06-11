@@ -1,8 +1,10 @@
 package com.example.demo.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,14 +46,17 @@ public class TransactionController {
         return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 
-    /** GET /api/transaction/user/{userId}?page=0&size=10 — รายการธุรกรรมแบบแบ่งหน้า (cycleId กรองได้ผ่าน query) */
+    /** GET /api/transaction/user/{userId}?page=0&size=10 — รายการธุรกรรมแบบแบ่งหน้า */
     @GetMapping("/user/{userId}")
     public ResponseEntity<ApiRes<PageRes<TransactionRes>>> listTransactionsByUser(
             @PathVariable UUID userId,
             @RequestParam(required = false) UUID cycleId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PageRes<TransactionRes> data = transactionService.listTransactionsByUserPage(userId, cycleId, page, size);
+        PageRes<TransactionRes> data = transactionService.listTransactionsByUserPage(
+                userId, cycleId, startDate, endDate, page, size);
         return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 

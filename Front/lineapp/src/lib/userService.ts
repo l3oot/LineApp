@@ -17,6 +17,52 @@ export type PageRes<T> = {
 
 export const TRANSACTION_PAGE_SIZE = 10;
 
+export type TransactionListPageQuery = {
+    cycleId?: string;
+    startDate?: string;
+    endDate?: string;
+};
+
+function normalizeTransactionPage(
+    data: PageRes<Transaction> | Transaction[] | null | undefined,
+    page: number,
+    size: number,
+): PageRes<Transaction> {
+    if (!data) {
+        return {
+            items: [],
+            page,
+            size,
+            totalElements: 0,
+            totalPages: 0,
+            hasNext: false,
+        };
+    }
+    if (Array.isArray(data)) {
+        const safePage = Math.max(page, 0);
+        const safeSize = size > 0 ? size : TRANSACTION_PAGE_SIZE;
+        const start = safePage * safeSize;
+        const items = data.slice(start, start + safeSize);
+        const totalElements = data.length;
+        return {
+            items,
+            page: safePage,
+            size: safeSize,
+            totalElements,
+            totalPages: safeSize > 0 ? Math.ceil(totalElements / safeSize) : 0,
+            hasNext: start + items.length < totalElements,
+        };
+    }
+    return {
+        items: data.items ?? [],
+        page: data.page ?? page,
+        size: data.size ?? size,
+        totalElements: data.totalElements ?? data.items?.length ?? 0,
+        totalPages: data.totalPages ?? 0,
+        hasNext: data.hasNext ?? false,
+    };
+}
+
 function requireUserId(): string {
     const user = auth.getUser();
     if (!user?.userId) {
@@ -132,33 +178,28 @@ export const transactionApi = {
     },
 
     /** GET /api/transaction/user/{userId}?page=&size=10 — แบ่งหน้าทีละ 10 รายการ */
-    listPage: async (page = 0, cycleId?: string, size = TRANSACTION_PAGE_SIZE) => {
+    listPage: async (
+        page = 0,
+        query: TransactionListPageQuery = {},
+        size = TRANSACTION_PAGE_SIZE,
+    ) => {
         const userId = requireUserId();
-        const query = { page, size, cycleId };
+        const params = { page, size, ...query };
         const path = `/api/transaction/user/${encodeURIComponent(userId)}`;
         try {
-            return await api.get<PageRes<Transaction>>(path, query);
+            const data = await api.get<PageRes<Transaction> | Transaction[]>(path, params);
+            return normalizeTransactionPage(data, page, size);
         } catch (err) {
             const msg = err instanceof ApiError ? err.message : "";
             if (
                 err instanceof ApiError &&
                 (err.status === 404 || msg.includes("static resource") || msg.includes("No static resource"))
             ) {
-                const rows = await api.get<Transaction[]>("/api/transaction", { userId, cycleId });
-                const safePage = Math.max(page, 0);
-                const safeSize = size > 0 ? size : TRANSACTION_PAGE_SIZE;
-                const start = safePage * safeSize;
-                const items = (rows ?? []).slice(start, start + safeSize);
-                const totalElements = rows?.length ?? 0;
-                const totalPages = safeSize > 0 ? Math.ceil(totalElements / safeSize) : 0;
-                return {
-                    items,
-                    page: safePage,
-                    size: safeSize,
-                    totalElements,
-                    totalPages,
-                    hasNext: start + items.length < totalElements,
-                } satisfies PageRes<Transaction>;
+                const rows = await api.get<Transaction[]>("/api/transaction", {
+                    userId,
+                    cycleId: query.cycleId,
+                });
+                return normalizeTransactionPage(rows, page, size);
             }
             throw err;
         }
@@ -175,6 +216,13 @@ export const transactionApi = {
 
     delete: (txId: string) =>
         api.delete<void>("/api/transaction", { txId, userId: requireUserId() }),
+
+    deleteMany: (txIds: string[]) => {
+        const userId = requireUserId();
+        return Promise.all(
+            txIds.map((txId) => api.delete<void>("/api/transaction", { txId, userId })),
+        );
+    },
 
     /** DELETE /api/transaction/user/{userId} — ลบธุรกรรมทั้งหมดของผู้ใช้ */
     deleteAllByUser: () => {

@@ -1,6 +1,15 @@
 import dayjs, { type Dayjs } from "dayjs";
 import type { AnalyticFilter } from "../data/analyticMockData";
 import type { Category, Transaction } from "../lib/userService";
+import { displayYearFromGregorian, formatAppDate, formatAppMonthYear } from "./formatAppDate";
+import { APP_TIME_ZONE, parseTxDateTime } from "./parseTxDateTime";
+
+export type DailyTotals = {
+    income: number;
+    expense: number;
+    incomeCount: number;
+    expenseCount: number;
+};
 
 export type ExpenseShareSlice = {
     label: string;
@@ -9,11 +18,19 @@ export type ExpenseShareSlice = {
 };
 
 export const EXPENSE_PIE_COLORS = [
-    "#2f8f4e",
-    "#a7772d",
     "#b23a3a",
-    "#2d6fbe",
-    "#6b46b8",
+    "#c94f4f",
+    "#8f2e2e",
+    "#d97272",
+    "#9a3535",
+];
+
+export const INCOME_PIE_COLORS = [
+    "#2f8f4e",
+    "#3da35d",
+    "#5cb87a",
+    "#1e6b3a",
+    "#7fd99a",
 ];
 
 export type TrendLineSeries = {
@@ -53,23 +70,18 @@ function bucketKey(txDate: Dayjs, filter: AnalyticFilter): string {
     }
 }
 
-function formatLabel(key: string, filter: AnalyticFilter, locale: string): string {
+function formatLabel(key: string, filter: AnalyticFilter, lang?: string): string {
     if (filter === "1M") {
         const d = dayjs(key);
-        return d.isValid()
-            ? d.toDate().toLocaleDateString(locale, { day: "numeric", month: "short" })
-            : key;
+        return d.isValid() ? formatAppDate(d.toDate(), lang) : key;
     }
     if (filter === "5Y" || filter === "ALL") {
-        return key;
+        const year = Number(key);
+        return Number.isNaN(year) ? key : displayYearFromGregorian(year, lang);
     }
     const d = dayjs(`${key}-01`);
     if (!d.isValid()) return key;
-    const opts: Intl.DateTimeFormatOptions =
-        filter === "YTD"
-            ? { month: "short" }
-            : { month: "short", year: "2-digit" };
-    return d.toDate().toLocaleDateString(locale, opts);
+    return formatAppMonthYear(d.toDate(), lang);
 }
 
 function orderedBucketKeys(filter: AnalyticFilter, start: Dayjs, end: Dayjs): string[] {
@@ -103,8 +115,9 @@ function orderedBucketKeys(filter: AnalyticFilter, start: Dayjs, end: Dayjs): st
 
 export function yearOptionsFromTransactions(
     transactions: Transaction[],
+    lang?: string,
     span = 6,
-): { value: string }[] {
+): { value: string; label: string }[] {
     const years = new Set<number>();
     const current = dayjs().year();
     years.add(current);
@@ -115,31 +128,35 @@ export function yearOptionsFromTransactions(
     let earliest = current;
     for (const y of years) earliest = Math.min(earliest, y);
     const start = Math.max(earliest, current - span + 1);
-    const result: { value: string }[] = [];
+    const result: { value: string; label: string }[] = [];
     for (let y = current; y >= start; y--) {
-        result.push({ value: String(y) });
+        result.push({
+            value: String(y),
+            label: displayYearFromGregorian(y, lang),
+        });
     }
     return result;
 }
 
-export function buildExpenseShareFromTransactions(
+export function buildCategoryShareFromTransactions(
     transactions: Transaction[],
     categories: Category[],
     year: number,
+    txType: "expense" | "income",
     othersLabel: string,
 ): ExpenseShareSlice[] {
     const nameById = new Map(categories.map((c) => [c.categoryId, c.name]));
     const byCategory = new Map<string, number>();
-    let uncategorized = 0;
+    let othersAmount = 0;
 
     for (const tx of transactions) {
-        if (tx.txType !== "expense") continue;
+        if (tx.txType !== txType) continue;
         const d = dayjs(tx.txDate);
         if (!d.isValid() || d.year() !== year) continue;
         const amount = Number(tx.amount);
         if (Number.isNaN(amount) || amount <= 0) continue;
-        if (!tx.categoryId) {
-            uncategorized += amount;
+        if (!tx.categoryId || !nameById.has(tx.categoryId)) {
+            othersAmount += amount;
             continue;
         }
         byCategory.set(tx.categoryId, (byCategory.get(tx.categoryId) ?? 0) + amount);
@@ -147,18 +164,17 @@ export function buildExpenseShareFromTransactions(
 
     const ranked = [...byCategory.entries()]
         .map(([id, amount]) => ({
-            label: nameById.get(id) ?? othersLabel,
+            label: nameById.get(id)!,
             amount,
         }))
         .sort((a, b) => b.amount - a.amount);
 
-    const total =
-        ranked.reduce((sum, row) => sum + row.amount, 0) + uncategorized;
+    const total = ranked.reduce((sum, row) => sum + row.amount, 0) + othersAmount;
     if (total <= 0) return [];
 
     const top = ranked.slice(0, 4);
     const restAmount =
-        ranked.slice(4).reduce((sum, row) => sum + row.amount, 0) + uncategorized;
+        ranked.slice(4).reduce((sum, row) => sum + row.amount, 0) + othersAmount;
     const slices: ExpenseShareSlice[] = top.map((row) => ({
         label: row.label,
         amount: row.amount,
@@ -176,10 +192,28 @@ export function buildExpenseShareFromTransactions(
     return slices;
 }
 
+export function buildExpenseShareFromTransactions(
+    transactions: Transaction[],
+    categories: Category[],
+    year: number,
+    othersLabel: string,
+): ExpenseShareSlice[] {
+    return buildCategoryShareFromTransactions(transactions, categories, year, "expense", othersLabel);
+}
+
+export function buildIncomeShareFromTransactions(
+    transactions: Transaction[],
+    categories: Category[],
+    year: number,
+    othersLabel: string,
+): ExpenseShareSlice[] {
+    return buildCategoryShareFromTransactions(transactions, categories, year, "income", othersLabel);
+}
+
 export function buildYearlyBarFromTransactions(
     transactions: Transaction[],
     year: number,
-    locale = "th-TH",
+    lang?: string,
 ): TrendLineSeries {
     const totals = new Map<number, { income: number; expense: number }>();
 
@@ -198,19 +232,60 @@ export function buildYearlyBarFromTransactions(
     const months = Array.from({ length: 12 }, (_, i) => i);
     return {
         labels: months.map((m) =>
-            dayjs().year(year).month(m).date(1).toDate().toLocaleDateString(locale, {
-                month: "short",
-            }),
+            formatAppMonthYear(dayjs().year(year).month(m).date(1).toDate(), lang),
         ),
         income: months.map((m) => totals.get(m)?.income ?? 0),
         expense: months.map((m) => totals.get(m)?.expense ?? 0),
     };
 }
 
+export function buildDailyTotalsFromTransactions(
+    transactions: Transaction[],
+): Map<string, DailyTotals> {
+    const totals = new Map<string, DailyTotals>();
+
+    for (const tx of transactions) {
+        const d = parseTxDateTime(tx.txDate);
+        if (Number.isNaN(d.getTime())) continue;
+
+        const key = d.toLocaleDateString("en-CA", { timeZone: APP_TIME_ZONE });
+        const bucket = totals.get(key) ?? { income: 0, expense: 0, incomeCount: 0, expenseCount: 0 };
+        const amount = Number(tx.amount);
+        if (Number.isNaN(amount)) continue;
+        if (tx.txType === "income") {
+            bucket.income += amount;
+            bucket.incomeCount += 1;
+        } else if (tx.txType === "expense") {
+            bucket.expense += amount;
+            bucket.expenseCount += 1;
+        }
+        totals.set(key, bucket);
+    }
+
+    return totals;
+}
+
+export function formatCompactAmount(amount: number): string {
+    if (amount <= 0) return "";
+    if (amount >= 1_000_000) {
+        const compact = amount / 1_000_000;
+        return `${compact % 1 === 0 ? compact.toFixed(0) : compact.toFixed(1)}M`;
+    }
+    if (amount >= 10_000) {
+        const compact = amount / 1_000;
+        return `${compact % 1 === 0 ? compact.toFixed(0) : compact.toFixed(1)}k`;
+    }
+    return amount.toLocaleString();
+}
+
+export function calendarDateKey(year: number, month: number, day: number): string {
+    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 export function buildTrendLineFromTransactions(
     transactions: Transaction[],
     filter: AnalyticFilter,
-    locale = "th-TH",
+    lang?: string,
 ): TrendLineSeries {
     const now = dayjs();
     const start = filterStart(filter, now);
@@ -239,7 +314,7 @@ export function buildTrendLineFromTransactions(
         : [...totals.keys()].sort();
 
     return {
-        labels: keys.map((k) => formatLabel(k, filter, locale)),
+        labels: keys.map((k) => formatLabel(k, filter, lang)),
         income: keys.map((k) => totals.get(k)?.income ?? 0),
         expense: keys.map((k) => totals.get(k)?.expense ?? 0),
     };

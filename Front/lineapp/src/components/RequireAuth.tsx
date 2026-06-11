@@ -41,7 +41,7 @@ export default function RequireAuth({ children }: RequireAuthProps) {
     }
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-[var(--background)] p-6">
+        <main className="flex min-h-screen items-center justify-center p-6">
             <section className="w-full max-w-md rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-5 text-center shadow-[var(--shadow-soft)]">
                 {state === "checking" && (
                     <p className="text-sm text-[var(--text-soft)]">กำลังตรวจสอบสถานะการเข้าสู่ระบบ...</p>

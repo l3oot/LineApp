@@ -8,14 +8,27 @@ import Addcycle from "../components/Addcycle";
 import { useTranslation } from "react-i18next";
 import { icons } from "../assets/Iconlist";
 import dayjs, { type Dayjs } from "dayjs";
+import buddhistEra from "dayjs/plugin/buddhistEra";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { AdapterDayjsBuddhist } from "@mui/x-date-pickers/AdapterDayjsBuddhist";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { ApiError } from "../lib/api";
 import { auth } from "../lib/auth";
 import { cycleApi, transactionApi, type Cycle } from "../lib/userService";
 import { aggregateTransactionsByCycle } from "../utils/cycleStats";
+import {
+    dayjsDateFormat,
+    dayjsLocaleForAppLanguage,
+    usesBuddhistEra,
+} from "../utils/formatAppDate";
 import { formatCycleDateRange } from "../utils/formatMonthYear";
+
+import "dayjs/locale/en";
+import "dayjs/locale/ja";
+import "dayjs/locale/th";
+
+dayjs.extend(buddhistEra);
 
 type IconName = keyof typeof icons;
 
@@ -345,7 +358,15 @@ export default function CyclePage() {
                                 </>
                             )}
 
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <LocalizationProvider
+                                key={i18n.language}
+                                dateAdapter={
+                                    usesBuddhistEra(i18n.language)
+                                        ? AdapterDayjsBuddhist
+                                        : AdapterDayjs
+                                }
+                                adapterLocale={dayjsLocaleForAppLanguage(i18n.language)}
+                            >
                                 <div className="grid grid-cols-2 gap-2">
                                     <label ref={startPickerRef} className="text-sm font-semibold text-[var(--text)]">
                                         {t("cycle.startLabel")}
@@ -355,7 +376,7 @@ export default function CyclePage() {
                                             open={isStartPickerOpen}
                                             onOpen={() => { setIsStartPickerOpen(true); setIsEndPickerOpen(false); }}
                                             onClose={() => setIsStartPickerOpen(false)}
-                                            format="DD/MM/YYYY"
+                                            format={dayjsDateFormat(i18n.language)}
                                             slotProps={{
                                                 textField: {
                                                     required: true,
@@ -375,7 +396,7 @@ export default function CyclePage() {
                                             open={isEndPickerOpen}
                                             onOpen={() => { setIsEndPickerOpen(true); setIsStartPickerOpen(false); }}
                                             onClose={() => setIsEndPickerOpen(false)}
-                                            format="DD/MM/YYYY"
+                                            format={dayjsDateFormat(i18n.language)}
                                             slotProps={{
                                                 textField: {
                                                     required: true,

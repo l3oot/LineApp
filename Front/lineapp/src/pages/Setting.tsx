@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import MainLayout from "../layouts/MainLayout";
 import SettingActionRow from "../components/SettingActionRow";
 import LanguageBottomSheet from "../components/LanguageBottomSheet";
-import TimezoneBottomSheet from "../components/TimezoneBottomSheet";
+import ConfirmBottomSheet from "../components/ConfirmBottomSheet";
 import CategoryCenterModal from "../components/CategoryCenterModal";
 import { LuUserRound, LuLogOut } from "react-icons/lu";
 import { useTranslation } from "react-i18next";
@@ -11,7 +11,7 @@ import { auth } from "../lib/auth";
 import { transactionApi } from "../lib/userService";
 
 type SettingItem = {
-    key: "category" | "timezone" | "language" | "deleteAll";
+    key: "category" | "language" | "deleteAll";
     value?: string;
     danger?: boolean;
 };
@@ -20,9 +20,8 @@ export default function Setting() {
     const { t, i18n } = useTranslation();
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false);
-    const [isTimezoneSheetOpen, setIsTimezoneSheetOpen] = useState(false);
-    const [activeTimezone, setActiveTimezone] = useState<string>(() => localStorage.getItem("timezone") ?? "Asia/Bangkok");
     const [avatarBroken, setAvatarBroken] = useState(false);
+    const [isDeleteAllConfirmOpen, setIsDeleteAllConfirmOpen] = useState(false);
     const [deleteAllBusy, setDeleteAllBusy] = useState(false);
     const [deleteAllError, setDeleteAllError] = useState<string | null>(null);
 
@@ -45,7 +44,6 @@ export default function Setting() {
 
     const settingItems: SettingItem[] = [
         { key: "category" },
-        { key: "timezone", value: activeTimezone.split("/")[1].replace("_", " ") },
         { key: "language", value: languageValue },
         { key: "deleteAll", danger: true },
     ];
@@ -56,12 +54,6 @@ export default function Setting() {
         setIsLanguageSheetOpen(false);
     };
 
-    const handleSelectTimezone = (timezone: string) => {
-        localStorage.setItem("timezone", timezone);
-        setActiveTimezone(timezone);
-        setIsTimezoneSheetOpen(false);
-    };
-
     const handleLogout = () => {
         auth.clear();
         // กลับไปหน้าแรก → RequireAuth จะ redirect ไป LINE login ให้เอง
@@ -70,12 +62,12 @@ export default function Setting() {
 
     const handleDeleteAllTransactions = async () => {
         if (!auth.isAuthed()) return;
-        if (!window.confirm(t("settings.deleteAllConfirm"))) return;
 
         setDeleteAllBusy(true);
         setDeleteAllError(null);
         try {
             await transactionApi.deleteAllByUser();
+            setIsDeleteAllConfirmOpen(false);
         } catch (err) {
             setDeleteAllError(err instanceof ApiError ? err.message : (err as Error).message);
         } finally {
@@ -120,10 +112,8 @@ export default function Setting() {
                                 ? () => setIsCategoryModalOpen(true)
                                 : item.key === "language"
                                 ? () => setIsLanguageSheetOpen(true)
-                                : item.key === "timezone"
-                                    ? () => setIsTimezoneSheetOpen(true)
                                     : item.key === "deleteAll"
-                                      ? handleDeleteAllTransactions
+                                      ? () => setIsDeleteAllConfirmOpen(true)
                                       : undefined
                         }
                     />
@@ -155,11 +145,19 @@ export default function Setting() {
                 open={isCategoryModalOpen}
                 onClose={() => setIsCategoryModalOpen(false)}
             />
-            <TimezoneBottomSheet
-                open={isTimezoneSheetOpen}
-                currentTimezone={activeTimezone}
-                onClose={() => setIsTimezoneSheetOpen(false)}
-                onSelectTimezone={handleSelectTimezone}
+            <ConfirmBottomSheet
+                open={isDeleteAllConfirmOpen}
+                title={t("settings.deleteAllConfirmTitle")}
+                message={t("settings.deleteAllConfirm")}
+                confirmLabel={t("settings.deleteAllConfirmButton")}
+                busy={deleteAllBusy}
+                danger
+                onClose={() => {
+                    if (!deleteAllBusy) {
+                        setIsDeleteAllConfirmOpen(false);
+                    }
+                }}
+                onConfirm={handleDeleteAllTransactions}
             />
         </MainLayout>
     );
