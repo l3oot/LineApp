@@ -159,15 +159,19 @@ export default function Sum() {
                     ›
                   </Button>
                 </header>
-                <CalendarGrid className="w-full border-separate border-spacing-1">
+                <CalendarGrid className="w-full table-fixed border-separate border-spacing-1">
                   <CalendarGridHeader>
-                    {(day) => <CalendarHeaderCell className="pb-1 text-xs font-semibold text-[var(--text-soft)]">{day}</CalendarHeaderCell>}
+                    {(day) => (
+                      <CalendarHeaderCell className="pb-1 text-center text-xs font-semibold text-[var(--text-soft)]">
+                        {day}
+                      </CalendarHeaderCell>
+                    )}
                   </CalendarGridHeader>
                   <CalendarGridBody>
                     {(date) => (
                       <CalendarCell
                         date={date}
-                        className="flex h-8 w-8 items-center justify-center rounded-full text-sm text-[var(--text)] outline-none hover:bg-[var(--surface-soft)] data-[disabled]:text-gray-300 data-[outside-month]:text-gray-300 data-[selected]:bg-[var(--primary)] data-[selected]:text-white"
+                        className="flex h-8 w-full items-center justify-center rounded-full text-sm text-[var(--text)] outline-none hover:bg-[var(--surface-soft)] data-[disabled]:text-gray-300 data-[outside-month]:text-gray-300 data-[selected]:bg-[var(--primary-soft)] data-[selected]:text-[var(--primary)] data-[selected]:font-semibold"
                       />
                     )}
                   </CalendarGridBody>

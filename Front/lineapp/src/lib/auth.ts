@@ -50,18 +50,34 @@ export const auth = {
     },
 };
 
+let pendingExchange: { code: string; promise: Promise<AuthUser> } | null = null;
+
 /**
  * แลก LINE OAuth code → JWT + user profile แล้ว save session
  * ใช้ใน LineCallback หลังเอา code จาก URL
+ * dedupe ตาม code — กัน StrictMode เรียก API ซ้ำด้วย code เดียวกัน
  */
 export async function exchangeLineCode(code: string): Promise<AuthUser> {
-    const res = await api.post<LineLoginRes>("/api/auth/line", { code });
-    const user: AuthUser = {
-        userId: res.userId,
-        lineUserId: res.lineUserId,
-        displayName: res.displayName,
-        pictureUrl: res.pictureUrl,
-    };
-    auth.setSession(res.token, user);
-    return user;
+    if (pendingExchange?.code === code) {
+        return pendingExchange.promise;
+    }
+
+    const promise = (async () => {
+        const res = await api.post<LineLoginRes>("/api/auth/line", { code });
+        const user: AuthUser = {
+            userId: res.userId,
+            lineUserId: res.lineUserId,
+            displayName: res.displayName,
+            pictureUrl: res.pictureUrl,
+        };
+        auth.setSession(res.token, user);
+        return user;
+    })().finally(() => {
+        if (pendingExchange?.code === code) {
+            pendingExchange = null;
+        }
+    });
+
+    pendingExchange = { code, promise };
+    return promise;
 }

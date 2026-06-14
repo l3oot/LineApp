@@ -1,17 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MainLayout from "../layouts/MainLayout";
 import SettingActionRow from "../components/SettingActionRow";
 import LanguageBottomSheet from "../components/LanguageBottomSheet";
+import UserProfileBottomSheet from "../components/UserProfileBottomSheet";
 import ConfirmBottomSheet from "../components/ConfirmBottomSheet";
 import CategoryCenterModal from "../components/CategoryCenterModal";
 import { LuUserRound, LuLogOut } from "react-icons/lu";
 import { useTranslation } from "react-i18next";
 import { ApiError } from "../lib/api";
 import { auth } from "../lib/auth";
-import { transactionApi } from "../lib/userService";
+import { transactionApi, userProfileApi, type UserProfile } from "../lib/userService";
 
 type SettingItem = {
-    key: "category" | "language" | "deleteAll";
+    key: "profile" | "category" | "language" | "deleteAll";
     value?: string;
     danger?: boolean;
 };
@@ -20,6 +21,9 @@ export default function Setting() {
     const { t, i18n } = useTranslation();
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false);
+    const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [profileLoading, setProfileLoading] = useState(false);
     const [avatarBroken, setAvatarBroken] = useState(false);
     const [isDeleteAllConfirmOpen, setIsDeleteAllConfirmOpen] = useState(false);
     const [deleteAllBusy, setDeleteAllBusy] = useState(false);
@@ -42,7 +46,42 @@ export default function Setting() {
         return "ไทย";
     }, [activeLanguage]);
 
+    useEffect(() => {
+        if (!auth.isAuthed()) {
+            setProfile(null);
+            setProfileLoading(false);
+            return;
+        }
+
+        let cancelled = false;
+        setProfileLoading(true);
+        userProfileApi
+            .get()
+            .then((data) => {
+                if (!cancelled) setProfile(data);
+            })
+            .catch(() => {
+                if (!cancelled) setProfile(null);
+            })
+            .finally(() => {
+                if (!cancelled) setProfileLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const profileSummary = useMemo(() => {
+        if (profileLoading) {
+            return t("settings.profileSheet.loading");
+        }
+        const parts = [profile?.province, profile?.mainAgricultureType].filter(Boolean);
+        return parts.length > 0 ? parts.join(" · ") : t("settings.profileSheet.notSet");
+    }, [profile, profileLoading, t]);
+
     const settingItems: SettingItem[] = [
+        { key: "profile", value: profileSummary },
         { key: "category" },
         { key: "language", value: languageValue },
         { key: "deleteAll", danger: true },
@@ -81,23 +120,23 @@ export default function Setting() {
     return (
         <MainLayout>
             <div className="flex flex-col gap-1.5 px-5">
-                <div className="mb-1 flex w-full items-center gap-3.5 px-2 py-2">
+                <div className="mb-1 flex w-full items-center justify-end gap-3.5 px-2 py-2">
+                    <div className="leading-tight text-right">
+                        <p className="text-base font-semibold text-[var(--text)]">{displayName}</p>
+                    </div>
                     {canShowAvatar ? (
                         <img
                             src={currentUser!.pictureUrl!}
                             alt={displayName}
-                            className="h-10 w-10 rounded-full object-cover"
+                            className="h-10 w-10 shrink-0 rounded-full object-cover"
                             onError={() => setAvatarBroken(true)}
                             referrerPolicy="no-referrer"
                         />
                     ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
                             <LuUserRound size={20} />
                         </div>
                     )}
-                    <div className="leading-tight">
-                        <p className="text-base font-semibold text-[var(--text)]">{displayName}</p>
-                    </div>
                 </div>
 
                 {settingItems.map((item) => (
@@ -108,7 +147,9 @@ export default function Setting() {
                         danger={item.danger}
                         disabled={item.key === "deleteAll" && deleteAllBusy}
                         onClick={
-                            item.key === "category"
+                            item.key === "profile"
+                                ? () => setIsProfileSheetOpen(true)
+                                : item.key === "category"
                                 ? () => setIsCategoryModalOpen(true)
                                 : item.key === "language"
                                 ? () => setIsLanguageSheetOpen(true)
@@ -140,6 +181,12 @@ export default function Setting() {
                 currentLanguage={activeLanguage}
                 onClose={() => setIsLanguageSheetOpen(false)}
                 onSelectLanguage={handleSelectLanguage}
+            />
+            <UserProfileBottomSheet
+                open={isProfileSheetOpen}
+                profile={profile}
+                onClose={() => setIsProfileSheetOpen(false)}
+                onSaved={setProfile}
             />
             <CategoryCenterModal
                 open={isCategoryModalOpen}

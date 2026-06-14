@@ -22,6 +22,13 @@ ai:
   parse-path: ${AI_PARSE_PATH:/parse}
   timeout-seconds: ${AI_TIMEOUT_SECONDS:60}
 
+hcode:
+  base-url: ${HCODE_BASE_URL:https://hcode.moph.go.th}
+  username: ${HCODE_USERNAME:}
+  password: ${HCODE_PASSWORD:}
+  page-size: ${HCODE_PAGE_SIZE:1000}
+  timeout-seconds: ${HCODE_TIMEOUT_SECONDS:30}
+
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION}

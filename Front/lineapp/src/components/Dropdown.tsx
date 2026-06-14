@@ -1,9 +1,5 @@
-import * as React from "react";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import FormControl from "@mui/material/FormControl";
-import Select from "@mui/material/Select";
-import type { SelectChangeEvent } from "@mui/material";
+import { useEffect, useRef, useState } from "react";
+import { FiCheck, FiChevronDown } from "react-icons/fi";
 
 type DropdownItem = {
     value: string;
@@ -27,70 +23,83 @@ export default function Dropdown({
     minWidth = 120,
     margin = 1,
 }: DropdownProps) {
-    const [internal, setInternal] = React.useState("");
+    const [open, setOpen] = useState(false);
+    const [internal, setInternal] = useState("");
+    const rootRef = useRef<HTMLDivElement>(null);
     const controlled = valueProp !== undefined;
     const value = controlled ? valueProp : internal;
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (!controlled && data[0]?.value && !internal) {
             setInternal(data[0].value);
         }
     }, [controlled, data, internal]);
 
-    const handleChange = (event: SelectChangeEvent) => {
-        const next = event.target.value;
+    useEffect(() => {
+        if (!open) return;
+        const onPointerDown = (event: MouseEvent) => {
+            if (!rootRef.current?.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", onPointerDown);
+        return () => document.removeEventListener("mousedown", onPointerDown);
+    }, [open]);
+
+    const selectedItem = data.find((row) => row.value === value);
+    const display = selectedItem?.label ?? value;
+    const marginStyle = typeof margin === "number" ? `${margin * 8}px` : margin;
+
+    const handleSelect = (next: string) => {
         if (!controlled) setInternal(next);
         onValueChange?.(next);
+        setOpen(false);
     };
 
     return (
-        <FormControl
-            sx={{
-                m: margin,
-                minWidth,
-
-                "& .MuiOutlinedInput-root": {
-                    borderRadius: "14px",
-                    backgroundColor: "var(--surface)",
-                    transition: "0.2s",
-                    boxShadow: "var(--shadow-soft)",
-                    color: "var(--text)",
-                    "& fieldset": {
-                        borderColor: "var(--border)",
-                    },
-                    "&:hover fieldset": {
-                        borderColor: "var(--primary)",
-                    },
-                    "&.Mui-focused": {
-                        boxShadow: "var(--shadow-soft)",
-                        "& fieldset": {
-                            borderColor: "var(--primary)",
-                        },
-                    },
-                },
-                "& .MuiInputLabel-root": {
-                    color: "var(--text-soft)",
-                    fontWeight: 600,
-                },
-            }}
-            size="small"
-        >
-            <InputLabel>{label}</InputLabel>
-            <Select
-                value={value}
-                label={label}
-                onChange={handleChange}
-                renderValue={(selected) => {
-                    const item = data.find((row) => row.value === selected);
-                    return item?.label ?? selected;
-                }}
+        <div ref={rootRef} className="relative" style={{ minWidth, margin: marginStyle }}>
+            <button
+                type="button"
+                aria-label={label}
+                aria-expanded={open}
+                aria-haspopup="listbox"
+                onClick={() => setOpen((prev) => !prev)}
+                className="flex w-full items-center justify-between gap-2 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm font-medium text-[var(--text)] shadow-[var(--shadow-soft)] transition-all hover:border-[var(--primary)]"
             >
-                {data.map((item) => (
-                    <MenuItem key={item.value} value={item.value}>
-                        {item.label ?? item.value}
-                    </MenuItem>
-                ))}
-            </Select>
-        </FormControl>
+                <span className="truncate">{display}</span>
+                <FiChevronDown
+                    size={16}
+                    className={`shrink-0 text-[var(--text-soft)] transition-transform ${open ? "rotate-180" : ""}`}
+                />
+            </button>
+            {open && (
+                <div
+                    role="listbox"
+                    aria-label={label}
+                    className="absolute right-0 top-[calc(100%+4px)] z-50 max-h-[180px] min-w-full overflow-y-auto rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)]"
+                >
+                    {data.map((item) => {
+                        const isSelected = item.value === value;
+                        return (
+                            <button
+                                key={item.value}
+                                type="button"
+                                role="option"
+                                aria-selected={isSelected}
+                                onClick={() => handleSelect(item.value)}
+                                className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-all ${
+                                    isSelected
+                                        ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                                        : "text-[var(--text)] hover:bg-[var(--surface-soft)]"
+                                }`}
+                            >
+                                <span className="whitespace-nowrap">{item.label ?? item.value}</span>
+                                {isSelected && <FiCheck size={16} className="ml-2 shrink-0 text-[var(--text-soft)]" />}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
     );
 }

@@ -65,6 +65,12 @@ services:
       # HTTP Basic ของ /api/docs (override ผ่าน root .env ได้)
       DOCS_USERNAME: ${DOCS_USERNAME:-admin}
       DOCS_PASSWORD: ${DOCS_PASSWORD:-admin}
+      # MOPH HCode API — อ่านจาก root .env (สมัครที่ https://hcode.moph.go.th/signup/)
+      HCODE_BASE_URL: ${HCODE_BASE_URL:-https://hcode.moph.go.th}
+      HCODE_USERNAME: ${HCODE_USERNAME:-chutiman}
+      HCODE_PASSWORD: ${HCODE_PASSWORD:-@Chutiman123}
+      HCODE_PAGE_SIZE: ${HCODE_PAGE_SIZE:-1000}
+      HCODE_TIMEOUT_SECONDS: ${HCODE_TIMEOUT_SECONDS:-30}
       # Spring DevTools — ใช้ polling ตรวจ target/classes (bind mount จาก host)
       SPRING_DEVTOOLS_RESTART_ENABLED: "true"
       SPRING_DEVTOOLS_RESTART_POLL_INTERVAL: "2s"

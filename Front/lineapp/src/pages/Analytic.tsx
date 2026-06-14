@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
 import MainLayout from "../layouts/MainLayout";
 import AnalyticCalendarCard from "../components/AnalyticCalendarCard";
+import AnalyticDayTransactionsSheet from "../components/AnalyticDayTransactionsSheet";
 import { ApiError } from "../lib/api";
 import { auth } from "../lib/auth";
 import { categoryApi, transactionApi, type Category, type Transaction } from "../lib/userService";
@@ -13,6 +14,7 @@ import {
     buildTrendLineFromTransactions,
     buildYearlyBarFromTransactions,
     EXPENSE_PIE_COLORS,
+    formatCompactAmount,
     INCOME_PIE_COLORS,
     yearOptionsFromTransactions,
 } from "../utils/buildAnalyticTrend";
@@ -48,8 +50,41 @@ ChartJS.register(
     Legend
 );
 
+/** แสดงจำนวนเงินบนจุดข้อมูลของกราฟเส้น */
+const linePointAmountLabelsPlugin = {
+    id: "linePointAmountLabels",
+    afterDatasetsDraw(chart: ChartJS) {
+        const { ctx } = chart;
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            if (meta.hidden) return;
+
+            meta.data.forEach((point, index) => {
+                const value = dataset.data[index];
+                if (typeof value !== "number" || value <= 0) return;
+
+                const label = formatCompactAmount(value);
+                if (!label) return;
+
+                const { x, y } = point.getProps(["x", "y"], true);
+                const color = typeof dataset.borderColor === "string" ? dataset.borderColor : "#333";
+                const offsetY = datasetIndex === 0 ? -10 : 14;
+
+                ctx.save();
+                ctx.font = "600 10px system-ui, sans-serif";
+                ctx.fillStyle = color;
+                ctx.textAlign = "center";
+                ctx.textBaseline = datasetIndex === 0 ? "bottom" : "top";
+                ctx.fillText(label, x, y + offsetY);
+                ctx.restore();
+            });
+        });
+    },
+};
+
 import Dropdown from "../components/Dropdown";
-import { displayYearFromGregorian } from "../utils/formatAppDate";
+import { displayYearFromGregorian, gregorianKeyFromCalendarDate, parseTxToGregorianCalendarDate, toGregorianCalendarDate } from "../utils/formatAppDate";
+import { parseTxDateTime } from "../utils/parseTxDateTime";
 
 export default function Analytic() {
     const { t, i18n } = useTranslation();
@@ -57,11 +92,28 @@ export default function Analytic() {
     const [barYear, setBarYear] = useState(String(dayjs().year()));
     const [pieYear, setPieYear] = useState(String(dayjs().year()));
     const [calendarFocused, setCalendarFocused] = useState<CalendarDate>(() => today(getLocalTimeZone()));
+    const [selectedDay, setSelectedDay] = useState<CalendarDate | null>(null);
+    const [daySheetOpen, setDaySheetOpen] = useState(false);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
     const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [activeExpensePieIndex, setActiveExpensePieIndex] = useState<number | null>(null);
+    const [activeIncomePieIndex, setActiveIncomePieIndex] = useState<number | null>(null);
+    const handleDaySelect = useCallback((date: CalendarDate) => {
+        setSelectedDay(date);
+        setDaySheetOpen(true);
+    }, []);
+
+    const handleCloseDaySheet = useCallback(() => {
+        setDaySheetOpen(false);
+    }, []);
+
+    const handleDaySheetClosed = useCallback(() => {
+        setSelectedDay(null);
+    }, []);
+
     const brandColor = "#2f8f4e";
     const dangerColor = "#b23a3a";
 
@@ -124,15 +176,26 @@ export default function Analytic() {
         [transactions, barYear, i18n.language],
     );
 
+    const allCategories = useMemo(
+        () => [...expenseCategories, ...incomeCategories],
+        [expenseCategories, incomeCategories],
+    );
+
+    const categoryById = useMemo(
+        () => Object.fromEntries(allCategories.map((c) => [c.categoryId, c.name])),
+        [allCategories],
+    );
+
     const expensePieSlices = useMemo(
         () =>
             buildExpenseShareFromTransactions(
                 transactions,
-                expenseCategories,
+                allCategories,
                 Number(pieYear),
                 t("analytic.other"),
+                t("analytic.uncategorized"),
             ),
-        [transactions, expenseCategories, pieYear, t],
+        [transactions, allCategories, pieYear, t],
     );
 
     const dailyTotals = useMemo(
@@ -140,16 +203,47 @@ export default function Analytic() {
         [transactions],
     );
 
+    const selectedDayTransactions = useMemo(() => {
+        if (!selectedDay) return [];
+        const key = gregorianKeyFromCalendarDate(toGregorianCalendarDate(selectedDay));
+        return transactions
+            .filter(
+                (tx) =>
+                    gregorianKeyFromCalendarDate(parseTxToGregorianCalendarDate(tx.txDate)) === key,
+            )
+            .sort(
+                (a, b) => parseTxDateTime(b.txDate).getTime() - parseTxDateTime(a.txDate).getTime(),
+            );
+    }, [selectedDay, transactions]);
+
+    const selectedDayTotals = useMemo(() => {
+        let income = 0;
+        let expense = 0;
+        for (const tx of selectedDayTransactions) {
+            const amount = Number(tx.amount);
+            if (Number.isNaN(amount)) continue;
+            if (tx.txType === "income") income += amount;
+            else if (tx.txType === "expense") expense += amount;
+        }
+        return { income, expense };
+    }, [selectedDayTransactions]);
+
     const incomePieSlices = useMemo(
         () =>
             buildIncomeShareFromTransactions(
                 transactions,
-                incomeCategories,
+                allCategories,
                 Number(pieYear),
                 t("analytic.other"),
+                t("analytic.uncategorized"),
             ),
-        [transactions, incomeCategories, pieYear, t],
+        [transactions, allCategories, pieYear, t],
     );
+
+    useEffect(() => {
+        setActiveExpensePieIndex(null);
+        setActiveIncomePieIndex(null);
+    }, [pieYear, expensePieSlices, incomePieSlices]);
 
     const lineData = {
         labels: trendSeries.labels,
@@ -182,6 +276,12 @@ export default function Analytic() {
     const lineOptions = {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 16,
+                bottom: 8,
+            },
+        },
         plugins: {
             legend: {
                 display: false,
@@ -189,6 +289,12 @@ export default function Analytic() {
             tooltip: {
                 mode: "index" as const,
                 intersect: false,
+                callbacks: {
+                    label: (context: { dataset: { label?: string }; parsed: { y: number | null } }) => {
+                        const value = context.parsed.y ?? 0;
+                        return ` ${context.dataset.label}: ${value.toLocaleString()} ${t("list.currencySuffix")}`;
+                    },
+                },
             },
         },
         scales: {
@@ -234,7 +340,7 @@ export default function Analytic() {
             y: {
                 beginAtZero: true,
                 grid: {
-                    display: false,
+                    color: "rgba(0, 0, 0, 0.05)",
                 },
             },
         },
@@ -249,16 +355,22 @@ export default function Analytic() {
         slices: typeof expensePieSlices,
         label: string,
         colors: string[],
+        activeIndex: number | null,
     ) => ({
         labels: slices.map((s) => s.label),
         datasets: [
             {
                 label,
                 data: slices.map((s) => s.amount),
-                backgroundColor: slices.map((_, i) => colors[i % colors.length]),
+                backgroundColor: slices.map((_, i) => {
+                    const color = colors[i % colors.length];
+                    if (activeIndex === null || activeIndex === i) return color;
+                    return `${color}55`;
+                }),
                 borderColor: "white",
                 borderWidth: 3,
                 hoverOffset: 15,
+                offset: slices.map((_, i) => (activeIndex === i ? 18 : 0)),
                 radius: "80%",
             },
         ],
@@ -268,11 +380,13 @@ export default function Analytic() {
         expensePieSlices,
         t("analytic.expenseShare"),
         EXPENSE_PIE_COLORS,
+        activeExpensePieIndex,
     );
     const incomePieData = buildPieData(
         incomePieSlices,
         t("analytic.incomeShare"),
         INCOME_PIE_COLORS,
+        activeIncomePieIndex,
     );
 
     const pieOptions = {
@@ -323,7 +437,7 @@ export default function Analytic() {
                                     กำลังโหลด...
                                 </div>
                             ) : (
-                                <Line data={lineData} options={lineOptions} />
+                                <Line data={lineData} options={lineOptions} plugins={[linePointAmountLabelsPlugin]} />
                             )}
                         </div>
 
@@ -384,21 +498,41 @@ export default function Analytic() {
                     dailyTotals={dailyTotals}
                     focusedDate={calendarFocused}
                     onFocusedDateChange={setCalendarFocused}
+                    onDaySelect={handleDaySelect}
                     loading={loading}
+                />
+
+                <AnalyticDayTransactionsSheet
+                    open={daySheetOpen}
+                    date={selectedDay}
+                    transactions={selectedDayTransactions}
+                    categoryById={categoryById}
+                    incomeTotal={selectedDayTotals.income}
+                    expenseTotal={selectedDayTotals.expense}
+                    onRequestClose={handleCloseDaySheet}
+                    onClosed={handleDaySheetClosed}
                 />
 
                 {([
                     {
+                        key: "expense" as const,
                         title: t("analytic.expenseShare"),
                         slices: expensePieSlices,
                         pieData: expensePieData,
+                        colors: EXPENSE_PIE_COLORS,
+                        activeIndex: activeExpensePieIndex,
+                        setActiveIndex: setActiveExpensePieIndex,
                     },
                     {
+                        key: "income" as const,
                         title: t("analytic.incomeShare"),
                         slices: incomePieSlices,
                         pieData: incomePieData,
+                        colors: INCOME_PIE_COLORS,
+                        activeIndex: activeIncomePieIndex,
+                        setActiveIndex: setActiveIncomePieIndex,
                     },
-                ] as const).map((card) => (
+                ]).map((card) => (
                     <div
                         key={card.title}
                         className="flex flex-col items-center rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)] overflow-hidden"
@@ -428,24 +562,48 @@ export default function Analytic() {
                                     <div className="w-[30%] flex items-center justify-center">
                                         <Pie data={card.pieData} options={pieOptions} />
                                     </div>
-                                    <div className="w-[70%] flex flex-col gap-2 px-6">
-                                        {card.slices.map((item, index) => (
-                                            <div key={`${card.title}-${item.label}-${index}`} className="flex items-center gap-3">
-                                                <div
-                                                    className="w-4 h-4 rounded-sm"
-                                                    style={{
-                                                        backgroundColor:
-                                                            card.pieData.datasets[0].backgroundColor[index],
-                                                    }}
-                                                />
-                                                <p className="text-sm font-semibold text-[var(--text)]">
-                                                    {item.label}
-                                                </p>
-                                                <p className="text-sm text-[var(--text-soft)] ml-auto">
-                                                    {item.percent}%
-                                                </p>
-                                            </div>
-                                        ))}
+                                    <div className="w-[70%] flex flex-col gap-1 px-6">
+                                        {card.slices.map((item, index) => {
+                                            const isActive = card.activeIndex === index;
+                                            return (
+                                                <button
+                                                    key={`${card.key}-${item.label}-${index}`}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        card.setActiveIndex((current) =>
+                                                            current === index ? null : index,
+                                                        )
+                                                    }
+                                                    className={`flex w-full items-center gap-3 rounded-[var(--radius-control)] px-2 py-1.5 text-left transition-all ${
+                                                        isActive
+                                                            ? "bg-[var(--primary-soft)]"
+                                                            : "hover:bg-[var(--surface-soft)]"
+                                                    }`}
+                                                >
+                                                    <div
+                                                        className="h-4 w-4 shrink-0 rounded-sm"
+                                                        style={{
+                                                            backgroundColor:
+                                                                card.colors[index % card.colors.length],
+                                                            opacity:
+                                                                isActive || card.activeIndex === null ? 1 : 0.45,
+                                                        }}
+                                                    />
+                                                    <p
+                                                        className={`text-sm font-semibold ${
+                                                            isActive
+                                                                ? "text-[var(--primary)]"
+                                                                : "text-[var(--text)]"
+                                                        }`}
+                                                    >
+                                                        {item.label}
+                                                    </p>
+                                                    <p className="ml-auto text-sm text-[var(--text-soft)]">
+                                                        {item.percent}%
+                                                    </p>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </>
                             )}

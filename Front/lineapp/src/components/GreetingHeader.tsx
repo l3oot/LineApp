@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { LuBell } from "react-icons/lu";
 import { useTranslation } from "react-i18next";
+import logo from "../assets/logo.png";
 import { getGreetingIconUrl, getGreetingPeriod } from "../utils/greeting";
 
 type GreetingHeaderProps = {
@@ -26,21 +27,29 @@ export default function GreetingHeader({
     return (
         <header className="greeting-header px-5">
             <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-xl font-bold leading-tight text-[var(--text)]">
-                            {greeting}
-                        </h1>
-                        <img
-                            src={iconUrl}
-                            alt=""
-                            aria-hidden
-                            className="h-7 w-7 shrink-0 object-contain"
-                        />
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <img
+                        src={logo}
+                        alt=""
+                        aria-hidden
+                        className="h-12 w-12 shrink-0 rounded-full object-contain"
+                    />
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-xl font-bold leading-tight text-[var(--text)]">
+                                {greeting}
+                            </h1>
+                            <img
+                                src={iconUrl}
+                                alt=""
+                                aria-hidden
+                                className="h-7 w-7 shrink-0 object-contain"
+                            />
+                        </div>
+                        <p className="mt-1 text-sm text-[var(--text-soft)]">
+                            {t("greeting.subtitle")}
+                        </p>
                     </div>
-                    <p className="mt-1 text-sm text-[var(--text-soft)]">
-                        {t("greeting.subtitle")}
-                    </p>
                 </div>
 
                 <button

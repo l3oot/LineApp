@@ -19,6 +19,7 @@ import MainLayout from "../layouts/MainLayout";
 import AppDateTimeField, { initialAppDateTime } from "../components/AppDateTimeField";
 import TransactionCard, { type TransactionProps } from "../components/TransactionCard";
 import FilterChipButton from "../components/FilterChipButton";
+import BottomSheet from "../components/BottomSheet";
 import { icons } from "../assets/Iconlist";
 import { FiCalendar, FiCheck, FiChevronDown, FiX } from "react-icons/fi";
 import { FaPlus } from "react-icons/fa";
@@ -564,15 +565,19 @@ export default function List() {
                                         ›
                                     </Button>
                                 </header>
-                                <CalendarGrid className="w-full border-separate border-spacing-1">
+                                <CalendarGrid className="w-full table-fixed border-separate border-spacing-1">
                                     <CalendarGridHeader>
-                                        {(day) => <CalendarHeaderCell className="pb-1 text-xs font-semibold text-[var(--text-soft)]">{day}</CalendarHeaderCell>}
+                                        {(day) => (
+                                            <CalendarHeaderCell className="pb-1 text-center text-xs font-semibold text-[var(--text-soft)]">
+                                                {day}
+                                            </CalendarHeaderCell>
+                                        )}
                                     </CalendarGridHeader>
                                     <CalendarGridBody>
                                         {(date) => (
                                             <CalendarCell
                                                 date={date}
-                                                className="flex h-8 w-8 items-center justify-center rounded-full text-sm text-[var(--text)] outline-none hover:bg-[var(--surface-soft)] data-[disabled]:text-gray-300 data-[outside-month]:text-gray-300 data-[selected]:bg-[var(--primary)] data-[selected]:text-white"
+                                                className="flex h-8 w-full items-center justify-center rounded-full text-sm text-[var(--text)] outline-none hover:bg-[var(--surface-soft)] data-[disabled]:text-gray-300 data-[outside-month]:text-gray-300 data-[selected]:bg-[var(--primary-soft)] data-[selected]:text-[var(--primary)] data-[selected]:font-semibold"
                                             />
                                         )}
                                     </CalendarGridBody>
@@ -784,12 +789,16 @@ export default function List() {
             >
                 <FaPlus size={18} />
             </button>
-            {isAddSheetOpen && (
-                <div className="bottom-sheet-backdrop fixed inset-0 z-40 bg-black/35" onClick={() => setIsAddSheetOpen(false)}>
-                    <div
-                        className="bottom-sheet-panel mx-auto flex h-[74vh] w-full max-w-[420px] flex-col rounded-t-[22px] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]"
-                        onClick={(event) => event.stopPropagation()}
-                    >
+            <BottomSheet
+                open={isAddSheetOpen}
+                onClose={() => {
+                    resetAddForm();
+                    setIsAddSheetOpen(false);
+                }}
+                dragDisabled={submitting}
+                backdropClassName="z-40"
+                panelClassName="mx-auto flex h-[74vh] w-full max-w-[420px] flex-col rounded-t-[22px] border border-[var(--border)] p-4 shadow-[var(--shadow-soft)]"
+            >
                         <div className="mb-3 flex items-center justify-between">
                             {editingTxId ? (
                                 <button
@@ -1080,9 +1089,7 @@ export default function List() {
                                 </div>
                             </div>
                         )}
-                    </div>
-                </div>
-            )}
+            </BottomSheet>
         </MainLayout>
     );
 }

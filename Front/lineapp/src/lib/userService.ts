@@ -230,3 +230,45 @@ export const transactionApi = {
         return api.delete<void>(`/api/transaction/user/${encodeURIComponent(userId)}`);
     },
 };
+
+// ============ User Profile ============
+
+export type UserProfile = {
+    userId: string;
+    province: string | null;
+    district: string | null;
+    subDistrict: string | null;
+    mainAgricultureType: string | null;
+    updatedAt: string | null;
+};
+
+export type UserProfileUpsertPayload = {
+    province?: string | null;
+    district?: string | null;
+    subDistrict?: string | null;
+    mainAgricultureType?: string | null;
+};
+
+export const userProfileApi = {
+    get: () => api.get<UserProfile>("/api/user-profile", { userId: requireUserId() }),
+
+    upsert: (payload: UserProfileUpsertPayload) =>
+        api.put<UserProfile>("/api/user-profile", { ...payload, userId: requireUserId() }),
+};
+
+// ============ Thai Admin (MOPH HCode) ============
+
+export type ThaiAdminOption = {
+    code: string;
+    name: string;
+};
+
+export const thaiAdminApi = {
+    listProvinces: () => api.get<ThaiAdminOption[]>("/api/thai-admin/provinces"),
+
+    listDistricts: (provinceCode: string) =>
+        api.get<ThaiAdminOption[]>("/api/thai-admin/districts", { provinceCode }),
+
+    listSubdistricts: (districtCode: string) =>
+        api.get<ThaiAdminOption[]>("/api/thai-admin/subdistricts", { districtCode }),
+};

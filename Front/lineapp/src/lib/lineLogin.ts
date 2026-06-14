@@ -81,10 +81,14 @@ export function parseLineCallback(search: string): LineCallbackPayload {
     }
 
     const expectedState = sessionStorage.getItem(STATE_KEY);
-    sessionStorage.removeItem(STATE_KEY);
     if (!expectedState || expectedState !== state) {
         return { ok: false, message: "Invalid login state. Please try again." };
     }
 
     return { ok: true, code };
+}
+
+/** ลบ OAuth state หลังแลก code สำเร็จ — อย่าลบตอน parse เพื่อให้ StrictMode remount ใช้ซ้ำได้ */
+export function clearLineOAuthState(): void {
+    sessionStorage.removeItem(STATE_KEY);
 }

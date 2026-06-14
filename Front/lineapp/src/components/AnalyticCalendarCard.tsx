@@ -9,7 +9,7 @@ import {
     CalendarHeaderCell,
     Heading,
 } from "react-aria-components";
-import { useMemo } from "react";
+import { useMemo, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import Dropdown from "./Dropdown";
 import type { DailyTotals } from "../utils/buildAnalyticTrend";
@@ -37,6 +37,7 @@ type AnalyticCalendarCardProps = {
     dailyTotals: Map<string, DailyTotals>;
     focusedDate: CalendarDate;
     onFocusedDateChange: (date: CalendarDate) => void;
+    onDaySelect?: (date: CalendarDate) => void;
     loading?: boolean;
 };
 
@@ -44,6 +45,7 @@ export default function AnalyticCalendarCard({
     dailyTotals,
     focusedDate,
     onFocusedDateChange,
+    onDaySelect,
     loading = false,
 }: AnalyticCalendarCardProps) {
     const { t, i18n } = useTranslation();
@@ -110,6 +112,17 @@ export default function AnalyticCalendarCard({
         onFocusedDateChange(toAppCalendarDate(nowGregorian, lang));
     };
 
+    const handleDayActivate = (date: CalendarDate) => {
+        onDaySelect?.(date);
+    };
+
+    const handleCellClick = (date: CalendarDate, event: MouseEvent) => {
+        event.preventDefault();
+        handleDayActivate(date);
+    };
+
+    const todayKey = gregorianKeyFromCalendarDate(today(getLocalTimeZone()));
+
     return (
         <div className="flex flex-col rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)] overflow-hidden">
             <div className="p-5 pb-6">
@@ -158,6 +171,7 @@ export default function AnalyticCalendarCard({
                         aria-label={t("analytic.calendarAria")}
                         focusedValue={focusedDate}
                         onFocusChange={onFocusedDateChange}
+                        onChange={handleDayActivate}
                         className="w-full"
                     >
                         <header className="mb-3 grid grid-cols-[auto_1fr_auto] items-center gap-2">
@@ -198,19 +212,27 @@ export default function AnalyticCalendarCard({
                                         const key = gregorianKeyFromCalendarDate(date);
                                         const totals = dailyTotals.get(key) ?? EMPTY_DAILY_TOTALS;
                                         const hasActivity = totals.incomeCount > 0 || totals.expenseCount > 0;
+                                        const isToday = key === todayKey;
 
                                         return (
                                             <CalendarCell
                                                 date={date}
-                                                className="flex h-[58px] w-full flex-col items-center justify-start rounded-[10px] px-0.5 py-1 text-[var(--text)] outline-none hover:bg-[var(--surface-soft)] data-[disabled]:text-gray-300 data-[outside-month]:opacity-40 data-[selected]:bg-[var(--primary-soft)]"
+                                                onClick={(event) => handleCellClick(date, event)}
+                                                className={`flex h-[58px] w-full cursor-pointer flex-col items-center justify-start rounded-[10px] px-0.5 py-1 text-[var(--text)] outline-none hover:bg-[var(--surface-soft)] data-[disabled]:text-gray-300 data-[outside-month]:opacity-40 data-[selected]:bg-[var(--primary-soft)] ${isToday ? "bg-[var(--primary-soft)]" : ""
+                                                    }`}
                                             >
-                                                <span className="text-xs font-bold leading-none">{date.day}</span>
-                                                <div className="mt-1 flex h-[38px] w-full flex-col items-center justify-start gap-0.5 leading-none">
+                                                <span
+                                                    className={`text-xs font-bold leading-none ${isToday ? "text-[var(--primary)]" : ""
+                                                        }`}
+                                                >
+                                                    {date.day}
+                                                </span>
+                                                <div className="mt-0.5 flex w-full flex-row flex-wrap items-center justify-center gap-0.5 leading-none mt-2">
                                                     {hasActivity ? (
                                                         <>
                                                             {totals.incomeCount > 0 && (
                                                                 <span
-                                                                    className="flex h-[18px] min-w-[18px] items-center justify-center rounded-sm px-0.5 text-[10px] font-bold leading-none text-white"
+                                                                    className="inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-sm px-1 text-[10px] font-bold leading-none text-white"
                                                                     style={{ backgroundColor: brandColor }}
                                                                     title={`${t("analytic.income")} ${totals.incomeCount} ${t("analytic.items")} · ${totals.income.toLocaleString()}`}
                                                                 >
@@ -219,7 +241,7 @@ export default function AnalyticCalendarCard({
                                                             )}
                                                             {totals.expenseCount > 0 && (
                                                                 <span
-                                                                    className="flex h-[18px] min-w-[18px] items-center justify-center rounded-sm px-0.5 text-[10px] font-bold leading-none text-white"
+                                                                    className="inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-sm px-1 text-[10px] font-bold leading-none text-white"
                                                                     style={{ backgroundColor: dangerColor }}
                                                                     title={`${t("analytic.expense")} ${totals.expenseCount} ${t("analytic.items")} · ${totals.expense.toLocaleString()}`}
                                                                 >

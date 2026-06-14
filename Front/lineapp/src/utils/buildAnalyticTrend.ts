@@ -4,6 +4,12 @@ import type { Category, Transaction } from "../lib/userService";
 import { displayYearFromGregorian, formatAppDate, formatAppMonthYear } from "./formatAppDate";
 import { APP_TIME_ZONE, parseTxDateTime } from "./parseTxDateTime";
 
+function txDayjs(txDate: Transaction["txDate"]): Dayjs {
+    const parsed = parseTxDateTime(txDate);
+    if (Number.isNaN(parsed.getTime())) return dayjs(Number.NaN);
+    return dayjs(parsed);
+}
+
 export type DailyTotals = {
     income: number;
     expense: number;
@@ -122,7 +128,7 @@ export function yearOptionsFromTransactions(
     const current = dayjs().year();
     years.add(current);
     for (const tx of transactions) {
-        const d = dayjs(tx.txDate);
+        const d = txDayjs(tx.txDate);
         if (d.isValid()) years.add(d.year());
     }
     let earliest = current;
@@ -144,19 +150,23 @@ export function buildCategoryShareFromTransactions(
     year: number,
     txType: "expense" | "income",
     othersLabel: string,
+    uncategorizedLabel: string,
 ): ExpenseShareSlice[] {
+    const MIN_SLICE_PERCENT = 5;
+    const MAX_NAMED_SLICES = 4;
+
     const nameById = new Map(categories.map((c) => [c.categoryId, c.name]));
     const byCategory = new Map<string, number>();
-    let othersAmount = 0;
+    let uncategorizedAmount = 0;
 
     for (const tx of transactions) {
         if (tx.txType !== txType) continue;
-        const d = dayjs(tx.txDate);
+        const d = txDayjs(tx.txDate);
         if (!d.isValid() || d.year() !== year) continue;
         const amount = Number(tx.amount);
         if (Number.isNaN(amount) || amount <= 0) continue;
         if (!tx.categoryId || !nameById.has(tx.categoryId)) {
-            othersAmount += amount;
+            uncategorizedAmount += amount;
             continue;
         }
         byCategory.set(tx.categoryId, (byCategory.get(tx.categoryId) ?? 0) + amount);
@@ -169,27 +179,48 @@ export function buildCategoryShareFromTransactions(
         }))
         .sort((a, b) => b.amount - a.amount);
 
-    const total = ranked.reduce((sum, row) => sum + row.amount, 0) + othersAmount;
+    const total = ranked.reduce((sum, row) => sum + row.amount, 0) + uncategorizedAmount;
     if (total <= 0) return [];
 
-    const top = ranked.slice(0, 4);
-    const restAmount =
-        ranked.slice(4).reduce((sum, row) => sum + row.amount, 0) + othersAmount;
-    const slices: ExpenseShareSlice[] = top.map((row) => ({
-        label: row.label,
-        amount: row.amount,
-        percent: Math.round((row.amount / total) * 100),
-    }));
-
-    if (restAmount > 0) {
-        slices.push({
-            label: othersLabel,
-            amount: restAmount,
-            percent: Math.round((restAmount / total) * 100),
+    const addSlice = (target: ExpenseShareSlice[], label: string, amount: number) => {
+        if (amount <= 0) return;
+        const existing = target.find((row) => row.label === label);
+        if (existing) {
+            existing.amount += amount;
+            existing.percent = Math.round((existing.amount / total) * 100);
+            return;
+        }
+        target.push({
+            label,
+            amount,
+            percent: Math.round((amount / total) * 100),
         });
+    };
+
+    const slices: ExpenseShareSlice[] = [];
+    let groupedOthersAmount = 0;
+
+    for (const row of ranked) {
+        const percent = (row.amount / total) * 100;
+        if (percent >= MIN_SLICE_PERCENT && slices.length < MAX_NAMED_SLICES) {
+            addSlice(slices, row.label, row.amount);
+        } else {
+            groupedOthersAmount += row.amount;
+        }
     }
 
-    return slices;
+    if (uncategorizedAmount > 0) {
+        const percent = (uncategorizedAmount / total) * 100;
+        if (percent >= MIN_SLICE_PERCENT) {
+            addSlice(slices, uncategorizedLabel, uncategorizedAmount);
+        } else {
+            groupedOthersAmount += uncategorizedAmount;
+        }
+    }
+
+    addSlice(slices, othersLabel, groupedOthersAmount);
+
+    return slices.sort((a, b) => b.amount - a.amount);
 }
 
 export function buildExpenseShareFromTransactions(
@@ -197,8 +228,16 @@ export function buildExpenseShareFromTransactions(
     categories: Category[],
     year: number,
     othersLabel: string,
+    uncategorizedLabel: string,
 ): ExpenseShareSlice[] {
-    return buildCategoryShareFromTransactions(transactions, categories, year, "expense", othersLabel);
+    return buildCategoryShareFromTransactions(
+        transactions,
+        categories,
+        year,
+        "expense",
+        othersLabel,
+        uncategorizedLabel,
+    );
 }
 
 export function buildIncomeShareFromTransactions(
@@ -206,8 +245,16 @@ export function buildIncomeShareFromTransactions(
     categories: Category[],
     year: number,
     othersLabel: string,
+    uncategorizedLabel: string,
 ): ExpenseShareSlice[] {
-    return buildCategoryShareFromTransactions(transactions, categories, year, "income", othersLabel);
+    return buildCategoryShareFromTransactions(
+        transactions,
+        categories,
+        year,
+        "income",
+        othersLabel,
+        uncategorizedLabel,
+    );
 }
 
 export function buildYearlyBarFromTransactions(
@@ -218,7 +265,7 @@ export function buildYearlyBarFromTransactions(
     const totals = new Map<number, { income: number; expense: number }>();
 
     for (const tx of transactions) {
-        const d = dayjs(tx.txDate);
+        const d = txDayjs(tx.txDate);
         if (!d.isValid() || d.year() !== year) continue;
         const month = d.month();
         const bucket = totals.get(month) ?? { income: 0, expense: 0 };
@@ -294,7 +341,7 @@ export function buildTrendLineFromTransactions(
     const totals = new Map<string, { income: number; expense: number }>();
 
     for (const tx of transactions) {
-        const d = dayjs(tx.txDate);
+        const d = txDayjs(tx.txDate);
         if (!d.isValid()) continue;
         if (filter !== "ALL" && d.isBefore(start)) continue;
         if (d.isAfter(end)) continue;

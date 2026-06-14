@@ -5,6 +5,7 @@ import "../styles/Cycle.css";
 import { FaPlus } from "react-icons/fa";
 import { FiX } from "react-icons/fi";
 import Addcycle from "../components/Addcycle";
+import BottomSheet from "../components/BottomSheet";
 import { useTranslation } from "react-i18next";
 import { icons } from "../assets/Iconlist";
 import dayjs, { type Dayjs } from "dayjs";
@@ -284,12 +285,12 @@ export default function CyclePage() {
                 </div>
             </div>
 
-            {isSheetOpen && (
-                <div className="bottom-sheet-backdrop fixed inset-0 z-50 bg-black/35" onClick={handleCloseSheet}>
-                    <div
-                        className="bottom-sheet-panel mx-auto flex h-[62vh] w-full max-w-[420px] flex-col rounded-t-[22px] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]"
-                        onClick={(event) => event.stopPropagation()}
-                    >
+            <BottomSheet
+                open={isSheetOpen}
+                onClose={handleCloseSheet}
+                dragDisabled={submitting}
+                panelClassName="mx-auto flex h-[62vh] w-full max-w-[420px] flex-col rounded-t-[22px] border border-[var(--border)] p-4 shadow-[var(--shadow-soft)]"
+            >
                         <div className="mb-3 flex items-center justify-between">
                             <p className="text-base font-bold text-[var(--text)]">
                                 {isEditMode ? t("cycle.editFormTitle") : t("cycle.formTitle")}
@@ -483,9 +484,7 @@ export default function CyclePage() {
                                 </div>
                             </div>
                         )}
-                    </div>
-                </div>
-            )}
+            </BottomSheet>
         </MainLayout>
     );
 }

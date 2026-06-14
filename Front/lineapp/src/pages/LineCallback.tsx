@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { parseLineCallback } from "../lib/lineLogin";
-import { exchangeLineCode, type AuthUser } from "../lib/auth";
+import { clearLineOAuthState, parseLineCallback } from "../lib/lineLogin";
+import { auth, exchangeLineCode, type AuthUser } from "../lib/auth";
 import { ApiError } from "../lib/api";
 
 type CallbackStatus =
@@ -13,12 +13,12 @@ export default function LineCallback() {
     const location = useLocation();
     const navigate = useNavigate();
     const [status, setStatus] = useState<CallbackStatus>({ kind: "loading" });
-    // กัน React StrictMode call effect 2 รอบ — parseLineCallback ลบ sessionStorage state ทำให้รอบ 2 fail
-    const parsedOnceRef = useRef(false);
 
     useEffect(() => {
-        if (parsedOnceRef.current) return;
-        parsedOnceRef.current = true;
+        if (auth.isAuthed()) {
+            navigate("/", { replace: true });
+            return;
+        }
 
         const parsed = parseLineCallback(location.search);
         if (!parsed.ok) {
@@ -27,18 +27,19 @@ export default function LineCallback() {
             return;
         }
 
-        let cancelled = false;
+        let ignore = false;
         (async () => {
             try {
                 console.log("[LineCallback] Exchanging code with backend...");
                 const user = await exchangeLineCode(parsed.code);
+                clearLineOAuthState();
                 console.log("[LineCallback] Login success:", user);
-                if (cancelled) return;
+                if (ignore) return;
                 setStatus({ kind: "ok", user });
                 navigate("/", { replace: true });
             } catch (err) {
                 console.error("[LineCallback] Login failed:", err);
-                if (cancelled) return;
+                if (ignore) return;
                 const message =
                     err instanceof ApiError
                         ? `${err.message}${err.typeError ? ` (${err.typeError})` : ""}`
@@ -48,7 +49,7 @@ export default function LineCallback() {
         })();
 
         return () => {
-            cancelled = true;
+            ignore = true;
         };
     }, [location.search, navigate]);
 

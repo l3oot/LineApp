@@ -1,15 +1,26 @@
 -- ต้องใช้ extension สำหรับ UUID
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- ตาราง user: เก็บข้อมูลผู้ใช้งานระบบ
-CREATE TABLE "user" (
+-- ตาราง users: เก็บข้อมูลผู้ใช้งานระบบ (LINE login)
+CREATE TABLE users (
   user_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- รหัสผู้ใช้ (UUID)
-  user_sub      VARCHAR(50)   NOT NULL UNIQUE,              -- Subject จาก OAuth provider (เช่น Google)
+  user_sub      VARCHAR(50)   NOT NULL UNIQUE,              -- Subject จาก LINE OAuth
   user_name     VARCHAR(50),                                 -- ชื่อผู้ใช้
   user_picture  VARCHAR(500),                                -- URL รูปโปรไฟล์
   user_email    VARCHAR(100)  NOT NULL,                      -- อีเมล
   created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP, -- วันที่สร้างบัญชี
   lastlogin_at  TIMESTAMP                                     -- วันที่ login ล่าสุด
+);
+
+-- ตาราง user_profile: ข้อมูลเกษตรกรเพิ่มเติม (1 ต่อ 1 กับ users)
+CREATE TABLE user_profile (
+  user_id                 UUID PRIMARY KEY,                  -- FK → users: เจ้าของโปรไฟล์
+  province                VARCHAR(100),                        -- จังหวัด
+  district                VARCHAR(100),                        -- อำเภอ
+  sub_district            VARCHAR(100),                        -- ตำบล
+  main_agriculture_type   VARCHAR(100),                        -- การเกษตรหลัก เช่น ข้าว, มันสำปะหลัง
+  updated_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- วันที่แก้ไขล่าสุด
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- ตาราง cycle: เก็บรอบการผลิตของแต่ละ user
@@ -22,7 +33,7 @@ CREATE TABLE cycle (
   end_date      DATE,                                       -- วันสิ้นสุดรอบการผลิต (ประมาณการ)
   status        VARCHAR(50)   NOT NULL,                     -- สถานะรอบ: กำลังดำเนินอยู่ / ปิดแล้ว
   created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP, -- วันที่สร้างรอบ
-  FOREIGN KEY (user_id) REFERENCES "user"(user_id) ON DELETE CASCADE
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- ตาราง category: หมวดหมู่รายรับ-รายจ่าย กำหนดเองได้ต่อ user
@@ -31,7 +42,7 @@ CREATE TABLE category (
   user_id       UUID NOT NULL,                              -- FK → user: เจ้าของหมวดนี้
   name          VARCHAR(100)  NOT NULL,                     -- ชื่อหมวด เช่น "ปุ๋ย/ยา", "ขายผลผลิต"
   created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP, -- วันที่สร้างหมวด
-  FOREIGN KEY (user_id) REFERENCES "user"(user_id) ON DELETE CASCADE
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- ตาราง transaction: รายการรายรับ-รายจ่ายจริง (ตารางหลัก)
@@ -45,7 +56,7 @@ CREATE TABLE "transaction" (
   note          VARCHAR(255),                               -- หมายเหตุเพิ่มเติม
   tx_date       DATE NOT NULL,                              -- วันที่เกิดรายการจริง
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- วันที่บันทึกลงระบบ
-  FOREIGN KEY (user_id)     REFERENCES "user"(user_id)         ON DELETE CASCADE,
+  FOREIGN KEY (user_id)     REFERENCES users(user_id)         ON DELETE CASCADE,
   FOREIGN KEY (cycle_id)    REFERENCES cycle(cycle_id)        ON DELETE SET NULL, -- ลบรอบ → รายการยังอยู่ แต่ไม่ผูกรอบ
   FOREIGN KEY (category_id) REFERENCES category(category_id)  ON DELETE SET NULL  -- ลบหมวด → รายการยังอยู่ แต่ไม่ผูกหมวด
 );
