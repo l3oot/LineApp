@@ -89,7 +89,29 @@
     "expense": "支出"
   },
   "cycle": {
-    "addNew": "新しい農業サイクルを追加"
+    "addNew": "新しい農業サイクルを追加",
+    "formTitle": "農業サイクルを追加",
+    "editFormTitle": "農業サイクルを編集",
+    "nameLabel": "サイクル名",
+    "namePlaceholder": "例: 米 第1期/68",
+    "iconLabel": "アイコン",
+    "iconSearchPlaceholder": "アイコンを検索",
+    "budgetLabel": "予算 (THB)",
+    "budgetPlaceholder": "任意",
+    "startLabel": "開始日",
+    "endLabel": "終了日",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "quotaPlan": "プラン: {{plan}}",
+    "quotaUsage": "使用中のサイクル {{active}}/{{max}}",
+    "quotaUnlimited": "使用中のサイクル {{active}} (無制限)",
+    "quotaLimitReached": "{{plan}} プランの上限に達しました — 新規作成前に既存サイクルを終了してください",
+    "quotaExpiresAt": "有効期限 {{date}}",
+    "planName": {
+      "free": "Free",
+      "plus": "Plus",
+      "pro": "Pro"
+    }
   },
   "addcycle": {
     "income": "収入",

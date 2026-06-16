@@ -25,4 +25,17 @@
     background-color: color-mix(in srgb, var(--primary) 14%, white);
 }
 
+.addbutton:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    border-style: dashed;
+    box-shadow: none;
+}
+
+.addbutton:disabled:hover {
+    background-color: var(--surface);
+    border-color: color-mix(in srgb, var(--primary) 55%, white);
+    transform: none;
+}
+
 /* bottom-sheet ใช้ class กลาง `.bottom-sheet-panel` จาก index.css แล้ว */

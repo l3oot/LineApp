@@ -30,12 +30,19 @@ public class LineAuthService {
     private final RestTemplate restTemplate;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final UserPlanService userPlanService;
 
-    public LineAuthService(LineProperties lineProperties, RestTemplate restTemplate, JwtUtil jwtUtil, UserRepository userRepository) {
+    public LineAuthService(
+            LineProperties lineProperties,
+            RestTemplate restTemplate,
+            JwtUtil jwtUtil,
+            UserRepository userRepository,
+            UserPlanService userPlanService) {
         this.lineProperties = lineProperties;
         this.restTemplate = restTemplate;
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
+        this.userPlanService = userPlanService;
     }
 
     public LineTokenRes exchangeToken(String code) {
@@ -91,8 +98,9 @@ public class LineAuthService {
         }
 
         UserEntity user = userRepository.findByUserSub(verifyResponse.sub()).orElse(null);
+        boolean isNewUser = user == null;
 
-        if (user == null) {
+        if (isNewUser) {
             user = new UserEntity(
                     verifyResponse.email(),
                     verifyResponse.picture(),
@@ -112,7 +120,13 @@ public class LineAuthService {
             }
         }
 
-        return userRepository.save(user);
+        UserEntity saved = userRepository.save(user);
+        if (isNewUser) {
+            userPlanService.assignFreePlan(saved.getUserId());
+        } else {
+            userPlanService.ensureActivePlan(saved.getUserId());
+        }
+        return saved;
     }
 
     public LineProfileRes getProfile(String accessToken) {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { FiCheck, FiChevronDown, FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import BottomSheet from "./BottomSheet";
@@ -120,6 +120,7 @@ export default function UserProfileBottomSheet({
     const [error, setError] = useState<string | null>(null);
     const [adminError, setAdminError] = useState<string | null>(null);
     const [activePicker, setActivePicker] = useState<PickerKey | null>(null);
+    const skipProfileInitRef = useRef(false);
 
     const loadDistricts = useCallback(async (nextProvinceCode: string) => {
         const list = await thaiAdminApi.listDistricts(nextProvinceCode);
@@ -136,6 +137,9 @@ export default function UserProfileBottomSheet({
     useEffect(() => {
         if (!open) {
             setActivePicker(null);
+            return;
+        }
+        if (skipProfileInitRef.current) {
             return;
         }
 
@@ -185,7 +189,10 @@ export default function UserProfileBottomSheet({
                 if (cancelled) return;
                 setAdminError(err instanceof ApiError ? err.message : (err as Error).message);
             } finally {
-                if (!cancelled) setAdminLoading(false);
+                if (!cancelled) {
+                    setAdminLoading(false);
+                    skipProfileInitRef.current = true;
+                }
             }
         })();
 
@@ -252,6 +259,7 @@ export default function UserProfileBottomSheet({
                 subDistrict: subdistricts.find((item) => item.code === subDistrictCode)?.name ?? null,
                 mainAgricultureType: mainAgricultureType.trim() || null,
             });
+            skipProfileInitRef.current = false;
             onSaved(saved);
             onClose();
         } catch (err) {

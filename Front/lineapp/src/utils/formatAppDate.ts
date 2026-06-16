@@ -9,6 +9,7 @@ import {
     type DateValue,
 } from "@internationalized/date";
 import i18n from "i18next";
+import dayjs, { type Dayjs } from "dayjs";
 import { APP_TIME_ZONE, parseTxDateTime } from "./parseTxDateTime";
 
 const BUDDHIST_ERA_OFFSET = 543;
@@ -31,9 +32,11 @@ export function displayYearFromGregorian(gregorianYear: number, lang?: string): 
     return String(year);
 }
 
-/** locale สำหรับ react-aria DateInput — dd/mm/yyyy, พ.ศ. สำหรับไทย */
+/** locale สำหรับ react-aria DateInput — ปฏิทินและรูปแบบวันที่ตามภาษาที่เลือก */
 export function ariaLocaleForAppLanguage(lang?: string): string {
-    if (usesBuddhistEra(lang)) return "th-TH-u-ca-buddhist";
+    const code = appLanguageCode(lang);
+    if (code === "th") return "th-TH-u-ca-buddhist";
+    if (code === "jp") return "ja-JP";
     return "en-GB";
 }
 
@@ -206,6 +209,78 @@ export function dayjsLocaleForAppLanguage(lang?: string): string {
     return "th";
 }
 
+type MuiFieldPlaceholderText = {
+    fieldDayPlaceholder?: () => string;
+    fieldMonthPlaceholder?: () => string;
+    fieldYearPlaceholder?: () => string;
+};
+
+function muiDateFieldPlaceholders(lang?: string): MuiFieldPlaceholderText {
+    const code = appLanguageCode(lang);
+    if (code === "jp") {
+        return {
+            fieldYearPlaceholder: () => "YYYY",
+            fieldMonthPlaceholder: () => "M",
+            fieldDayPlaceholder: () => "D",
+        };
+    }
+    if (code === "en") {
+        return {
+            fieldDayPlaceholder: () => "D",
+            fieldMonthPlaceholder: () => "MMM",
+            fieldYearPlaceholder: () => "YYYY",
+        };
+    }
+    return {
+        fieldDayPlaceholder: () => "D",
+        fieldMonthPlaceholder: () => "MMM",
+        fieldYearPlaceholder: () => "BBBB",
+    };
+}
+
+/** localeText สำหรับ MUI DatePicker — ไม่พึ่ง @mui/x-date-pickers/locales (v9 ไม่ export) */
+export function muiPickerLocaleText(lang?: string) {
+    const code = appLanguageCode(lang);
+    const placeholders = muiDateFieldPlaceholders(lang);
+
+    if (code === "jp") {
+        return {
+            ...placeholders,
+            previousMonth: "先月",
+            nextMonth: "来月",
+            cancelButtonLabel: "キャンセル",
+            clearButtonLabel: "クリア",
+            okButtonLabel: "確定",
+            todayButtonLabel: "今日",
+            datePickerToolbarTitle: "日付を選択",
+        };
+    }
+
+    if (code === "en") {
+        return {
+            ...placeholders,
+            previousMonth: "Previous month",
+            nextMonth: "Next month",
+            cancelButtonLabel: "Cancel",
+            clearButtonLabel: "Clear",
+            okButtonLabel: "OK",
+            todayButtonLabel: "Today",
+            datePickerToolbarTitle: "Select date",
+        };
+    }
+
+    return {
+        ...placeholders,
+        previousMonth: "เดือนก่อนหน้า",
+        nextMonth: "เดือนถัดไป",
+        cancelButtonLabel: "ยกเลิก",
+        clearButtonLabel: "ล้าง",
+        okButtonLabel: "ตกลง",
+        todayButtonLabel: "วันนี้",
+        datePickerToolbarTitle: "เลือกวันที่",
+    };
+}
+
 export function initialAppDateTime(lang?: string): { date: CalendarDate; time: Time } {
     const parts = getBangkokDateParts(new Date());
     const gregorian = new CalendarDate(parts.yearCe, parts.month, parts.day);
@@ -213,4 +288,11 @@ export function initialAppDateTime(lang?: string): { date: CalendarDate; time: T
         date: toAppCalendarDate(gregorian, lang),
         time: new Time(parts.hour, parts.minute),
     };
+}
+
+/** วันนี้ (โซน Bangkok) สำหรับ MUI DatePicker */
+export function defaultPickerDayjs(lang?: string): Dayjs {
+    const { date } = initialAppDateTime(lang);
+    const gregorian = toGregorianCalendarDate(date);
+    return dayjs(gregorianDateKey(gregorian.year, gregorian.month, gregorian.day));
 }

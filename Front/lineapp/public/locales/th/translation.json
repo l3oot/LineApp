@@ -89,7 +89,29 @@
     "expense": "รายจ่าย"
   },
   "cycle": {
-    "addNew": "เพิ่มรอบการเกษตรใหม่"
+    "addNew": "เพิ่มรอบการเกษตรใหม่",
+    "formTitle": "เพิ่มรอบการเกษตร",
+    "editFormTitle": "แก้ไขรอบการเกษตร",
+    "nameLabel": "ชื่อรอบ",
+    "namePlaceholder": "เช่น ข้าว รอบ 1/68",
+    "iconLabel": "ไอคอน",
+    "iconSearchPlaceholder": "ค้นหาไอคอน",
+    "budgetLabel": "งบประมาณ (บาท)",
+    "budgetPlaceholder": "ไม่บังคับ",
+    "startLabel": "วันเริ่ม",
+    "endLabel": "วันสิ้นสุด",
+    "cancel": "ยกเลิก",
+    "save": "บันทึก",
+    "quotaPlan": "แพ็กเกจ {{plan}}",
+    "quotaUsage": "รอบที่ใช้งาน {{active}}/{{max}}",
+    "quotaUnlimited": "รอบที่ใช้งาน {{active}} (ไม่จำกัด)",
+    "quotaLimitReached": "ครบจำนวนรอบตามแพ็กเกจ {{plan}} แล้ว — ปิดรอบเดิมก่อนจึงจะสร้างใหม่ได้",
+    "quotaExpiresAt": "หมดอายุ {{date}}",
+    "planName": {
+      "free": "Free",
+      "plus": "Plus",
+      "pro": "Pro"
+    }
   },
   "addcycle": {
     "income": "รายรับ",

@@ -89,7 +89,29 @@
     "expense": "Expense"
   },
   "cycle": {
-    "addNew": "Add new farming cycle"
+    "addNew": "Add new farming cycle",
+    "formTitle": "Add farming cycle",
+    "editFormTitle": "Edit farming cycle",
+    "nameLabel": "Cycle name",
+    "namePlaceholder": "e.g. Rice season 1/68",
+    "iconLabel": "Icon",
+    "iconSearchPlaceholder": "Search icons",
+    "budgetLabel": "Budget (THB)",
+    "budgetPlaceholder": "Optional",
+    "startLabel": "Start date",
+    "endLabel": "End date",
+    "cancel": "Cancel",
+    "save": "Save",
+    "quotaPlan": "Plan: {{plan}}",
+    "quotaUsage": "Active cycles {{active}}/{{max}}",
+    "quotaUnlimited": "Active cycles {{active}} (unlimited)",
+    "quotaLimitReached": "You reached the {{plan}} plan limit — close an active cycle before creating a new one",
+    "quotaExpiresAt": "Expires {{date}}",
+    "planName": {
+      "free": "Free",
+      "plus": "Plus",
+      "pro": "Pro"
+    }
   },
   "addcycle": {
     "income": "Income",

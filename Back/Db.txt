@@ -78,3 +78,28 @@ CREATE TABLE budget_category (
   created_at         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- วันที่ตั้งงบ
   FOREIGN KEY (category_id) REFERENCES category(category_id) ON DELETE CASCADE -- ลบหมวด → ลบงบด้วย
 );
+
+-- ตาราง plan: กำหนด tier สมาชิก (free / basic / pro)
+CREATE TABLE plan (
+  plan_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- รหัส plan (UUID)
+  name          VARCHAR(100)  NOT NULL UNIQUE,                -- ชื่อ tier เช่น free, plus, pro
+  max_cycles    INT           NOT NULL DEFAULT 3,             -- จำนวน active cycle สูงสุด (-1 = ไม่จำกัด)
+  price         NUMERIC(10,2) NOT NULL DEFAULT 0,           -- ราคา (ยังไม่ใช้ payment)
+  is_active     BOOLEAN       NOT NULL DEFAULT TRUE,        -- เปิดขาย tier นี้อยู่หรือไม่
+  created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ตาราง user_plan: user แต่ละคนอยู่ใน plan ไหน
+CREATE TABLE user_plan (
+  user_plan_id  UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- รหัส subscription (UUID)
+  user_id       UUID NOT NULL,                              -- FK → users
+  plan_id       UUID NOT NULL,                              -- FK → plan
+  started_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at    TIMESTAMP,                                  -- NULL = ไม่หมดอายุ (free/basic)
+  status        VARCHAR(32)   NOT NULL DEFAULT 'active',    -- active, expired, cancelled
+  created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+  FOREIGN KEY (plan_id) REFERENCES plan(plan_id) ON DELETE RESTRICT
+);
+-- user มี active plan ได้แค่ 1 อัน
+CREATE UNIQUE INDEX user_plan_one_active_per_user ON user_plan (user_id) WHERE status = 'active';

@@ -1,6 +1,7 @@
 import '../styles/MainLayout.css';
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import GreetingHeader from "../components/GreetingHeader";
+import AnnouncementBottomSheet from "../components/AnnouncementBottomSheet";
 import { GoHome } from "react-icons/go";
 import { GrPowerCycle } from "react-icons/gr";
 import { GrAnalytics } from "react-icons/gr";
@@ -23,10 +24,22 @@ const navItems = [
 
 export default function MainLayout({ children }: MainLayoutProps) {
     const { t } = useTranslation();
+    const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
+    const [hasUnreadAnnouncement, setHasUnreadAnnouncement] = useState(true);
 
     return (
         <div className="min-h-screen flex flex-col">
-            <GreetingHeader />
+            <GreetingHeader
+                hasNotification={hasUnreadAnnouncement}
+                onNotificationClick={() => {
+                    setIsAnnouncementOpen(true);
+                    setHasUnreadAnnouncement(false);
+                }}
+            />
+            <AnnouncementBottomSheet
+                open={isAnnouncementOpen}
+                onClose={() => setIsAnnouncementOpen(false)}
+            />
             <main className="main-layout-content flex-1 pb-24">
                 {children}
             </main>

@@ -14,4 +14,6 @@ public interface CycleRepository extends JpaRepository<CycleEntity, UUID> {
     boolean existsByNameAndCycleIdNot(String name, UUID cycleId);
 
     List<CycleEntity> findByUserIdOrderByCreatedAtDesc(UUID userId);
+
+    long countByUserIdAndStatus(UUID userId, String status);
 }

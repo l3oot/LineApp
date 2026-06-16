@@ -143,9 +143,6 @@ export default function List() {
     const [newAmount, setNewAmount] = useState("0");
     const [formDate, setFormDate] = useState<CalendarDate>(() => initialAppDateTime(i18n.language).date);
     const [formTime, setFormTime] = useState<Time>(() => initialAppDateTime(i18n.language).time);
-    const [newIcon, setNewIcon] = useState<keyof typeof icons>("bill");
-    const [iconQuery, setIconQuery] = useState("");
-    const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
     const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
     const [isAddCycleOpen, setIsAddCycleOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -240,8 +237,6 @@ export default function List() {
         return Array.from(new Set([...Object.values(categoryById), ...fromList]));
     }, [transactions, categoryById, fallbackCategory]);
     const selectedFormCategory = formCategories.find((c) => c.categoryId === newCategoryId) ?? null;
-    const iconOptions = Object.entries(icons) as [keyof typeof icons, string][];
-    const filteredIcons = iconOptions.filter(([key]) => key.toLowerCase().includes(iconQuery.trim().toLowerCase()));
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -400,9 +395,6 @@ export default function List() {
         const initial = initialAppDateTime(i18n.language);
         setFormDate(initial.date);
         setFormTime(initial.time);
-        setNewIcon("bill");
-        setIconQuery("");
-        setIsIconPickerOpen(false);
         setIsAddCategoryOpen(false);
         setIsAddCycleOpen(false);
     };
@@ -417,7 +409,6 @@ export default function List() {
         const { date, time } = calendarDateTimeFromTx(tx.txDate, i18n.language);
         setFormDate(date);
         setFormTime(time);
-        setNewIcon("bill");
         setAddError(null);
         setIsAddSheetOpen(true);
     }, [i18n.language]);
@@ -460,9 +451,18 @@ export default function List() {
     }, [pendingEditTxId, listLoading, transactions, openEditSheet, setSearchParams]);
 
     const openAddSheet = () => {
-        resetAddForm();
+        setEditingTxId(null);
         setAddError(null);
         setIsAddSheetOpen(true);
+    };
+
+    const handleCloseAddSheet = () => {
+        setIsAddSheetOpen(false);
+        setIsAddCategoryOpen(false);
+        setIsAddCycleOpen(false);
+        if (editingTxId) {
+            resetAddForm();
+        }
     };
 
     const handleDeleteTransaction = async () => {
@@ -791,10 +791,7 @@ export default function List() {
             </button>
             <BottomSheet
                 open={isAddSheetOpen}
-                onClose={() => {
-                    resetAddForm();
-                    setIsAddSheetOpen(false);
-                }}
+                onClose={handleCloseAddSheet}
                 dragDisabled={submitting}
                 backdropClassName="z-40"
                 panelClassName="mx-auto flex h-[74vh] w-full max-w-[420px] flex-col rounded-t-[22px] border border-[var(--border)] p-4 shadow-[var(--shadow-soft)]"
@@ -817,10 +814,7 @@ export default function List() {
                             <button
                                 type="button"
                                 aria-label={t("common.close")}
-                                onClick={() => {
-                                    resetAddForm();
-                                    setIsAddSheetOpen(false);
-                                }}
+                                onClick={handleCloseAddSheet}
                                 className="rounded-full p-1 text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)]"
                             >
                                 <FiX size={18} />
@@ -964,28 +958,17 @@ export default function List() {
                                 )}
                             </label>
 
-                            <div className="flex items-end gap-2">
-                                <label className="flex-1 text-sm font-bold text-[var(--text)]">
-                                    {t("list.titleLabel")}
-                                    <input
-                                        type="text"
-                                        required
-                                        value={newTitle}
-                                        onChange={(event) => setNewTitle(event.target.value)}
-                                        placeholder={t("list.detailPlaceholder")}
-                                        className="mt-2 w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
-                                    />
-                                </label>
-                                <button
-                                    type="button"
-                                    aria-label={t("list.iconLabel")}
-                                    title={`${t("list.iconLabel")} (${newIcon})`}
-                                    onClick={() => setIsIconPickerOpen((prev) => !prev)}
-                                    className="mt-2 flex h-[38px] w-[46px] items-center justify-center rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] transition-all hover:border-[var(--primary)]"
-                                >
-                                    <span className="text-[20px] leading-none">{icons[newIcon]}</span>
-                                </button>
-                            </div>
+                            <label className="text-sm font-bold text-[var(--text)]">
+                                {t("list.titleLabel")}
+                                <input
+                                    type="text"
+                                    required
+                                    value={newTitle}
+                                    onChange={(event) => setNewTitle(event.target.value)}
+                                    placeholder={t("list.detailPlaceholder")}
+                                    className="mt-2 w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
+                                />
+                            </label>
 
                             <label className="text-sm font-bold text-[var(--text)]">
                                 {t("list.amountLabel")}
@@ -1021,10 +1004,7 @@ export default function List() {
                                 <button
                                     type="button"
                                     disabled={submitting}
-                                    onClick={() => {
-                                        resetAddForm();
-                                        setIsAddSheetOpen(false);
-                                    }}
+                                    onClick={handleCloseAddSheet}
                                     className="rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)] disabled:opacity-50"
                                 >
                                     {t("cycle.cancel")}
@@ -1038,57 +1018,6 @@ export default function List() {
                                 </button>
                             </div>
                         </form>
-
-                        {isIconPickerOpen && (
-                            <div className="fixed inset-0 z-[60] bg-black/20 px-4" onClick={() => setIsIconPickerOpen(false)}>
-                                <div
-                                    className="mx-auto mt-[24vh] w-full max-w-[400px] rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-soft)]"
-                                    onClick={(event) => event.stopPropagation()}
-                                >
-                                    <div className="mb-2 flex items-center justify-between">
-                                        <p className="text-sm font-bold text-[var(--text)]">{t("list.iconLabel")}</p>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsIconPickerOpen(false)}
-                                            className="rounded-full p-1 text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)]"
-                                        >
-                                            <FiX size={16} />
-                                        </button>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={iconQuery}
-                                        onChange={(event) => setIconQuery(event.target.value)}
-                                        placeholder={t("cycle.iconSearchPlaceholder")}
-                                        className="w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-medium text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
-                                    />
-                                    <div className="mt-2 grid max-h-[220px] grid-cols-8 gap-1.5 overflow-y-auto pr-1">
-                                        {filteredIcons.map(([key, emoji]) => {
-                                            const isSelected = newIcon === key;
-                                            return (
-                                                <button
-                                                    key={key}
-                                                    type="button"
-                                                    aria-label={key}
-                                                    title={key}
-                                                    onClick={() => {
-                                                        setNewIcon(key);
-                                                        setIsIconPickerOpen(false);
-                                                    }}
-                                                    className={`flex h-9 w-9 items-center justify-center rounded-[10px] text-[22px] transition-all ${
-                                                        isSelected
-                                                            ? "bg-[var(--primary-soft)] ring-1 ring-[var(--primary)]"
-                                                            : "bg-[var(--surface-soft)] hover:bg-[var(--surface)]"
-                                                    }`}
-                                                >
-                                                    {emoji}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
             </BottomSheet>
         </MainLayout>
     );

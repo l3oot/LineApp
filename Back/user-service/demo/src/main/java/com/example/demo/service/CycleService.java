@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.dto.req.CycleCreateReq;
 import com.example.demo.dto.req.CycleUpdateReq;
@@ -21,10 +22,15 @@ public class CycleService {
 
     private final CycleRepository cycleRepository;
     private final BudgetCycleRepository budgetCycleRepository;
+    private final UserPlanService userPlanService;
 
-    public CycleService(CycleRepository cycleRepository, BudgetCycleRepository budgetCycleRepository) {
+    public CycleService(
+            CycleRepository cycleRepository,
+            BudgetCycleRepository budgetCycleRepository,
+            UserPlanService userPlanService) {
         this.cycleRepository = cycleRepository;
         this.budgetCycleRepository = budgetCycleRepository;
+        this.userPlanService = userPlanService;
     }
 
     public List<CycleRes> getCyclesByUserId(UUID userId) {
@@ -84,6 +90,7 @@ public class CycleService {
         cycleRepository.deleteById(cycleId);
     }
 
+    @Transactional
     public CycleRes createCycle(CycleCreateReq req) {
         if (req.userId() == null) {
             throw new ApiException(ErrorCode.USER_ID_REQUIRED, "userId is required");
@@ -94,6 +101,8 @@ public class CycleService {
         if (cycleRepository.existsByName(req.name())) {
             throw new ApiException(ErrorCode.CYCLE_NAME_EXISTS, "Name already exists");
         }
+
+        userPlanService.assertCanCreateCycle(req.userId());
 
         CycleEntity entity = new CycleEntity(
                 req.userId(),

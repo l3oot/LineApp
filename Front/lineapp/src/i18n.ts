@@ -1,5 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import { iconLabelsEn, iconLabelsJp, iconLabelsTh } from "./data/iconLabels";
 
 const resources = {
     th: {
@@ -22,6 +23,19 @@ const resources = {
                 night: "สวัสดีตอนกลางคืน",
                 subtitle: "จัดการการเงินของคุณให้ดีในทุกวัน",
                 notificationAria: "การแจ้งเตือน",
+            },
+            notificationSheet: {
+                title: "ประกาศ",
+                items: {
+                    welcome: {
+                        title: "ยินดีต้อนรับสู่ LineApp",
+                        body: "จัดการรายรับ-รายจ่ายการเกษตรได้ในที่เดียว",
+                    },
+                    cycleFeature: {
+                        title: "ฟีเจอร์รอบการเกษตร",
+                        body: "สร้างรอบปลูกและติดตามงบประมาณได้แล้ว",
+                    },
+                },
             },
             settings: {
                 userTitle: "ผู้ใช้งาน",
@@ -152,7 +166,7 @@ const resources = {
                 nameLabel: "ชื่อรอบการเกษตร",
                 namePlaceholder: "เช่น ข้าวโพด ปี 2568",
                 iconLabel: "ไอคอน",
-                iconSearchPlaceholder: "กรองไอคอน...",
+                iconSearchPlaceholder: "ค้นหาไอคอน",
                 budgetLabel: "งบประมาณ",
                 budgetPlaceholder: "เช่น 10000",
                 incomeLabel: "รายรับ",
@@ -162,6 +176,7 @@ const resources = {
                 cancel: "ยกเลิก",
                 save: "บันทึก",
             },
+            icons: iconLabelsTh,
             addcycle: {
                 capital: "เงินต้นทุน",
                 income: "รายรับ",
@@ -230,6 +245,19 @@ const resources = {
                 night: "Good night",
                 subtitle: "Manage your finances well every day",
                 notificationAria: "Notifications",
+            },
+            notificationSheet: {
+                title: "Announcements",
+                items: {
+                    welcome: {
+                        title: "Welcome to LineApp",
+                        body: "Manage farm income and expenses in one place",
+                    },
+                    cycleFeature: {
+                        title: "Farming cycle feature",
+                        body: "Create growing cycles and track your budget",
+                    },
+                },
             },
             settings: {
                 userTitle: "User",
@@ -360,7 +388,7 @@ const resources = {
                 nameLabel: "Cycle name",
                 namePlaceholder: "e.g. Corn 2026",
                 iconLabel: "Icon",
-                iconSearchPlaceholder: "Filter icons...",
+                iconSearchPlaceholder: "Search icons",
                 budgetLabel: "Budget",
                 budgetPlaceholder: "e.g. 10000",
                 incomeLabel: "Income",
@@ -370,6 +398,7 @@ const resources = {
                 cancel: "Cancel",
                 save: "Save",
             },
+            icons: iconLabelsEn,
             addcycle: {
                 capital: "Capital",
                 income: "Income",
@@ -438,6 +467,19 @@ const resources = {
                 night: "おやすみなさい",
                 subtitle: "毎日しっかり家計を管理しましょう",
                 notificationAria: "通知",
+            },
+            notificationSheet: {
+                title: "お知らせ",
+                items: {
+                    welcome: {
+                        title: "LineAppへようこそ",
+                        body: "農業の収入と支出を一か所で管理できます",
+                    },
+                    cycleFeature: {
+                        title: "農業サイクル機能",
+                        body: "栽培サイクルの作成と予算管理ができるようになりました",
+                    },
+                },
             },
             settings: {
                 userTitle: "ユーザー",
@@ -568,7 +610,7 @@ const resources = {
                 nameLabel: "サイクル名",
                 namePlaceholder: "例: トウモロコシ 2026",
                 iconLabel: "アイコン",
-                iconSearchPlaceholder: "アイコンを絞り込み...",
+                iconSearchPlaceholder: "アイコンを検索",
                 budgetLabel: "予算",
                 budgetPlaceholder: "例: 10000",
                 incomeLabel: "収入",
@@ -578,6 +620,7 @@ const resources = {
                 cancel: "キャンセル",
                 save: "保存",
             },
+            icons: iconLabelsJp,
             addcycle: {
                 capital: "元手",
                 income: "収入",

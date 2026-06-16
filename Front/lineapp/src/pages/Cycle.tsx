@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import "../styles/Cycle.css";
@@ -6,30 +6,41 @@ import { FaPlus } from "react-icons/fa";
 import { FiX } from "react-icons/fi";
 import Addcycle from "../components/Addcycle";
 import BottomSheet from "../components/BottomSheet";
+import IconPickerSheet from "../components/IconPickerSheet";
 import { useTranslation } from "react-i18next";
 import { icons } from "../assets/Iconlist";
-import dayjs, { type Dayjs } from "dayjs";
-import buddhistEra from "dayjs/plugin/buddhistEra";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { AdapterDayjsBuddhist } from "@mui/x-date-pickers/AdapterDayjsBuddhist";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { CalendarDate } from "@internationalized/date";
+import AppDateField from "../components/AppDateField";
 import { ApiError } from "../lib/api";
 import { auth } from "../lib/auth";
-import { cycleApi, transactionApi, type Cycle } from "../lib/userService";
+import { cycleApi, planApi, transactionApi, type Cycle, type PlanQuota } from "../lib/userService";
 import { aggregateTransactionsByCycle } from "../utils/cycleStats";
 import {
-    dayjsDateFormat,
-    dayjsLocaleForAppLanguage,
-    usesBuddhistEra,
+    gregorianDateKey,
+    initialAppDateTime,
+    parseTxToGregorianCalendarDate,
+    toGregorianCalendarDate,
 } from "../utils/formatAppDate";
 import { formatCycleDateRange } from "../utils/formatMonthYear";
+import dayjs from "dayjs";
 
-import "dayjs/locale/en";
-import "dayjs/locale/ja";
-import "dayjs/locale/th";
+function calendarDateToApiDate(value: CalendarDate): string {
+    const gregorian = toGregorianCalendarDate(value);
+    return gregorianDateKey(gregorian.year, gregorian.month, gregorian.day);
+}
 
-dayjs.extend(buddhistEra);
+function apiDateToCalendarDate(value: string | null | undefined): CalendarDate {
+    if (!value) return initialAppDateTime().date;
+    return parseTxToGregorianCalendarDate(`${value}T12:00:00`);
+}
+
+function defaultCycleStartDate(lang?: string): CalendarDate {
+    return initialAppDateTime(lang).date;
+}
+
+function defaultCycleEndDate(lang?: string): CalendarDate {
+    return defaultCycleStartDate(lang).add({ days: 30 });
+}
 
 type IconName = keyof typeof icons;
 
@@ -37,25 +48,25 @@ function isIconName(value: string | null | undefined): value is IconName {
     return Boolean(value && Object.prototype.hasOwnProperty.call(icons, value));
 }
 
+function isActiveCycle(cycle: Cycle): boolean {
+    return (cycle.status ?? "active") === "active";
+}
+
+function countActiveCycles(cycles: Cycle[]): number {
+    return cycles.filter(isActiveCycle).length;
+}
+
+function canCreateFromQuota(quota: PlanQuota | null, activeCount: number): boolean {
+    if (!quota) return true;
+    if (quota.maxCycles === -1) return true;
+    return activeCount < quota.maxCycles;
+}
+
 function cycleLengthLabel(c: Cycle, lang: string): string {
     const start = c.startDate ? dayjs(c.startDate).toDate() : null;
     const end = c.endDate ? dayjs(c.endDate).toDate() : null;
     return formatCycleDateRange(start, end, lang);
 }
-
-const datePickerTextFieldSx = {
-    mt: 1.5,
-    "& .MuiPickersOutlinedInput-root": {
-        borderRadius: "var(--radius-control)",
-        backgroundColor: "var(--surface)",
-        color: "var(--text)",
-        "& fieldset": { borderColor: "var(--border)" },
-        "&:hover fieldset": { borderColor: "var(--border)" },
-        "&.Mui-focused fieldset": { borderColor: "var(--primary)" },
-    },
-    "& .MuiPickersSectionList-root": { fontSize: "0.875rem" },
-    "& .MuiInputAdornment-root .MuiSvgIcon-root": { color: "var(--text-soft)" },
-};
 
 export default function CyclePage() {
     const { t, i18n } = useTranslation();
@@ -69,6 +80,7 @@ export default function CyclePage() {
     const [submitting, setSubmitting] = useState(false);
     const [deletingCycleId, setDeletingCycleId] = useState<string | null>(null);
     const [editingCycle, setEditingCycle] = useState<Cycle | null>(null);
+    const [planQuota, setPlanQuota] = useState<PlanQuota | null>(null);
 
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [title, setTitle] = useState("");
@@ -76,18 +88,22 @@ export default function CyclePage() {
     const [selectedIcon, setSelectedIcon] = useState<IconName>("corn");
     const [iconQuery, setIconQuery] = useState("");
     const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
-    const [startDate, setStartDate] = useState<Dayjs | null>(null);
-    const [endDate, setEndDate] = useState<Dayjs | null>(null);
+    const [startDate, setStartDate] = useState<CalendarDate>(() => defaultCycleStartDate());
+    const [endDate, setEndDate] = useState<CalendarDate>(() => defaultCycleEndDate());
     const [budget, setBudget] = useState("");
     const [isStartPickerOpen, setIsStartPickerOpen] = useState(false);
     const [isEndPickerOpen, setIsEndPickerOpen] = useState(false);
-    const startPickerRef = useRef<HTMLLabelElement>(null);
-    const endPickerRef = useRef<HTMLLabelElement>(null);
 
-    const iconOptions = Object.entries(icons) as [IconName, string][];
-    const filteredIcons = iconOptions.filter(([key]) =>
-        key.toLowerCase().includes(iconQuery.trim().toLowerCase()),
-    );
+    const activeCycleCount = countActiveCycles(cycles);
+    const canCreateCycle = canCreateFromQuota(planQuota, activeCycleCount);
+    const planDisplayName = planQuota
+        ? t(`cycle.planName.${planQuota.planName}`, { defaultValue: planQuota.planName })
+        : "";
+
+    const refreshQuota = async () => {
+        const quota = await planApi.getQuota();
+        setPlanQuota(quota);
+    };
 
     useEffect(() => {
         if (!auth.isAuthed()) {
@@ -97,16 +113,18 @@ export default function CyclePage() {
         let cancelled = false;
         setLoading(true);
         setError(null);
-        Promise.all([cycleApi.list(), transactionApi.list()])
-            .then(([cycleRows, txRows]) => {
+        Promise.all([cycleApi.list(), transactionApi.list(), planApi.getQuota()])
+            .then(([cycleRows, txRows, quota]) => {
                 if (cancelled) return;
                 setCycles(cycleRows ?? []);
                 setStatsByCycleId(aggregateTransactionsByCycle(txRows ?? []));
+                setPlanQuota(quota);
             })
             .catch((err: unknown) => {
                 if (cancelled) return;
                 setCycles([]);
                 setStatsByCycleId({});
+                setPlanQuota(null);
                 setError(err instanceof ApiError ? err.message : (err as Error).message);
             })
             .finally(() => {
@@ -123,15 +141,19 @@ export default function CyclePage() {
         setSelectedIcon("corn");
         setIconQuery("");
         setIsIconPickerOpen(false);
-        setStartDate(null);
-        setEndDate(null);
+        const today = defaultCycleStartDate(i18n.language);
+        setStartDate(today);
+        setEndDate(defaultCycleEndDate(i18n.language));
         setBudget("");
         setIsStartPickerOpen(false);
         setIsEndPickerOpen(false);
     };
 
     const openAddSheet = () => {
-        resetForm();
+        if (!canCreateCycle) {
+            setError(t("cycle.quotaLimitReached", { plan: planDisplayName }));
+            return;
+        }
         setEditingCycle(null);
         setError(null);
         setIsSheetOpen(true);
@@ -142,8 +164,8 @@ export default function CyclePage() {
         setTitle(cycle.name);
         setFarmType(cycle.farmType ?? "ทั่วไป");
         setSelectedIcon(isIconName(cycle.icon) ? cycle.icon : "corn");
-        setStartDate(cycle.startDate ? dayjs(cycle.startDate) : null);
-        setEndDate(cycle.endDate ? dayjs(cycle.endDate) : null);
+        setStartDate(apiDateToCalendarDate(cycle.startDate));
+        setEndDate(apiDateToCalendarDate(cycle.endDate));
         setBudget("");
         setIconQuery("");
         setIsIconPickerOpen(false);
@@ -155,18 +177,12 @@ export default function CyclePage() {
 
     const handleCloseSheet = () => {
         setIsSheetOpen(false);
-        setEditingCycle(null);
         setIsStartPickerOpen(false);
         setIsEndPickerOpen(false);
-    };
-
-    const handleFormPointerDownCapture = (event: PointerEvent<HTMLFormElement>) => {
-        const target = event.target as HTMLElement;
-        const insideStart = startPickerRef.current?.contains(target) ?? false;
-        const insideEnd = endPickerRef.current?.contains(target) ?? false;
-        const insidePopper = Boolean(target.closest(".MuiPickerPopper-root"));
-        if (!insideStart && !insidePopper) setIsStartPickerOpen(false);
-        if (!insideEnd && !insidePopper) setIsEndPickerOpen(false);
+        if (editingCycle) {
+            resetForm();
+            setEditingCycle(null);
+        }
     };
 
     const handleDeleteCycle = async (cycle: Cycle) => {
@@ -180,6 +196,7 @@ export default function CyclePage() {
             setCycles((prev) => prev.filter((c) => c.cycleId !== cycle.cycleId));
             const txRows = await transactionApi.list();
             setStatsByCycleId(aggregateTransactionsByCycle(txRows ?? []));
+            await refreshQuota();
         } catch (err) {
             setError(err instanceof ApiError ? err.message : (err as Error).message);
         } finally {
@@ -190,7 +207,7 @@ export default function CyclePage() {
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const nextTitle = title.trim();
-        if (!nextTitle || !startDate || !endDate) return;
+        if (!nextTitle) return;
 
         setSubmitting(true);
         setError(null);
@@ -200,8 +217,8 @@ export default function CyclePage() {
                     cycleId: editingCycle.cycleId,
                     name: nextTitle,
                     farmType: editingCycle.farmType ?? "ทั่วไป",
-                    startDate: startDate.format("YYYY-MM-DD"),
-                    endDate: endDate.format("YYYY-MM-DD"),
+                    startDate: calendarDateToApiDate(startDate),
+                    endDate: calendarDateToApiDate(endDate),
                     status: editingCycle.status ?? "active",
                     icon: selectedIcon,
                 });
@@ -216,8 +233,8 @@ export default function CyclePage() {
                 const created = await cycleApi.create({
                     name: nextTitle,
                     farmType: farmType.trim() || "ทั่วไป",
-                    startDate: startDate.format("YYYY-MM-DD"),
-                    endDate: endDate.format("YYYY-MM-DD"),
+                    startDate: calendarDateToApiDate(startDate),
+                    endDate: calendarDateToApiDate(endDate),
                     status: "active",
                     icon: selectedIcon,
                     budgetAmount: budgetNumber,
@@ -225,6 +242,7 @@ export default function CyclePage() {
                 setCycles((prev) => [created, ...prev]);
                 const txRows = await transactionApi.list();
                 setStatsByCycleId(aggregateTransactionsByCycle(txRows ?? []));
+                await refreshQuota();
             }
             resetForm();
             handleCloseSheet();
@@ -243,7 +261,8 @@ export default function CyclePage() {
                 <button
                     type="button"
                     onClick={openAddSheet}
-                    className="addbutton group transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
+                    disabled={loading || !canCreateCycle}
+                    className="addbutton group transition-all hover:scale-[1.02] active:scale-95 shadow-sm disabled:hover:scale-100 disabled:active:scale-100"
                 >
                     <FaPlus size={14} color="var(--primary)" className="group-hover:rotate-90 transition-transform" />
                     <p className="ml-2 font-bold text-[var(--primary)]">{t("cycle.addNew")}</p>
@@ -308,7 +327,6 @@ export default function CyclePage() {
                         <form
                             className="flex flex-1 flex-col gap-3 overflow-y-auto pb-1"
                             onSubmit={handleSubmit}
-                            onPointerDownCapture={handleFormPointerDownCapture}
                         >
                             <div className="flex items-end gap-2">
                                 <label className="flex-1 text-sm font-semibold text-[var(--text)]">
@@ -359,58 +377,34 @@ export default function CyclePage() {
                                 </>
                             )}
 
-                            <LocalizationProvider
-                                key={i18n.language}
-                                dateAdapter={
-                                    usesBuddhistEra(i18n.language)
-                                        ? AdapterDayjsBuddhist
-                                        : AdapterDayjs
-                                }
-                                adapterLocale={dayjsLocaleForAppLanguage(i18n.language)}
-                            >
-                                <div className="grid grid-cols-2 gap-2">
-                                    <label ref={startPickerRef} className="text-sm font-semibold text-[var(--text)]">
-                                        {t("cycle.startLabel")}
-                                        <DatePicker
-                                            value={startDate}
-                                            onChange={setStartDate}
-                                            open={isStartPickerOpen}
-                                            onOpen={() => { setIsStartPickerOpen(true); setIsEndPickerOpen(false); }}
-                                            onClose={() => setIsStartPickerOpen(false)}
-                                            format={dayjsDateFormat(i18n.language)}
-                                            slotProps={{
-                                                textField: {
-                                                    required: true,
-                                                    fullWidth: true,
-                                                    size: "small",
-                                                    sx: datePickerTextFieldSx,
-                                                    onClick: () => { setIsStartPickerOpen(true); setIsEndPickerOpen(false); },
-                                                },
-                                            }}
-                                        />
-                                    </label>
-                                    <label ref={endPickerRef} className="text-sm font-semibold text-[var(--text)]">
-                                        {t("cycle.endLabel")}
-                                        <DatePicker
-                                            value={endDate}
-                                            onChange={setEndDate}
-                                            open={isEndPickerOpen}
-                                            onOpen={() => { setIsEndPickerOpen(true); setIsStartPickerOpen(false); }}
-                                            onClose={() => setIsEndPickerOpen(false)}
-                                            format={dayjsDateFormat(i18n.language)}
-                                            slotProps={{
-                                                textField: {
-                                                    required: true,
-                                                    fullWidth: true,
-                                                    size: "small",
-                                                    sx: datePickerTextFieldSx,
-                                                    onClick: () => { setIsEndPickerOpen(true); setIsStartPickerOpen(false); },
-                                                },
-                                            }}
-                                        />
-                                    </label>
-                                </div>
-                            </LocalizationProvider>
+                            <div className="grid grid-cols-2 gap-2">
+                                <label className="text-sm font-bold text-[var(--text)]">
+                                    {t("cycle.startLabel")}
+                                    <AppDateField
+                                        value={startDate}
+                                        onChange={setStartDate}
+                                        ariaLabel={t("cycle.startLabel")}
+                                        isOpen={isStartPickerOpen}
+                                        onOpenChange={(open) => {
+                                            setIsStartPickerOpen(open);
+                                            if (open) setIsEndPickerOpen(false);
+                                        }}
+                                    />
+                                </label>
+                                <label className="text-sm font-bold text-[var(--text)]">
+                                    {t("cycle.endLabel")}
+                                    <AppDateField
+                                        value={endDate}
+                                        onChange={setEndDate}
+                                        ariaLabel={t("cycle.endLabel")}
+                                        isOpen={isEndPickerOpen}
+                                        onOpenChange={(open) => {
+                                            setIsEndPickerOpen(open);
+                                            if (open) setIsStartPickerOpen(false);
+                                        }}
+                                    />
+                                </label>
+                            </div>
 
                             <div className="mt-auto grid grid-cols-2 gap-2 pt-2">
                                 <button
@@ -431,59 +425,19 @@ export default function CyclePage() {
                             </div>
                         </form>
 
-                        {isIconPickerOpen && (
-                            <div
-                                className="fixed inset-0 z-[60] bg-black/20 px-4"
-                                onClick={() => setIsIconPickerOpen(false)}
-                            >
-                                <div
-                                    className="mx-auto mt-[24vh] w-full max-w-[400px] rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-soft)]"
-                                    onClick={(event) => event.stopPropagation()}
-                                >
-                                    <div className="mb-2 flex items-center justify-between">
-                                        <p className="text-sm font-bold text-[var(--text)]">{t("cycle.iconLabel")}</p>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsIconPickerOpen(false)}
-                                            className="rounded-full p-1 text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)]"
-                                        >
-                                            <FiX size={16} />
-                                        </button>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={iconQuery}
-                                        onChange={(event) => setIconQuery(event.target.value)}
-                                        placeholder={t("cycle.iconSearchPlaceholder")}
-                                        className="w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-medium text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
-                                    />
-                                    <div className="mt-2 grid max-h-[220px] grid-cols-8 gap-1.5 overflow-y-auto pr-1">
-                                        {filteredIcons.map(([key, emoji]) => {
-                                            const isSelected = selectedIcon === key;
-                                            return (
-                                                <button
-                                                    key={key}
-                                                    type="button"
-                                                    aria-label={key}
-                                                    title={key}
-                                                    onClick={() => {
-                                                        setSelectedIcon(key);
-                                                        setIsIconPickerOpen(false);
-                                                    }}
-                                                    className={`flex h-9 w-9 items-center justify-center rounded-[10px] text-[22px] transition-all ${
-                                                        isSelected
-                                                            ? "bg-[var(--primary-soft)] ring-1 ring-[var(--primary)]"
-                                                            : "bg-[var(--surface-soft)] hover:bg-[var(--surface)]"
-                                                    }`}
-                                                >
-                                                    {emoji}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        <IconPickerSheet
+                            open={isIconPickerOpen}
+                            title={t("cycle.iconLabel")}
+                            searchPlaceholder={t("cycle.iconSearchPlaceholder")}
+                            query={iconQuery}
+                            onQueryChange={setIconQuery}
+                            selectedIcon={selectedIcon}
+                            onSelect={(icon) => {
+                                setSelectedIcon(icon);
+                                setIsIconPickerOpen(false);
+                            }}
+                            onClose={() => setIsIconPickerOpen(false)}
+                        />
             </BottomSheet>
         </MainLayout>
     );

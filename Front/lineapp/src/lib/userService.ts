@@ -111,6 +111,20 @@ export const cycleApi = {
         api.delete<void>("/api/cycle", { cycleId, userId: requireUserId() }),
 };
 
+// ============ Plan / Quota ============
+
+export type PlanQuota = {
+    planName: string;
+    maxCycles: number;
+    activeCycles: number;
+    canCreate: boolean;
+    expiresAt: string | null;
+};
+
+export const planApi = {
+    getQuota: () => api.get<PlanQuota>("/api/plan/quota", { userId: requireUserId() }),
+};
+
 // ============ Category ============
 
 export type Category = {
