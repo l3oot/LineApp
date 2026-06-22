@@ -257,15 +257,19 @@ export default function CyclePage() {
 
     return (
         <MainLayout>
-            <div className="flex flex-col gap-4 px-5 pb-3">
+            <div className="home-page">
+                <div className="home-content-card">
+                    <div className="cycle-page">
                 <button
                     type="button"
                     onClick={openAddSheet}
                     disabled={loading || !canCreateCycle}
-                    className="addbutton group transition-all hover:scale-[1.02] active:scale-95 shadow-sm disabled:hover:scale-100 disabled:active:scale-100"
+                    className="pill-action-btn"
                 >
-                    <FaPlus size={14} color="var(--primary)" className="group-hover:rotate-90 transition-transform" />
-                    <p className="ml-2 font-bold text-[var(--primary)]">{t("cycle.addNew")}</p>
+                    <span className="pill-action-btn-icon" aria-hidden>
+                        <FaPlus size={14} />
+                    </span>
+                    <span className="pill-action-btn-text">{t("cycle.addNew")}</span>
                 </button>
 
                 {error && (
@@ -301,6 +305,8 @@ export default function CyclePage() {
                             ยังไม่มีรอบปลูก กดปุ่ม + เพื่อเริ่มต้น
                         </p>
                     )}
+                </div>
+                    </div>
                 </div>
             </div>
 

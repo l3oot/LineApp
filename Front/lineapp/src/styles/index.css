@@ -1,21 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap');
 @import "tailwindcss";
 
 :root {
   --bg: #f5f7f2;
   --surface: #ffffff;
-  --surface-soft: #eef3ea;
-  --border: #dbe4d5;
-  --text: #1f2a1f;
-  --text-soft: #5e6b5f;
-  --primary: #2f8f4e;
-  --primary-soft: #e7f4ea;
-  --danger: #b23a3a;
+  --surface-soft: #f3f6ef;
+  --border: #e8ebe4;
+  --text: #4a4a4a;
+  --text-soft: #8a8a8a;
+  --primary: #5bb35f;
+  --primary-soft: #e8f5e9;
+  --income: #5bb35f;
+  --expense: #e57373;
+  --balance: #8e8cd8;
+  --danger: #e57373;
   --radius-card: 22px;
-  --radius-control: 14px;
-  --shadow-soft: 0 10px 24px rgba(31, 42, 31, 0.06);
+  --radius-control: 16px;
+  --shadow-soft: 0 8px 20px rgba(74, 74, 74, 0.06);
   --mono: ui-monospace, Consolas, monospace;
-  --sans: "Google Sans", sans-serif;
+  --font-mali: "Mali", cursive;
+  --font-google-sans: "Google Sans", sans-serif;
+  --sans: var(--font-mali);
 
   font: 17px/145% var(--sans);
   letter-spacing: 0.18px;
@@ -55,6 +59,85 @@ body {
   min-height: 100vh;
 }
 
+.google-sans {
+  font-family: var(--font-google-sans);
+  font-optical-sizing: auto;
+  font-style: normal;
+  font-variation-settings: "GRAD" 0;
+}
+
+.mali-extralight {
+  font-family: var(--font-mali);
+  font-weight: 200;
+  font-style: normal;
+}
+
+.mali-light {
+  font-family: var(--font-mali);
+  font-weight: 300;
+  font-style: normal;
+}
+
+.mali-regular {
+  font-family: var(--font-mali);
+  font-weight: 400;
+  font-style: normal;
+}
+
+.mali-medium {
+  font-family: var(--font-mali);
+  font-weight: 500;
+  font-style: normal;
+}
+
+.mali-semibold {
+  font-family: var(--font-mali);
+  font-weight: 600;
+  font-style: normal;
+}
+
+.mali-bold {
+  font-family: var(--font-mali);
+  font-weight: 700;
+  font-style: normal;
+}
+
+.mali-extralight-italic {
+  font-family: var(--font-mali);
+  font-weight: 200;
+  font-style: italic;
+}
+
+.mali-light-italic {
+  font-family: var(--font-mali);
+  font-weight: 300;
+  font-style: italic;
+}
+
+.mali-regular-italic {
+  font-family: var(--font-mali);
+  font-weight: 400;
+  font-style: italic;
+}
+
+.mali-medium-italic {
+  font-family: var(--font-mali);
+  font-weight: 500;
+  font-style: italic;
+}
+
+.mali-semibold-italic {
+  font-family: var(--font-mali);
+  font-weight: 600;
+  font-style: italic;
+}
+
+.mali-bold-italic {
+  font-family: var(--font-mali);
+  font-weight: 700;
+  font-style: italic;
+}
+
 @keyframes language-sheet-enter {
   from {
     transform: translateY(18px);
@@ -68,6 +151,65 @@ body {
 
 .language-sheet-enter {
   animation: language-sheet-enter 180ms ease-out;
+}
+
+/* Shared pill action button (cycle add, list add, …) */
+.pill-action-btn {
+  --pill-action-bg: #9ab870;
+  --pill-action-border: #6f9454;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  height: 3.25rem;
+  padding: 0.625rem 1.25rem;
+  border: 1.5px solid var(--pill-action-border);
+  border-radius: 9999px;
+  background: var(--pill-action-bg);
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(79, 104, 58, 0.18);
+  transition:
+    transform 180ms ease,
+    filter 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.pill-action-btn:hover:not(:disabled) {
+  filter: brightness(1.03);
+  box-shadow: 0 3px 10px rgba(79, 104, 58, 0.22);
+}
+
+.pill-action-btn:active:not(:disabled) {
+  transform: scale(0.99);
+  filter: brightness(0.98);
+}
+
+.pill-action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+.pill-action-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background: #fff;
+  color: var(--pill-action-bg);
+}
+
+.pill-action-btn-text {
+  text-shadow: 0 1px 2px rgba(52, 72, 38, 0.28);
 }
 
 /* bottom sheet ใช้ร่วมกันระหว่างหน้า Cycle / List (Add transaction, Add cycle) */
@@ -100,5 +242,76 @@ body {
 
 .bottom-sheet-backdrop {
   animation: bottom-sheet-backdrop 180ms ease-out;
+}
+
+/* Shared page shell (home, cycle, list, analytics, …) */
+.home-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0 1rem 0.75rem;
+}
+
+.home-content-card {
+  margin-top: -0.5rem;
+  border-radius: 2rem 2rem var(--radius-card) var(--radius-card);
+  background: var(--surface);
+  padding: 1.5rem 1.25rem 1.75rem;
+  box-shadow: 0 4px 24px rgba(74, 74, 74, 0.06);
+}
+
+/* Date range picker trigger (home + list) */
+.home-date-range,
+.list-date-range {
+  position: relative;
+  width: 100%;
+  border-radius: 9999px;
+  border: 1.5px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+  background: color-mix(in srgb, var(--primary-soft) 60%, var(--surface));
+  padding: 0.6875rem 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(74, 74, 74, 0.06);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.home-date-range:hover,
+.list-date-range:hover {
+  background: color-mix(in srgb, var(--primary-soft) 82%, var(--surface));
+  border-color: color-mix(in srgb, var(--primary) 48%, var(--border));
+  box-shadow: 0 3px 12px rgba(79, 104, 58, 0.12);
+}
+
+.home-date-range:active,
+.list-date-range:active {
+  transform: scale(0.99);
+  background: color-mix(in srgb, var(--primary-soft) 95%, var(--surface));
+}
+
+.date-range-trigger-btn {
+  cursor: pointer;
+}
+
+.home-date-range-label,
+.list-date-range-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.home-date-range-sep,
+.list-date-range-sep {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.home-date-range-icon,
+.list-date-range-icon {
+  font-size: 1.0625rem;
+  color: var(--primary);
 }
 

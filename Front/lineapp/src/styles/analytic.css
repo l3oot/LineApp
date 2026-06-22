@@ -1,0 +1,292 @@
+/* ── Analytics page layout ── */
+
+.analytic-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.analytic-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--border) 85%, #d8cfc4);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.analytic-card-body {
+    padding: 1.25rem 1.25rem 1.5rem;
+}
+
+.analytic-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.analytic-card-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.analytic-card-dropdown {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    transform: scale(0.92);
+    transform-origin: right center;
+}
+
+.analytic-legend {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.analytic-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.analytic-legend-dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+}
+
+.analytic-legend-dot--income {
+    background: var(--income);
+}
+
+.analytic-legend-dot--expense {
+    background: var(--expense);
+}
+
+.analytic-legend-label {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-soft);
+}
+
+.analytic-chart-wrap {
+    width: 100%;
+    height: 250px;
+}
+
+.analytic-chart-wrap--bar {
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.analytic-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 0.875rem;
+    color: var(--text-soft);
+}
+
+.analytic-error {
+    margin: 0 0 0.75rem;
+    font-size: 0.875rem;
+    color: var(--danger);
+}
+
+.analytic-filter-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 0.25rem;
+    margin-top: 1.5rem;
+    padding: 0.25rem;
+    border-radius: var(--radius-control);
+    background: var(--surface-soft);
+}
+
+.analytic-filter-btn {
+    flex: 1;
+    padding: 0.375rem 0.5rem;
+    border: none;
+    border-radius: 0.625rem;
+    background: transparent;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--text-soft);
+    cursor: pointer;
+    transition:
+        background-color 160ms ease,
+        color 160ms ease,
+        box-shadow 160ms ease;
+}
+
+.analytic-filter-btn:hover {
+    color: var(--text);
+}
+
+.analytic-filter-btn.is-active {
+    background: var(--surface);
+    color: var(--primary);
+    box-shadow: 0 2px 8px rgba(74, 74, 74, 0.08);
+}
+
+/* Pie share cards */
+.analytic-pie-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--border) 85%, #d8cfc4);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.analytic-pie-card-header {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1.25rem 1.25rem 0;
+}
+
+.analytic-pie-layout {
+    display: flex;
+    width: 100%;
+    height: 200px;
+    align-items: center;
+    padding-bottom: 1.25rem;
+}
+
+.analytic-pie-chart {
+    display: flex;
+    width: 30%;
+    align-items: center;
+    justify-content: center;
+}
+
+.analytic-pie-legend-list {
+    display: flex;
+    width: 70%;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0 1.5rem;
+}
+
+.analytic-pie-legend-btn {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.375rem 0.5rem;
+    border: none;
+    border-radius: var(--radius-control);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 160ms ease;
+}
+
+.analytic-pie-legend-btn:hover {
+    background: var(--surface-soft);
+}
+
+.analytic-pie-legend-btn.is-active {
+    background: var(--primary-soft);
+}
+
+.analytic-pie-swatch {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    border-radius: 0.25rem;
+}
+
+.analytic-pie-legend-label {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.analytic-pie-legend-btn.is-active .analytic-pie-legend-label {
+    color: var(--primary);
+}
+
+.analytic-pie-legend-percent {
+    margin: 0 0 0 auto;
+    font-size: 0.875rem;
+    color: var(--text-soft);
+}
+
+.analytic-empty {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+    font-size: 0.875rem;
+    color: var(--text-soft);
+}
+
+/* Calendar card extras */
+.analytic-today-btn {
+    flex-shrink: 0;
+    padding: 0.25rem 0.75rem;
+    border: 1.5px solid color-mix(in srgb, var(--primary) 55%, white);
+    border-radius: 9999px;
+    background: var(--primary-soft);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--primary);
+    cursor: pointer;
+    transition:
+        filter 160ms ease,
+        transform 160ms ease;
+}
+
+.analytic-today-btn:hover {
+    filter: brightness(1.03);
+}
+
+.analytic-today-btn:active {
+    transform: scale(0.97);
+}
+
+.analytic-cal-badge {
+    display: inline-flex;
+    height: 1.125rem;
+    min-width: 1.125rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.25rem;
+    border-radius: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+}
+
+.analytic-cal-badge--income {
+    background: var(--income);
+}
+
+.analytic-cal-badge--expense {
+    background: var(--expense);
+}

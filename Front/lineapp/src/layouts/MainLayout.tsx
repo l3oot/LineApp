@@ -1,6 +1,11 @@
 import '../styles/MainLayout.css';
+import '../styles/page-tones.css';
 import { useState, type ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 import GreetingHeader from "../components/GreetingHeader";
+import CyclePageHeader from "../components/CyclePageHeader";
+import AnalyticPageHeader from "../components/AnalyticPageHeader";
+import ListPageHeader from "../components/ListPageHeader";
 import AnnouncementBottomSheet from "../components/AnnouncementBottomSheet";
 import { GoHome } from "react-icons/go";
 import { GrPowerCycle } from "react-icons/gr";
@@ -22,25 +27,49 @@ const navItems = [
     { to: "/settings", labelKey: "nav.settings", icon: LuSettings },
 ];
 
+function resolvePageTone(pathname: string): string {
+    if (pathname.startsWith("/list")) return "green";
+    if (pathname === "/cycle") return "pink";
+    if (pathname.startsWith("/analytics")) return "blue";
+    if (pathname.startsWith("/settings")) return "purple";
+    return "neutral";
+}
+
 export default function MainLayout({ children }: MainLayoutProps) {
     const { t } = useTranslation();
+    const location = useLocation();
+    const isCyclePage = location.pathname === "/cycle";
+    const isAnalyticsPage = location.pathname === "/analytics";
+    const isListPage = location.pathname === "/list";
     const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
     const [hasUnreadAnnouncement, setHasUnreadAnnouncement] = useState(true);
 
+    const headerProps = {
+        hasNotification: hasUnreadAnnouncement,
+        onNotificationClick: () => {
+            setIsAnnouncementOpen(true);
+            setHasUnreadAnnouncement(false);
+        },
+    };
+
+    const pageTone = resolvePageTone(location.pathname);
+
     return (
         <div className="min-h-screen flex flex-col">
-            <GreetingHeader
-                hasNotification={hasUnreadAnnouncement}
-                onNotificationClick={() => {
-                    setIsAnnouncementOpen(true);
-                    setHasUnreadAnnouncement(false);
-                }}
-            />
+            {isCyclePage ? (
+                <CyclePageHeader {...headerProps} />
+            ) : isAnalyticsPage ? (
+                <AnalyticPageHeader {...headerProps} />
+            ) : isListPage ? (
+                <ListPageHeader {...headerProps} />
+            ) : (
+                <GreetingHeader {...headerProps} />
+            )}
             <AnnouncementBottomSheet
                 open={isAnnouncementOpen}
                 onClose={() => setIsAnnouncementOpen(false)}
             />
-            <main className="main-layout-content flex-1 pb-24">
+            <main className={`main-layout-content flex-1 pb-20 page-tone page-tone--${pageTone}`}>
                 {children}
             </main>
             <footer className="main-layout-footer">
@@ -56,8 +85,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                     `main-layout-nav-item${isActive ? " is-active" : ""}`
                                 }
                             >
-                                <Icon size={22} aria-hidden />
-                                <span>{t(item.labelKey)}</span>
+                                <span className="main-layout-nav-icon" aria-hidden>
+                                    <Icon size={20} />
+                                </span>
+                                <span className="main-layout-nav-label">{t(item.labelKey)}</span>
                             </NavLink>
                         );
                     })}

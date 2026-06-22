@@ -12,6 +12,7 @@ import {
 import { useMemo, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import Dropdown from "./Dropdown";
+import "../styles/analytic.css";
 import type { DailyTotals } from "../utils/buildAnalyticTrend";
 import {
     gregorianKeyFromCalendarDate,
@@ -49,8 +50,6 @@ export default function AnalyticCalendarCard({
     loading = false,
 }: AnalyticCalendarCardProps) {
     const { t, i18n } = useTranslation();
-    const brandColor = "#2f8f4e";
-    const dangerColor = "#b23a3a";
     const lang = i18n.language;
     const focusedGregorian = toGregorianCalendarDate(focusedDate);
 
@@ -124,11 +123,11 @@ export default function AnalyticCalendarCard({
     const todayKey = gregorianKeyFromCalendarDate(today(getLocalTimeZone()));
 
     return (
-        <div className="flex flex-col rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)] overflow-hidden">
-            <div className="p-5 pb-6">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="font-bold text-[var(--text)] text-lg">{t("analytic.calendarTitle")}</p>
-                    <div className="flex shrink-0 items-center scale-90 origin-right">
+        <section className="analytic-card">
+            <div className="analytic-card-body">
+                <div className="analytic-card-header">
+                    <h2 className="analytic-card-title">{t("analytic.calendarTitle")}</h2>
+                    <div className="analytic-card-dropdown">
                         <Dropdown
                             label={t("analytic.month")}
                             data={monthOptions}
@@ -148,20 +147,20 @@ export default function AnalyticCalendarCard({
                     </div>
                 </div>
 
-                <div className="mb-4 flex flex-row gap-4">
-                    <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: brandColor }} />
-                        <p className="text-sm font-semibold text-[var(--text-soft)]">{t("analytic.income")}</p>
+                <div className="analytic-legend">
+                    <div className="analytic-legend-item">
+                        <span className="analytic-legend-dot analytic-legend-dot--income" aria-hidden />
+                        <p className="analytic-legend-label">{t("analytic.income")}</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: dangerColor }} />
-                        <p className="text-sm font-semibold text-[var(--text-soft)]">{t("analytic.expense")}</p>
+                    <div className="analytic-legend-item">
+                        <span className="analytic-legend-dot analytic-legend-dot--expense" aria-hidden />
+                        <p className="analytic-legend-label">{t("analytic.expense")}</p>
                     </div>
                 </div>
 
                 {loading ? (
                     <div
-                        className="flex items-center justify-center text-sm text-[var(--text-soft)]"
+                        className="analytic-loading"
                         style={{ minHeight: CALENDAR_GRID_MIN_HEIGHT_PX + 44 }}
                     >
                         กำลังโหลด...
@@ -192,7 +191,7 @@ export default function AnalyticCalendarCard({
                                 <button
                                     type="button"
                                     onClick={goToToday}
-                                    className="shrink-0 rounded-[var(--radius-control)] border border-[var(--primary)] bg-[var(--primary)] px-3 py-1 text-xs font-bold text-white shadow-sm transition-all hover:brightness-110 active:scale-95"
+                                    className="analytic-today-btn"
                                 >
                                     {t("analytic.today")}
                                 </button>
@@ -232,8 +231,7 @@ export default function AnalyticCalendarCard({
                                                         <>
                                                             {totals.incomeCount > 0 && (
                                                                 <span
-                                                                    className="inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-sm px-1 text-[10px] font-bold leading-none text-white"
-                                                                    style={{ backgroundColor: brandColor }}
+                                                                    className="analytic-cal-badge analytic-cal-badge--income"
                                                                     title={`${t("analytic.income")} ${totals.incomeCount} ${t("analytic.items")} · ${totals.income.toLocaleString()}`}
                                                                 >
                                                                     {totals.incomeCount}
@@ -241,8 +239,7 @@ export default function AnalyticCalendarCard({
                                                             )}
                                                             {totals.expenseCount > 0 && (
                                                                 <span
-                                                                    className="inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-sm px-1 text-[10px] font-bold leading-none text-white"
-                                                                    style={{ backgroundColor: dangerColor }}
+                                                                    className="analytic-cal-badge analytic-cal-badge--expense"
                                                                     title={`${t("analytic.expense")} ${totals.expenseCount} ${t("analytic.items")} · ${totals.expense.toLocaleString()}`}
                                                                 >
                                                                     {totals.expenseCount}
@@ -260,6 +257,6 @@ export default function AnalyticCalendarCard({
                     </Calendar>
                 )}
             </div>
-        </div>
+        </section>
     );
 }

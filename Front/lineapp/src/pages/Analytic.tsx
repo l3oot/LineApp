@@ -3,6 +3,7 @@ import { CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
 import MainLayout from "../layouts/MainLayout";
 import AnalyticCalendarCard from "../components/AnalyticCalendarCard";
 import AnalyticDayTransactionsSheet from "../components/AnalyticDayTransactionsSheet";
+import "../styles/analytic.css";
 import { ApiError } from "../lib/api";
 import { auth } from "../lib/auth";
 import { categoryApi, transactionApi, type Category, type Transaction } from "../lib/userService";
@@ -37,6 +38,12 @@ import {
     analyticFilters,
     type AnalyticFilter,
 } from "../data/analyticMockData";
+import {
+    CHART_EXPENSE,
+    CHART_INCOME,
+    chartColorWithAlpha,
+    chartColorWithOpacity,
+} from "../utils/chartTheme";
 
 ChartJS.register(
     CategoryScale,
@@ -114,8 +121,8 @@ export default function Analytic() {
         setSelectedDay(null);
     }, []);
 
-    const brandColor = "#2f8f4e";
-    const dangerColor = "#b23a3a";
+    const incomeColor = CHART_INCOME;
+    const expenseColor = CHART_EXPENSE;
 
     useEffect(() => {
         if (!auth.isAuthed()) {
@@ -251,23 +258,23 @@ export default function Analytic() {
             {
                 label: t("analytic.income"),
                 data: trendSeries.income,
-                borderColor: brandColor,
-                backgroundColor: "rgba(47, 143, 78, 0.15)",
+                borderColor: incomeColor,
+                backgroundColor: chartColorWithAlpha(incomeColor, 0.15),
                 fill: "start",
                 tension: 0.4,
                 pointRadius: 4,
-                pointBackgroundColor: brandColor,
+                pointBackgroundColor: incomeColor,
                 borderWidth: 3,
             },
             {
                 label: t("analytic.expense"),
                 data: trendSeries.expense,
-                borderColor: dangerColor,
-                backgroundColor: "rgba(178, 58, 58, 0.15)",
+                borderColor: expenseColor,
+                backgroundColor: chartColorWithAlpha(expenseColor, 0.15),
                 fill: "start",
                 tension: 0.4,
                 pointRadius: 4,
-                pointBackgroundColor: dangerColor,
+                pointBackgroundColor: expenseColor,
                 borderWidth: 3,
             },
         ],
@@ -317,14 +324,14 @@ export default function Analytic() {
             {
                 label: t("analytic.income"),
                 data: barSeries.income,
-                backgroundColor: "#2f8f4ecc",
-                borderRadius: 5,
+                backgroundColor: chartColorWithOpacity(incomeColor, "cc"),
+                borderRadius: 8,
             },
             {
                 label: t("analytic.expense"),
                 data: barSeries.expense,
-                backgroundColor: "#b23a3acc",
-                borderRadius: 5,
+                backgroundColor: chartColorWithOpacity(expenseColor, "cc"),
+                borderRadius: 8,
             },
         ],
     };
@@ -408,59 +415,55 @@ export default function Analytic() {
 
     return (
         <MainLayout>
-            <div className="flex flex-col gap-5 p-5">
-                {/* Trend Chart Card */}
-                <div className="flex flex-col rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)] overflow-hidden">
-                    <div className="p-5 pb-7">
-                        <div className="flex flex-row justify-between items-center mb-3">
-                            <p className="font-bold text-[var(--text)] text-lg">{t("analytic.trendTitle")}</p>
+            <div className="home-page">
+                <div className="home-content-card">
+                    <div className="analytic-page">
+                <section className="analytic-card">
+                    <div className="analytic-card-body">
+                        <div className="analytic-card-header">
+                            <h2 className="analytic-card-title">{t("analytic.trendTitle")}</h2>
                         </div>
 
-                        {/* Custom Legend for Line Chart */}
-                        <div className="flex flex-row gap-4 mb-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-sm bg-[#2f8f4e]" />
-                                <p className="text-sm font-semibold text-[var(--text-soft)]">{t("analytic.income")}</p>
+                        <div className="analytic-legend">
+                            <div className="analytic-legend-item">
+                                <span className="analytic-legend-dot analytic-legend-dot--income" aria-hidden />
+                                <p className="analytic-legend-label">{t("analytic.income")}</p>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-sm bg-[#b23a3a]" />
-                                <p className="text-sm font-semibold text-[var(--text-soft)]">{t("analytic.expense")}</p>
+                            <div className="analytic-legend-item">
+                                <span className="analytic-legend-dot analytic-legend-dot--expense" aria-hidden />
+                                <p className="analytic-legend-label">{t("analytic.expense")}</p>
                             </div>
                         </div>
 
-                        {loadError && (
-                            <p className="mb-3 text-sm text-[var(--danger)]">{loadError}</p>
-                        )}
-                        <div className="h-[250px] w-full">
+                        {loadError && <p className="analytic-error">{loadError}</p>}
+                        <div className="analytic-chart-wrap">
                             {loading ? (
-                                <div className="flex h-full items-center justify-center text-sm text-[var(--text-soft)]">
-                                    กำลังโหลด...
-                                </div>
+                                <div className="analytic-loading">กำลังโหลด...</div>
                             ) : (
                                 <Line data={lineData} options={lineOptions} plugins={[linePointAmountLabelsPlugin]} />
                             )}
                         </div>
 
-                        {/* Filter Buttons */}
-                        <div className="flex flex-row bg-[var(--surface-soft)] p-1 rounded-[var(--radius-control)] mt-6 justify-between">
+                        <div className="analytic-filter-bar">
                             {analyticFilters.map((f) => (
                                 <button
                                     key={f}
+                                    type="button"
                                     onClick={() => setFilter(f)}
-                                    className={`px-3 py-1.5 rounded-[10px] text-xs font-bold transition-all ${filter === f ? "bg-[var(--surface)] text-[var(--primary)] shadow-sm" : "text-[var(--text-soft)] hover:text-[var(--text)]"}`}>
+                                    className={`analytic-filter-btn${filter === f ? " is-active" : ""}`}
+                                >
                                     {t(`analytic.filter.${f}`)}
                                 </button>
                             ))}
                         </div>
                     </div>
-                </div>
+                </section>
 
-                {/* Bar Chart Card */}
-                <div className="flex flex-col rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)] overflow-hidden">
-                    <div className="p-5 pb-7">
-                        <div className="flex flex-row justify-between items-center">
-                            <p className="font-bold text-[var(--text)] text-lg">{t("analytic.incomeExpenseTitle")}</p>
-                            <div className="flex items-center scale-90 origin-right">
+                <section className="analytic-card">
+                    <div className="analytic-card-body">
+                        <div className="analytic-card-header">
+                            <h2 className="analytic-card-title">{t("analytic.incomeExpenseTitle")}</h2>
+                            <div className="analytic-card-dropdown">
                                 <Dropdown
                                     label={t("analytic.year")}
                                     data={barYearOptions.length > 0 ? barYearOptions : [yearDropdownFallback(barYear)]}
@@ -470,29 +473,26 @@ export default function Analytic() {
                             </div>
                         </div>
 
-                        {/* Custom Legend for Bar Chart */}
-                        <div className="flex flex-row gap-4 mb-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-sm bg-[#2f8f4ecc]" />
-                                <p className="text-sm font-semibold text-[var(--text-soft)]">{t("analytic.income")}</p>
+                        <div className="analytic-legend">
+                            <div className="analytic-legend-item">
+                                <span className="analytic-legend-dot analytic-legend-dot--income" aria-hidden />
+                                <p className="analytic-legend-label">{t("analytic.income")}</p>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-sm bg-[#b23a3acc]" />
-                                <p className="text-sm font-semibold text-[var(--text-soft)]">{t("analytic.expense")}</p>
+                            <div className="analytic-legend-item">
+                                <span className="analytic-legend-dot analytic-legend-dot--expense" aria-hidden />
+                                <p className="analytic-legend-label">{t("analytic.expense")}</p>
                             </div>
                         </div>
 
-                        <div className="w-full h-[300px] flex items-center justify-center">
+                        <div className="analytic-chart-wrap analytic-chart-wrap--bar">
                             {loading ? (
-                                <div className="flex h-full items-center justify-center text-sm text-[var(--text-soft)]">
-                                    กำลังโหลด...
-                                </div>
+                                <div className="analytic-loading">กำลังโหลด...</div>
                             ) : (
                                 <Bar data={barData} options={options} />
                             )}
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <AnalyticCalendarCard
                     dailyTotals={dailyTotals}
@@ -533,13 +533,10 @@ export default function Analytic() {
                         setActiveIndex: setActiveIncomePieIndex,
                     },
                 ]).map((card) => (
-                    <div
-                        key={card.title}
-                        className="flex flex-col items-center rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)] overflow-hidden"
-                    >
-                        <div className="flex flex-row justify-between items-center w-full px-5 mt-5">
-                            <p className="font-bold text-[var(--text)] text-lg">{card.title}</p>
-                            <div className="flex items-center">
+                    <section key={card.title} className="analytic-pie-card">
+                        <div className="analytic-pie-card-header">
+                            <h2 className="analytic-card-title">{card.title}</h2>
+                            <div className="analytic-card-dropdown">
                                 <Dropdown
                                     label={t("analytic.year")}
                                     data={barYearOptions.length > 0 ? barYearOptions : [yearDropdownFallback(pieYear)]}
@@ -548,21 +545,17 @@ export default function Analytic() {
                                 />
                             </div>
                         </div>
-                        <div className="w-full h-[200px] flex items-center pb-5">
+                        <div className="analytic-pie-layout">
                             {loading ? (
-                                <div className="flex w-full items-center justify-center py-8 text-sm text-[var(--text-soft)]">
-                                    กำลังโหลด...
-                                </div>
+                                <div className="analytic-empty">กำลังโหลด...</div>
                             ) : card.slices.length === 0 ? (
-                                <div className="flex w-full items-center justify-center py-8 text-sm text-[var(--text-soft)]">
-                                    {t("list.empty")}
-                                </div>
+                                <div className="analytic-empty">{t("list.empty")}</div>
                             ) : (
                                 <>
-                                    <div className="w-[30%] flex items-center justify-center">
+                                    <div className="analytic-pie-chart">
                                         <Pie data={card.pieData} options={pieOptions} />
                                     </div>
-                                    <div className="w-[70%] flex flex-col gap-1 px-6">
+                                    <div className="analytic-pie-legend-list">
                                         {card.slices.map((item, index) => {
                                             const isActive = card.activeIndex === index;
                                             return (
@@ -574,14 +567,10 @@ export default function Analytic() {
                                                             current === index ? null : index,
                                                         )
                                                     }
-                                                    className={`flex w-full items-center gap-3 rounded-[var(--radius-control)] px-2 py-1.5 text-left transition-all ${
-                                                        isActive
-                                                            ? "bg-[var(--primary-soft)]"
-                                                            : "hover:bg-[var(--surface-soft)]"
-                                                    }`}
+                                                    className={`analytic-pie-legend-btn${isActive ? " is-active" : ""}`}
                                                 >
-                                                    <div
-                                                        className="h-4 w-4 shrink-0 rounded-sm"
+                                                    <span
+                                                        className="analytic-pie-swatch"
                                                         style={{
                                                             backgroundColor:
                                                                 card.colors[index % card.colors.length],
@@ -589,18 +578,8 @@ export default function Analytic() {
                                                                 isActive || card.activeIndex === null ? 1 : 0.45,
                                                         }}
                                                     />
-                                                    <p
-                                                        className={`text-sm font-semibold ${
-                                                            isActive
-                                                                ? "text-[var(--primary)]"
-                                                                : "text-[var(--text)]"
-                                                        }`}
-                                                    >
-                                                        {item.label}
-                                                    </p>
-                                                    <p className="ml-auto text-sm text-[var(--text-soft)]">
-                                                        {item.percent}%
-                                                    </p>
+                                                    <p className="analytic-pie-legend-label">{item.label}</p>
+                                                    <p className="analytic-pie-legend-percent">{item.percent}%</p>
                                                 </button>
                                             );
                                         })}
@@ -608,8 +587,10 @@ export default function Analytic() {
                                 </>
                             )}
                         </div>
-                    </div>
+                    </section>
                 ))}
+                    </div>
+                </div>
             </div>
         </MainLayout>
     );

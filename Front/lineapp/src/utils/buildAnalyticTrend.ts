@@ -24,19 +24,19 @@ export type ExpenseShareSlice = {
 };
 
 export const EXPENSE_PIE_COLORS = [
-    "#b23a3a",
-    "#c94f4f",
-    "#8f2e2e",
-    "#d97272",
-    "#9a3535",
+    "#e57373",
+    "#ef9a9a",
+    "#d32f2f",
+    "#f48fb1",
+    "#c62828",
 ];
 
 export const INCOME_PIE_COLORS = [
-    "#2f8f4e",
-    "#3da35d",
-    "#5cb87a",
-    "#1e6b3a",
-    "#7fd99a",
+    "#5bb35f",
+    "#81c784",
+    "#43a047",
+    "#a5d6a7",
+    "#388e3c",
 ];
 
 export type TrendLineSeries = {

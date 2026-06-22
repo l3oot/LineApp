@@ -119,8 +119,9 @@ export default function Setting() {
 
     return (
         <MainLayout>
-            <div className="flex flex-col gap-1.5 px-5">
-                <div className="mb-1 flex w-full items-center justify-end gap-3.5 px-2 py-2">
+            <div className="home-page">
+                <div className="home-content-card flex flex-col gap-1.5">
+                <div className="settings-panel mb-1 flex w-full items-center justify-end gap-3.5 px-2 py-2">
                     <div className="leading-tight text-right">
                         <p className="text-base font-semibold text-[var(--text)]">{displayName}</p>
                     </div>
@@ -174,6 +175,7 @@ export default function Setting() {
                         {t("settings.logout")}
                     </button>
                 )}
+                </div>
             </div>
 
             <LanguageBottomSheet

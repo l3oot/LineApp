@@ -16,8 +16,8 @@ import {
     RangeCalendar,
 } from "react-aria-components";
 import MainLayout from "../layouts/MainLayout";
+import ListDayTypeCard from "../components/ListDayTypeCard";
 import AppDateTimeField, { initialAppDateTime } from "../components/AppDateTimeField";
-import TransactionCard, { type TransactionProps } from "../components/TransactionCard";
 import FilterChipButton from "../components/FilterChipButton";
 import BottomSheet from "../components/BottomSheet";
 import { icons } from "../assets/Iconlist";
@@ -25,6 +25,7 @@ import { FiCalendar, FiCheck, FiChevronDown, FiX } from "react-icons/fi";
 import { FaPlus } from "react-icons/fa";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { useTranslation } from "react-i18next";
+import "../styles/list.css";
 import type { GroupedTransaction } from "../data/listMockData";
 import { ApiError } from "../lib/api";
 import {
@@ -37,7 +38,6 @@ import {
     type TransactionListPageQuery,
 } from "../lib/userService";
 import { auth } from "../lib/auth";
-import { formatTxTime, parseTxDateTime } from "../utils/parseTxDateTime";
 import {
     calendarDateTimeFromTx,
     calendarDateTimeToApi,
@@ -46,30 +46,14 @@ import {
     formatAppDate,
     formatCalendarDate,
     gregorianKeyFromCalendarDate,
-    intlLocaleForAppLanguage,
     parseTxToGregorianCalendarDate,
     toAppCalendarDate,
     toGregorianCalendarDate,
 } from "../utils/formatAppDate";
+import { parseTxDateTime } from "../utils/parseTxDateTime";
 
 function isIconName(value: string | null | undefined): value is keyof typeof icons {
     return Boolean(value && Object.prototype.hasOwnProperty.call(icons, value));
-}
-
-function toDisplayTransaction(
-    tx: Transaction,
-    categoryById: Record<string, string>,
-    fallbackCategory: string,
-    dateLocale: string,
-): TransactionProps {
-    return {
-        title: tx.note?.trim() || "—",
-        type: tx.txType,
-        category: tx.categoryId ? (categoryById[tx.categoryId] ?? fallbackCategory) : fallbackCategory,
-        amount: Number(tx.amount),
-        time: formatTxTime(tx.txDate, dateLocale),
-        icon: icons.bill,
-    };
 }
 
 function categoryNameForTx(
@@ -111,7 +95,6 @@ function groupTransactionsByDate(rows: Transaction[], lang: string): GroupedTran
 
 export default function List() {
     const { t, i18n } = useTranslation();
-    const dateLocale = intlLocaleForAppLanguage(i18n.language);
     const [searchParams, setSearchParams] = useSearchParams();
     const pendingEditTxId = searchParams.get("editTxId");
     const [activeFilter, setActiveFilter] = useState<"all" | "expense" | "income">("all");
@@ -151,6 +134,7 @@ export default function List() {
     const [isBulkSelectMode, setIsBulkSelectMode] = useState(false);
     const [selectedTxIds, setSelectedTxIds] = useState<string[]>([]);
     const [bulkDeleting, setBulkDeleting] = useState(false);
+    const [collapsedCards, setCollapsedCards] = useState<Record<string, boolean>>({});
     const selectAllRef = useRef<HTMLInputElement>(null);
     const fallbackCategory = t("list.quickAddCategory");
 
@@ -378,6 +362,10 @@ export default function List() {
         }
     };
 
+    const toggleCardCollapsed = useCallback((key: string) => {
+        setCollapsedCards((prev) => ({ ...prev, [key]: !prev[key] }));
+    }, []);
+
     const filterButtons = [
         { key: "all", label: t("list.all") },
         { key: "expense", label: t("list.expense") },
@@ -524,7 +512,9 @@ export default function List() {
 
     return (
         <MainLayout>
-            <div className="flex flex-col p-5 gap-4 pb-3">
+            <div className="home-page">
+                <div className="home-content-card">
+                    <div className="list-page">
                 <DateRangePicker
                     aria-label={t("list.dateRangeAria")}
                     value={dateRange}
@@ -537,20 +527,20 @@ export default function List() {
                     }}
                     className="w-full"
                 >
-                    <Group className="relative w-full rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-soft)] transition-all focus-within:border-[var(--primary)] hover:bg-[var(--surface-soft)]">
+                    <Group className="list-date-range">
                         <Button
                             aria-label={t("list.dateRangeAria")}
-                            className="absolute inset-0 z-10 rounded-[var(--radius-card)]"
+                            className="date-range-trigger-btn absolute inset-0 z-10 rounded-full"
                         />
-                        <div className="pointer-events-none flex items-center justify-center gap-3">
-                            <span className="whitespace-nowrap text-base font-semibold text-[var(--text)]">
+                        <div className="pointer-events-none flex items-center justify-center gap-2">
+                            <span className="list-date-range-label whitespace-nowrap">
                                 {formatCalendarDate(dateRange.start, i18n.language)}
                             </span>
-                            <span className="text-base font-semibold text-[var(--text)]">-</span>
-                            <span className="whitespace-nowrap text-base font-semibold text-[var(--text)]">
+                            <span className="list-date-range-sep">-</span>
+                            <span className="list-date-range-label whitespace-nowrap">
                                 {formatCalendarDate(dateRange.end, i18n.language)}
                             </span>
-                            <FiCalendar className="text-xl text-[var(--text-soft)]" />
+                            <FiCalendar className="list-date-range-icon" aria-hidden />
                         </div>
                     </Group>
                     <Popover className="z-30 mt-2 w-[var(--trigger-width)] min-w-[280px] rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[var(--shadow-soft)]">
@@ -587,40 +577,30 @@ export default function List() {
                     </Popover>
                 </DateRangePicker>
 
-                <div className="flex gap-3 items-stretch">
-                    <div className="w-full rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft)]">
-                        <p className="text-[var(--text-soft)] text-sm font-semibold mb-3">{t("list.filterTitle")}</p>
-                        <div className="relative flex items-center justify-between gap-2">
-                            <div className="flex flex-wrap gap-2">
-                                {filterButtons.map((filter) => {
-                                    const isActive = activeFilter === filter.key;
-                                    const activeClass = filter.key === "expense"
-                                        ? "border-[var(--danger)] bg-[var(--danger)] text-white"
-                                        : "border-[var(--primary)] bg-[var(--primary)] text-white";
-                                    return (
-                                        <FilterChipButton
-                                            key={filter.key}
-                                            label={filter.label}
-                                            active={isActive}
-                                            activeClassName={activeClass}
-                                            onClick={() => setActiveFilter(filter.key)}
-                                        />
-                                    );
-                                })}
-                            </div>
-                            <button
-                                type="button"
-                                aria-label={t("list.extraFilterAria")}
-                                onClick={() => setIsCategoryDropdownOpen((prev) => !prev)}
-                                className="inline-flex shrink-0 items-center justify-center rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-soft)] px-2 py-1 text-[var(--text-soft)] transition-all hover:bg-[var(--surface)]"
-                            >
-                                <FilterListIcon fontSize="small" />
-                            </button>
-                            {isCategoryDropdownOpen && (
-                                <div
-                                    ref={categoryDropdownRef}
-                                    className="absolute right-0 top-full z-20 mt-2 w-52 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-soft)]"
-                                >
+                <div className="list-filter-card">
+                    <p className="list-filter-title">{t("list.filterTitle")}</p>
+                    <div className="relative list-filter-row">
+                        <div className="list-filter-chips">
+                            {filterButtons.map((filter) => (
+                                <FilterChipButton
+                                    key={filter.key}
+                                    label={filter.label}
+                                    active={activeFilter === filter.key}
+                                    variant={filter.key}
+                                    onClick={() => setActiveFilter(filter.key)}
+                                />
+                            ))}
+                        </div>
+                        <button
+                            type="button"
+                            aria-label={t("list.extraFilterAria")}
+                            onClick={() => setIsCategoryDropdownOpen((prev) => !prev)}
+                            className="list-filter-extra-btn"
+                        >
+                            <FilterListIcon fontSize="small" />
+                        </button>
+                        {isCategoryDropdownOpen && (
+                            <div ref={categoryDropdownRef} className="list-category-menu">
                                     <p className="mb-2 text-xs font-semibold text-[var(--text-soft)]">{t("list.categoryTitle")}</p>
                                     <div className="flex flex-col gap-2">
                                         <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[var(--text)]">
@@ -628,7 +608,7 @@ export default function List() {
                                                 type="checkbox"
                                                 checked={activeCategories.length === 0}
                                                 onChange={() => setActiveCategories([])}
-                                                className="h-4 w-4 rounded border-[var(--border)] accent-[var(--primary)]"
+                                                className="list-category-checkbox"
                                             />
                                             {t("list.all")}
                                         </label>
@@ -644,7 +624,7 @@ export default function List() {
                                                                 checked ? prev.filter((item) => item !== category) : [...prev, category]
                                                             );
                                                         }}
-                                                        className="h-4 w-4 rounded border-[var(--border)] accent-[var(--primary)]"
+                                                        className="list-category-checkbox"
                                                     />
                                                     {category}
                                                 </label>
@@ -652,8 +632,7 @@ export default function List() {
                                         })}
                                     </div>
                                 </div>
-                            )}
-                        </div>
+                        )}
                     </div>
                 </div>
 
@@ -664,7 +643,7 @@ export default function List() {
                 )}
 
                 {!listLoading && visibleTransactions.length > 0 && (
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="list-bulk-bar">
                         {!isBulkSelectMode ? (
                             <button
                                 type="button"
@@ -681,7 +660,7 @@ export default function List() {
                                         type="checkbox"
                                         checked={allVisibleSelected}
                                         onChange={toggleSelectAllVisible}
-                                        className="h-4 w-4 rounded border-[var(--border)] accent-[var(--danger)]"
+                                        className="list-round-checkbox"
                                     />
                                     {t("list.selectAllLoaded", { count: visibleTransactions.length })}
                                 </label>
@@ -710,82 +689,49 @@ export default function List() {
                     </div>
                 )}
 
-                <div className="flex flex-col gap-6">
+                <div className="list-groups">
                     {listLoading && (
-                        <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] px-4 py-5 text-center text-[var(--text-soft)] shadow-[var(--shadow-soft)]">
-                            กำลังโหลดรายการ...
-                        </div>
+                        <div className="list-loading">กำลังโหลดรายการ...</div>
                     )}
-                    {!listLoading && filteredGroups.map((group, index) => {
-                        const dailyTotal = group.transactions.reduce((sum, tx) => {
-                            const amount = Number(tx.amount);
-                            return sum + (tx.txType === "income" ? amount : -amount);
-                        }, 0);
-                        const isPositive = dailyTotal >= 0;
-                        const totalColor = isPositive ? 'text-[var(--primary)]' : 'text-[var(--danger)]';
-                        const totalSign = isPositive ? '+' : '-';
-
-                        return (
-                            <div key={index} className="flex flex-col gap-3">
-                                <div className="flex items-center gap-3">
-                                    <p className="text-sm font-bold text-[var(--text-soft)] whitespace-nowrap">{group.date}</p>
-                                    <div className="h-[1px] flex-grow bg-[var(--border)]"></div>
-                                    <p className={`text-sm font-bold whitespace-nowrap ${totalColor}`}>
-                                        {t("list.dailyTotalPrefix")} {totalSign}{Math.abs(dailyTotal).toLocaleString()} {t("list.currencySuffix")}
-                                    </p>
-                                </div>
-                                
-                                <div className="flex flex-col gap-3">
-                                    {group.transactions.map((tx) => {
-                                        const display = toDisplayTransaction(
-                                            tx,
-                                            categoryById,
-                                            fallbackCategory,
-                                            dateLocale,
-                                        );
-                                        return (
-                                            <TransactionCard
-                                                key={tx.txId}
-                                                {...display}
-                                                selectable={isBulkSelectMode}
-                                                selected={selectedTxIds.includes(tx.txId)}
-                                                onSelectedChange={(selected) =>
-                                                    toggleTxSelection(tx.txId, selected)
-                                                }
-                                                onOpen={
-                                                    isBulkSelectMode
-                                                        ? undefined
-                                                        : () => openEditSheet(tx)
-                                                }
-                                            />
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        );
-                    })}
+                    {!listLoading &&
+                        filteredGroups.map((group) => (
+                            <ListDayTypeCard
+                                key={group.date}
+                                date={group.date}
+                                transactions={group.transactions}
+                                collapsed={Boolean(collapsedCards[group.date])}
+                                onToggle={() => toggleCardCollapsed(group.date)}
+                                categoryById={categoryById}
+                                fallbackCategory={fallbackCategory}
+                                icon={icons.bill}
+                                selectable={isBulkSelectMode}
+                                selectedTxIds={selectedTxIds}
+                                onToggleSelect={toggleTxSelection}
+                                onEdit={openEditSheet}
+                            />
+                        ))}
                     {!listLoading && filteredGroups.length === 0 && (
-                        <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] px-4 py-5 text-center text-[var(--text-soft)] shadow-[var(--shadow-soft)]">
-                            {t("list.empty")}
-                        </div>
+                        <div className="list-empty">{t("list.empty")}</div>
                     )}
                     {!listLoading && hasMoreTransactions && (
                         <button
                             type="button"
                             disabled={listLoadingMore}
                             onClick={loadMoreTransactions}
-                            className="rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-semibold text-[var(--text)] transition-all hover:bg-[var(--surface-soft)] disabled:opacity-50"
+                            className="list-load-more-btn"
                         >
                             {listLoadingMore ? t("list.loadingMore") : t("list.loadMore")}
                         </button>
                     )}
+                </div>
+                    </div>
                 </div>
             </div>
             <button
                 type="button"
                 aria-label={t("list.addButtonAria")}
                 onClick={openAddSheet}
-                className="fixed bottom-24 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[var(--shadow-soft)] transition-all hover:brightness-95 active:scale-95"
+                className="list-add-fab"
             >
                 <FaPlus size={18} />
             </button>
