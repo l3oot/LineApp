@@ -331,7 +331,7 @@ export default function CyclePage() {
                         </div>
 
                         <form
-                            className="flex flex-1 flex-col gap-3 overflow-y-auto pb-1"
+                            className="bottom-sheet-scroll flex flex-1 flex-col gap-3 overflow-y-auto pb-1"
                             onSubmit={handleSubmit}
                         >
                             <div className="flex items-end gap-2">
@@ -424,9 +424,11 @@ export default function CyclePage() {
                                 <button
                                     type="submit"
                                     disabled={submitting}
-                                    className="rounded-[var(--radius-control)] border border-[var(--primary)] bg-[var(--primary-soft)] px-3 py-2 text-sm font-semibold text-[var(--primary)] transition-all hover:brightness-95 disabled:opacity-50"
+                                    className="pill-action-btn pill-action-btn--compact"
                                 >
-                                    {submitting ? "กำลังบันทึก..." : t("cycle.save")}
+                                    <span className="pill-action-btn-text">
+                                        {submitting ? "กำลังบันทึก..." : t("cycle.save")}
+                                    </span>
                                 </button>
                             </div>
                         </form>

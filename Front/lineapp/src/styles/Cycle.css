@@ -17,9 +17,11 @@
 }
 
 .cycle-card-top {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    column-gap: 0.75rem;
+    position: relative;
+    align-items: start;
 }
 
 .cycle-card-icon-wrap {
@@ -29,6 +31,8 @@
     flex-shrink: 0;
     width: 4.5rem;
     height: 4.5rem;
+    grid-column: 1;
+    grid-row: 1;
     border-radius: 9999px;
     background: linear-gradient(145deg, #f8faf5 0%, #eef3e8 100%);
     border: 2px solid color-mix(in srgb, var(--primary) 18%, white);
@@ -41,24 +45,19 @@
 }
 
 .cycle-card-info {
-    flex: 1;
+    grid-column: 2;
+    grid-row: 1;
     min-width: 0;
+    overflow: visible;
 }
 
 .cycle-card-title {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
     margin: 0;
+    padding-right: 8.5rem;
     font-size: 1.0625rem;
     font-weight: 800;
     line-height: 1.25;
     color: var(--text);
-}
-
-.cycle-card-title-icon {
-    font-size: 0.875rem;
-    line-height: 1;
 }
 
 .cycle-card-status {
@@ -76,13 +75,21 @@
     display: flex;
     align-items: center;
     gap: 0.3rem;
-    margin: 0.25rem 0 0;
+    width: 100%;
+    margin: 0.125rem 0 0;
     font-size: 0.75rem;
     font-weight: 500;
     color: var(--text-soft);
 }
 
+.cycle-card-date span {
+    white-space: nowrap;
+}
+
 .cycle-card-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -201,10 +208,6 @@
     color: var(--balance);
 }
 
-.cycle-stat-value--percent {
-    font-size: 0.75rem;
-}
-
 .cycle-stat--income-expense {
     padding-left: 0.375rem;
     padding-right: 0.375rem;
@@ -224,18 +227,48 @@
 }
 
 .cycle-stat-progress {
+    position: relative;
     width: calc(100% - 0.5rem);
+    margin-top: 0.25rem;
+    cursor: pointer;
+}
+
+.cycle-stat-progress-track {
     height: 0.3125rem;
-    margin-top: 0.125rem;
     border-radius: 9999px;
     background: #d6ddd2;
     overflow: hidden;
+}
+
+.cycle-stat-progress-tip {
+    position: absolute;
+    bottom: calc(100% + 0.25rem);
+    left: 50%;
+    z-index: 1;
+    transform: translateX(-50%);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.375rem;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 1px 4px rgba(74, 74, 74, 0.12);
+    font-size: 0.5625rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms ease;
+}
+
+.cycle-stat-progress:hover .cycle-stat-progress-tip,
+.cycle-stat-progress.is-active .cycle-stat-progress-tip {
+    opacity: 1;
 }
 
 .cycle-stat-progress-fill {
     height: 100%;
     border-radius: 9999px;
     transition: width 500ms ease;
+    pointer-events: none;
 }
 
 @media (max-width: 380px) {

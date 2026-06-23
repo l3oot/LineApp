@@ -64,6 +64,11 @@
   },
   "list": {
     "dateRangeAria": "เลือกช่วงวันที่",
+    "dateFrom": "วันที่เริ่ม",
+    "dateTo": "วันที่สิ้นสุด",
+    "dateFromAria": "เลือกวันที่เริ่ม",
+    "dateToAria": "เลือกวันที่สิ้นสุด",
+    "filterData": "กรองข้อมูล",
     "filterTitle": "คัดกรองประเภทรายการ",
     "extraFilterAria": "ตัวกรองเพิ่มเติม",
     "categoryTitle": "หมวดหมู่",
@@ -76,6 +81,11 @@
   },
   "sum": {
     "dateRangeAria": "เลือกช่วงวันที่",
+    "dateFrom": "วันที่เริ่ม",
+    "dateTo": "วันที่สิ้นสุด",
+    "dateFromAria": "เลือกวันที่เริ่ม",
+    "dateToAria": "เลือกวันที่สิ้นสุด",
+    "filterData": "กรองข้อมูล",
     "financeOverview": "ภาพรวมการเงิน",
     "totalIncome": "รายได้รวม",
     "totalExpense": "รายจ่ายรวม",

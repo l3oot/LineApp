@@ -64,6 +64,11 @@
   },
   "list": {
     "dateRangeAria": "Select date range",
+    "dateFrom": "Date from",
+    "dateTo": "Date to",
+    "dateFromAria": "Select start date",
+    "dateToAria": "Select end date",
+    "filterData": "Filter",
     "filterTitle": "Filter transaction type",
     "extraFilterAria": "More filters",
     "categoryTitle": "Category",
@@ -76,6 +81,11 @@
   },
   "sum": {
     "dateRangeAria": "Select date range",
+    "dateFrom": "Date from",
+    "dateTo": "Date to",
+    "dateFromAria": "Select start date",
+    "dateToAria": "Select end date",
+    "filterData": "Filter",
     "financeOverview": "Financial overview",
     "totalIncome": "Total income",
     "totalExpense": "Total expense",

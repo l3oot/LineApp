@@ -32,7 +32,7 @@ export default function AnnouncementBottomSheet({ open, onClose }: AnnouncementB
                 </button>
             </div>
 
-            <div className="flex flex-1 flex-col gap-3 overflow-y-auto pb-1">
+            <div className="bottom-sheet-scroll flex flex-1 flex-col gap-3 overflow-y-auto pb-1">
                 {ANNOUNCEMENT_KEYS.map((key) => (
                     <article
                         key={key}

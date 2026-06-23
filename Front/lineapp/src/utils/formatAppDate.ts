@@ -131,6 +131,13 @@ export function formatCalendarDate(cd: DateValue, lang?: string): string {
     );
 }
 
+/** DD/MM/YYYY (ปี พ.ศ. สำหรับภาษาไทย) — ใช้ในช่องเลือกช่วงวันที่แบบกะทัดรัด */
+export function formatCalendarDateSlash(cd: DateValue, lang?: string): string {
+    const gregorian = toGregorianCalendarDate(cd);
+    const year = usesBuddhistEra(lang) ? gregorian.year + BUDDHIST_ERA_OFFSET : gregorian.year;
+    return `${pad2(gregorian.day)}/${pad2(gregorian.month)}/${year}`;
+}
+
 export function formatAppDateTime(
     value: Date | string | number[] | null | undefined,
     lang?: string,

@@ -21,6 +21,23 @@
   --font-google-sans: "Google Sans", sans-serif;
   --sans: var(--font-mali);
 
+  /* bg.png — อัตราส่วนสูง/กว้าง (ปรับให้ตรงไฟล์จริงถ้าเปลี่ยนรูป) */
+  --bg-aspect-ratio-h-w: 2.16;
+  --bg-display-height: calc(100vw * var(--bg-aspect-ratio-h-w));
+  --home-bg-anchor-ratio: 0.30;
+  --home-content-top: calc(var(--bg-display-height) * var(--home-bg-anchor-ratio));
+  /* ความสูง header โดยประมาณเทียบกับพื้นหลัง (มือถือ) */
+  --home-greeting-header-ratio: 0.21;
+  --home-greeting-header-offset: calc(var(--bg-display-height) * var(--home-greeting-header-ratio));
+  /* subpage header สั้นกว่า greeting เล็กน้อย — ชดเชยให้การ์ดอยู่ตำแหน่งเดียวกัน */
+  --home-subpage-header-offset: calc(var(--home-greeting-header-offset) - 0.875rem);
+
+  --app-bg-image: url("../assets/bg.png");
+  --app-bg-fallback: #fef9f2;
+  --app-bg-size: 100% auto;
+  --app-bg-position: center -3.5rem;
+  --app-bg-attachment: scroll;
+
   font: 17px/145% var(--sans);
   letter-spacing: 0.18px;
   color-scheme: light;
@@ -33,6 +50,18 @@
 
   @media (max-width: 1024px) {
     font-size: 16px;
+  }
+
+  @media (min-width: 768px) {
+    --app-bg-size: cover;
+    --app-bg-position: center clamp(-8rem, -9vw, -5rem);
+    --home-content-top: 30dvh;
+    --home-greeting-header-offset: 21dvh;
+    --home-subpage-header-offset: calc(21dvh - 0.875rem);
+  }
+
+  @media (min-width: 1024px) {
+    --app-bg-attachment: fixed;
   }
 }
 
@@ -47,12 +76,18 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--text);
-  background-color: var(--bg);
-  background-image: url("../assets/bg.png");
-  background-size: cover;
-  background-position: center top;
+  background-color: var(--app-bg-fallback);
+  background-image: var(--app-bg-image);
+  background-size: var(--app-bg-size);
+  background-position: var(--app-bg-position);
   background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-attachment: var(--app-bg-attachment);
+}
+
+@media (max-width: 1023px), (hover: none) {
+  body {
+    background-attachment: scroll;
+  }
 }
 
 #root {
@@ -212,7 +247,183 @@ body {
   text-shadow: 0 1px 2px rgba(52, 72, 38, 0.28);
 }
 
+.pill-action-btn--compact {
+  gap: 0;
+  height: auto;
+  min-height: 2.375rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.pill-action-btn--expense {
+  --pill-action-bg: #e57373;
+  --pill-action-border: #c85a5a;
+  box-shadow: 0 2px 8px rgba(200, 90, 90, 0.22);
+}
+
+.pill-action-btn--expense:hover:not(:disabled) {
+  box-shadow: 0 3px 10px rgba(200, 90, 90, 0.28);
+}
+
+.pill-action-btn--expense .pill-action-btn-text {
+  text-shadow: 0 1px 2px rgba(120, 40, 40, 0.28);
+}
+
+.pill-type-btn--idle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid var(--border);
+  border-radius: 9999px;
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.pill-type-btn--idle:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.pill-type-btn--income-idle {
+  border-color: color-mix(in srgb, #6f9454 42%, var(--border));
+  background: color-mix(in srgb, #9ab870 12%, var(--surface-soft));
+  color: #6f9454;
+}
+
+.pill-type-btn--income-idle:hover:not(:disabled) {
+  background: color-mix(in srgb, #9ab870 20%, var(--surface-soft));
+}
+
+.pill-type-btn--expense-idle {
+  border-color: color-mix(in srgb, #c85a5a 38%, #fecaca);
+  background: #fef2f2;
+  color: #c85a5a;
+}
+
+.pill-type-btn--expense-idle:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+/* Shared pill control (analytics filters, dropdowns, …) */
+.pill-control {
+  --pill-action-bg: #9ab870;
+  --pill-action-border: #6f9454;
+
+  border: 1.5px solid var(--pill-action-border);
+  border-radius: 9999px;
+  background: var(--pill-action-bg);
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(79, 104, 58, 0.18);
+  transition:
+    transform 180ms ease,
+    filter 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.pill-control:hover:not(:disabled) {
+  filter: brightness(1.03);
+  box-shadow: 0 3px 10px rgba(79, 104, 58, 0.22);
+}
+
+.pill-control:active:not(:disabled) {
+  transform: scale(0.99);
+  filter: brightness(0.98);
+}
+
+.pill-control--select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 2.1875rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.pill-control--chip {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.pill-control--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: #6f9454;
+  box-shadow: none;
+}
+
+.pill-control--ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--pill-action-bg) 14%, white);
+  filter: none;
+  box-shadow: none;
+}
+
+.pill-control.is-active {
+  background: var(--pill-action-bg);
+  border-color: var(--pill-action-border);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(79, 104, 58, 0.16);
+}
+
+.pill-control.is-active:hover:not(:disabled) {
+  filter: brightness(1.03);
+  box-shadow: 0 3px 8px rgba(79, 104, 58, 0.2);
+}
+
+.pill-segment-track {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1.5px solid color-mix(in srgb, #6f9454 32%, white);
+  border-radius: 9999px;
+  background: color-mix(in srgb, #9ab870 12%, #faf6f0);
+}
+
+.pill-control-chevron {
+  flex-shrink: 0;
+  opacity: 0.92;
+}
+
+.pill-control--chip-today {
+  padding: 0.25rem 0.75rem;
+  min-height: 2.0625rem;
+}
+
 /* bottom sheet ใช้ร่วมกันระหว่างหน้า Cycle / List (Add transaction, Add cycle) */
+.bottom-sheet-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.bottom-sheet-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 .bottom-sheet-panel {
   position: fixed;
   inset-inline: 0;
@@ -244,16 +455,23 @@ body {
   animation: bottom-sheet-backdrop 180ms ease-out;
 }
 
-/* Shared page shell (home, cycle, list, analytics, …) */
+/* Shared page shell — ยึดการ์ดที่ % ของความสูงพื้นหลัง (ลบความสูง header แบบสัดส่วน) */
 .home-page {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
   padding: 0 1rem 0.75rem;
+  padding-top: max(0.5rem, calc(var(--home-content-top) - var(--home-header-offset, var(--home-greeting-header-offset))));
+}
+
+.page-tone--pink .home-page,
+.page-tone--blue .home-page,
+.page-tone--green .home-page {
+  --home-header-offset: var(--home-subpage-header-offset);
 }
 
 .home-content-card {
-  margin-top: -0.5rem;
+  margin-top: 0;
   border-radius: 2rem 2rem var(--radius-card) var(--radius-card);
   background: var(--surface);
   padding: 1.5rem 1.25rem 1.75rem;
@@ -261,7 +479,110 @@ body {
 }
 
 /* Date range picker trigger (home + list) */
-.home-date-range,
+.home-date-range {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  border-radius: 9999px;
+  border: 1px solid #e8dfd4;
+  background: #faf6f0;
+  padding: 0.5rem 0.5rem 0.5rem 0.625rem;
+  box-shadow: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.home-date-range:hover {
+  background: #f7f1e8;
+  border-color: #ddd2c4;
+  box-shadow: none;
+}
+
+.home-date-range:active {
+  transform: none;
+  background: #f3ebe0;
+}
+
+.home-date-range-leading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: #ede6dc;
+  color: #5c4a3a;
+}
+
+.home-date-range-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.home-date-range-field-picker {
+  min-width: 0;
+  flex: 1;
+}
+
+.home-date-range-leading-icon {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.home-date-range-fields {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-date-range-field-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #6b5344;
+}
+
+.home-date-range-field-input {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  padding: 0.3125rem 0.5rem 0.3125rem 0.625rem;
+  border-radius: 9999px;
+  background: #fff;
+  border: 1px solid #ece4d8;
+}
+
+.home-date-range-field-value {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #4a3f35;
+}
+
+.home-date-range-field-icon {
+  flex-shrink: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  color: #6b5344;
+}
+
+.home-date-range-sep {
+  flex-shrink: 0;
+  padding-bottom: 0.4375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #6b5344;
+}
+
 .list-date-range {
   position: relative;
   width: 100%;
@@ -278,14 +599,12 @@ body {
     transform 160ms ease;
 }
 
-.home-date-range:hover,
 .list-date-range:hover {
   background: color-mix(in srgb, var(--primary-soft) 82%, var(--surface));
   border-color: color-mix(in srgb, var(--primary) 48%, var(--border));
   box-shadow: 0 3px 12px rgba(79, 104, 58, 0.12);
 }
 
-.home-date-range:active,
 .list-date-range:active {
   transform: scale(0.99);
   background: color-mix(in srgb, var(--primary-soft) 95%, var(--surface));
@@ -295,21 +614,18 @@ body {
   cursor: pointer;
 }
 
-.home-date-range-label,
 .list-date-range-label {
   font-size: 0.875rem;
   font-weight: 700;
   color: var(--text);
 }
 
-.home-date-range-sep,
 .list-date-range-sep {
   font-size: 0.875rem;
   font-weight: 700;
   color: var(--text-soft);
 }
 
-.home-date-range-icon,
 .list-date-range-icon {
   font-size: 1.0625rem;
   color: var(--primary);

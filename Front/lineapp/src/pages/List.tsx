@@ -1,27 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CalendarDate, Time, getLocalTimeZone, today } from "@internationalized/date";
-import {
-    Button,
-    CalendarCell,
-    CalendarGrid,
-    CalendarGridBody,
-    CalendarGridHeader,
-    CalendarHeaderCell,
-    DateRangePicker,
-    Dialog,
-    Group,
-    Heading,
-    Popover,
-    RangeCalendar,
-} from "react-aria-components";
 import MainLayout from "../layouts/MainLayout";
+import DateFilterBar from "../components/DateFilterBar";
 import ListDayTypeCard from "../components/ListDayTypeCard";
 import AppDateTimeField, { initialAppDateTime } from "../components/AppDateTimeField";
 import FilterChipButton from "../components/FilterChipButton";
 import BottomSheet from "../components/BottomSheet";
 import { icons } from "../assets/Iconlist";
-import { FiCalendar, FiCheck, FiChevronDown, FiX } from "react-icons/fi";
+import { FiCheck, FiChevronDown, FiX } from "react-icons/fi";
 import { FaPlus } from "react-icons/fa";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { useTranslation } from "react-i18next";
@@ -44,7 +31,6 @@ import {
     calendarDateToApiEnd,
     calendarDateToApiStart,
     formatAppDate,
-    formatCalendarDate,
     gregorianKeyFromCalendarDate,
     parseTxToGregorianCalendarDate,
     toAppCalendarDate,
@@ -104,10 +90,8 @@ export default function List() {
     const localTimeZone = getLocalTimeZone();
     const initialEnd = today(localTimeZone);
     const initialStart = initialEnd.add({ days: -29 });
-    const [dateRange, setDateRange] = useState<{ start: CalendarDate; end: CalendarDate }>({
-        start: initialStart,
-        end: initialEnd,
-    });
+    const [startDate, setStartDate] = useState<CalendarDate>(initialStart);
+    const [endDate, setEndDate] = useState<CalendarDate>(initialEnd);
 
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [categoryById, setCategoryById] = useState<Record<string, string>>({});
@@ -140,10 +124,10 @@ export default function List() {
 
     const listPageQuery = useMemo<TransactionListPageQuery>(
         () => ({
-            startDate: calendarDateToApiStart(dateRange.start),
-            endDate: calendarDateToApiEnd(dateRange.end),
+            startDate: calendarDateToApiStart(startDate),
+            endDate: calendarDateToApiEnd(endDate),
         }),
-        [dateRange],
+        [startDate, endDate],
     );
 
     const loadTransactions = useCallback(async () => {
@@ -403,10 +387,10 @@ export default function List() {
 
     useEffect(() => {
         setFormDate((current) => toAppCalendarDate(toGregorianCalendarDate(current), i18n.language));
-        setDateRange((current) => ({
-            start: toAppCalendarDate(toGregorianCalendarDate(current.start), i18n.language),
-            end: toAppCalendarDate(toGregorianCalendarDate(current.end), i18n.language),
-        }));
+        const convert = (date: CalendarDate) =>
+            toAppCalendarDate(toGregorianCalendarDate(date), i18n.language);
+        setStartDate((current) => convert(current));
+        setEndDate((current) => convert(current));
     }, [i18n.language]);
 
     useEffect(() => {
@@ -515,67 +499,16 @@ export default function List() {
             <div className="home-page">
                 <div className="home-content-card">
                     <div className="list-page">
-                <DateRangePicker
-                    aria-label={t("list.dateRangeAria")}
-                    value={dateRange}
-                    onChange={(newRange) => {
-                        if (!newRange) return;
-                        setDateRange({
-                            start: newRange.start as CalendarDate,
-                            end: newRange.end as CalendarDate,
-                        });
-                    }}
-                    className="w-full"
-                >
-                    <Group className="list-date-range">
-                        <Button
-                            aria-label={t("list.dateRangeAria")}
-                            className="date-range-trigger-btn absolute inset-0 z-10 rounded-full"
-                        />
-                        <div className="pointer-events-none flex items-center justify-center gap-2">
-                            <span className="list-date-range-label whitespace-nowrap">
-                                {formatCalendarDate(dateRange.start, i18n.language)}
-                            </span>
-                            <span className="list-date-range-sep">-</span>
-                            <span className="list-date-range-label whitespace-nowrap">
-                                {formatCalendarDate(dateRange.end, i18n.language)}
-                            </span>
-                            <FiCalendar className="list-date-range-icon" aria-hidden />
-                        </div>
-                    </Group>
-                    <Popover className="z-30 mt-2 w-[var(--trigger-width)] min-w-[280px] rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[var(--shadow-soft)]">
-                        <Dialog className="outline-none">
-                            <RangeCalendar className="w-full">
-                                <header className="mb-2 flex items-center justify-between">
-                                    <Button slot="previous" className="rounded-full px-2 py-1 text-sm text-[var(--text-soft)] hover:bg-[var(--surface-soft)]">
-                                        ‹
-                                    </Button>
-                                    <Heading className="text-sm font-bold text-[var(--text)]" />
-                                    <Button slot="next" className="rounded-full px-2 py-1 text-sm text-[var(--text-soft)] hover:bg-[var(--surface-soft)]">
-                                        ›
-                                    </Button>
-                                </header>
-                                <CalendarGrid className="w-full table-fixed border-separate border-spacing-1">
-                                    <CalendarGridHeader>
-                                        {(day) => (
-                                            <CalendarHeaderCell className="pb-1 text-center text-xs font-semibold text-[var(--text-soft)]">
-                                                {day}
-                                            </CalendarHeaderCell>
-                                        )}
-                                    </CalendarGridHeader>
-                                    <CalendarGridBody>
-                                        {(date) => (
-                                            <CalendarCell
-                                                date={date}
-                                                className="flex h-8 w-full items-center justify-center rounded-full text-sm text-[var(--text)] outline-none hover:bg-[var(--surface-soft)] data-[disabled]:text-gray-300 data-[outside-month]:text-gray-300 data-[selected]:bg-[var(--primary-soft)] data-[selected]:text-[var(--primary)] data-[selected]:font-semibold"
-                                            />
-                                        )}
-                                    </CalendarGridBody>
-                                </CalendarGrid>
-                            </RangeCalendar>
-                        </Dialog>
-                    </Popover>
-                </DateRangePicker>
+                <DateFilterBar
+                    startDate={startDate}
+                    endDate={endDate}
+                    onStartDateChange={setStartDate}
+                    onEndDateChange={setEndDate}
+                    dateFromLabel={t("list.dateFrom")}
+                    dateToLabel={t("list.dateTo")}
+                    dateFromAria={t("list.dateFromAria")}
+                    dateToAria={t("list.dateToAria")}
+                />
 
                 <div className="list-filter-card">
                     <p className="list-filter-title">{t("list.filterTitle")}</p>
@@ -767,31 +700,35 @@ export default function List() {
                             </button>
                         </div>
 
-                        <form className="flex flex-1 flex-col gap-4 overflow-y-auto pb-1" onSubmit={handleSaveTransaction}>
+                        <form className="bottom-sheet-scroll flex flex-1 flex-col gap-4 overflow-y-auto pb-1" onSubmit={handleSaveTransaction}>
                             <div>
                                 <p className="text-sm font-bold text-[var(--text)]">{t("list.typeLabel")}</p>
                                 <div className="grid grid-cols-2 gap-2">
                                     <button
                                         type="button"
                                         onClick={() => setNewType("income")}
-                                        className={`rounded-[var(--radius-control)] border px-3 py-2 text-center text-sm font-semibold transition-all ${
+                                        className={
                                             newType === "income"
-                                                ? "border-2 border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary)]"
-                                                : "border-[var(--border)] bg-[var(--surface-soft)] text-[var(--text-soft)]"
-                                        }`}
+                                                ? "pill-action-btn pill-action-btn--compact"
+                                                : "pill-type-btn--idle pill-type-btn--income-idle"
+                                        }
                                     >
-                                        {t("list.income")}
+                                        <span className={newType === "income" ? "pill-action-btn-text" : undefined}>
+                                            {t("list.income")}
+                                        </span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setNewType("expense")}
-                                        className={`rounded-[var(--radius-control)] border px-3 py-2 text-center text-sm font-semibold transition-all ${
+                                        className={
                                             newType === "expense"
-                                                ? "border-2 border-[var(--danger)] bg-red-100 text-[var(--danger)]"
-                                                : "border-red-100 bg-red-50 text-[var(--danger)] hover:bg-red-100"
-                                        }`}
+                                                ? "pill-action-btn pill-action-btn--compact pill-action-btn--expense"
+                                                : "pill-type-btn--idle pill-type-btn--expense-idle"
+                                        }
                                     >
-                                        {t("list.expense")}
+                                        <span className={newType === "expense" ? "pill-action-btn-text" : undefined}>
+                                            {t("list.expense")}
+                                        </span>
                                     </button>
                                 </div>
                             </div>
@@ -958,9 +895,11 @@ export default function List() {
                                 <button
                                     type="submit"
                                     disabled={submitting}
-                                    className="rounded-[var(--radius-control)] border border-[var(--primary)] bg-[var(--primary-soft)] px-3 py-2 text-sm font-semibold text-[var(--primary)] transition-all hover:brightness-95 disabled:opacity-50"
+                                    className="pill-action-btn pill-action-btn--compact"
                                 >
-                                    {submitting ? "กำลังบันทึก..." : t("cycle.save")}
+                                    <span className="pill-action-btn-text">
+                                        {submitting ? "กำลังบันทึก..." : t("cycle.save")}
+                                    </span>
                                 </button>
                             </div>
                         </form>

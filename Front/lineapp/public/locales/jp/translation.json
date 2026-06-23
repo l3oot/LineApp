@@ -64,6 +64,11 @@
   },
   "list": {
     "dateRangeAria": "日付範囲を選択",
+    "dateFrom": "開始日",
+    "dateTo": "終了日",
+    "dateFromAria": "開始日を選択",
+    "dateToAria": "終了日を選択",
+    "filterData": "絞り込み",
     "filterTitle": "取引タイプを絞り込み",
     "extraFilterAria": "追加フィルター",
     "categoryTitle": "カテゴリ",
@@ -76,6 +81,11 @@
   },
   "sum": {
     "dateRangeAria": "日付範囲を選択",
+    "dateFrom": "開始日",
+    "dateTo": "終了日",
+    "dateFromAria": "開始日を選択",
+    "dateToAria": "終了日を選択",
+    "filterData": "絞り込み",
     "financeOverview": "財務概要",
     "totalIncome": "総収入",
     "totalExpense": "総支出",

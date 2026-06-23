@@ -444,13 +444,13 @@ export default function Analytic() {
                             )}
                         </div>
 
-                        <div className="analytic-filter-bar">
+                        <div className="analytic-filter-bar pill-segment-track">
                             {analyticFilters.map((f) => (
                                 <button
                                     key={f}
                                     type="button"
                                     onClick={() => setFilter(f)}
-                                    className={`analytic-filter-btn${filter === f ? " is-active" : ""}`}
+                                    className={`pill-control pill-control--chip pill-control--ghost analytic-filter-btn${filter === f ? " is-active" : ""}`}
                                 >
                                     {t(`analytic.filter.${f}`)}
                                 </button>

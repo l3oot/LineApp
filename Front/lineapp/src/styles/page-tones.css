@@ -31,7 +31,7 @@
     display: block;
     width: 2.5rem;
     height: 0.1875rem;
-    margin: 0 auto 0.625rem;
+    margin: 0 0 0.625rem;
     border-radius: 9999px;
     background: color-mix(in srgb, var(--page-tone-accent) 55%, white);
 }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { FiCalendar, FiEdit2, FiTrash2 } from "react-icons/fi";
 import { calpercentused, calbgcolor, calPnL } from "../utils/Sumfun";
 import { useTranslation } from "react-i18next";
@@ -39,6 +40,9 @@ export default function Addcycle({
     const displayPercent = Number.isFinite(percent) ? percent : 0;
     const currency = t("list.currencySuffix");
     const isEmptyBudget = safePercent === 0 && expense === 0;
+    const [showBudgetPercent, setShowBudgetPercent] = useState(false);
+    const percentLabel = `${displayPercent.toFixed(0)}%`;
+    const percentColor = isEmptyBudget ? "var(--text-soft)" : bgcolor;
 
     return (
         <article className="cycle-card">
@@ -48,12 +52,7 @@ export default function Addcycle({
                 </div>
 
                 <div className="cycle-card-info">
-                    <h2 className="cycle-card-title">
-                        {title}
-                        <span className="cycle-card-title-icon" aria-hidden>
-                            {icons[icon]}
-                        </span>
-                    </h2>
+                    <h2 className="cycle-card-title">{title}</h2>
                     <span
                         className="cycle-card-status"
                         style={{ backgroundColor: bgcolor }}
@@ -119,20 +118,36 @@ export default function Addcycle({
                         aria-hidden
                     />
                     <span className="cycle-stat-label">{t("addcycle.usedBudget")}</span>
-                    <span
-                        className="cycle-stat-value cycle-stat-value--percent"
-                        style={{ color: isEmptyBudget ? "var(--text-soft)" : bgcolor }}
+                    <div
+                        className={`cycle-stat-progress${showBudgetPercent ? " is-active" : ""}`}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={percentLabel}
+                        onClick={() => setShowBudgetPercent((visible) => !visible)}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                setShowBudgetPercent((visible) => !visible);
+                            }
+                        }}
+                        onBlur={() => setShowBudgetPercent(false)}
                     >
-                        {displayPercent.toFixed(0)}%
-                    </span>
-                    <div className="cycle-stat-progress">
-                        <div
-                            className="cycle-stat-progress-fill"
-                            style={{
-                                width: `${safePercent}%`,
-                                backgroundColor: isEmptyBudget ? "var(--border)" : bgcolor,
-                            }}
-                        />
+                        <span
+                            className="cycle-stat-progress-tip"
+                            style={{ color: percentColor }}
+                            aria-hidden={!showBudgetPercent}
+                        >
+                            {percentLabel}
+                        </span>
+                        <div className="cycle-stat-progress-track">
+                            <div
+                                className="cycle-stat-progress-fill"
+                                style={{
+                                    width: `${safePercent}%`,
+                                    backgroundColor: isEmptyBudget ? "var(--border)" : bgcolor,
+                                }}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

@@ -308,7 +308,7 @@ export default function UserProfileBottomSheet({
                 </button>
             </div>
 
-            <form className="flex flex-1 flex-col gap-4 overflow-y-auto pb-1" onSubmit={handleSubmit}>
+            <form className="bottom-sheet-scroll flex flex-1 flex-col gap-4 overflow-y-auto pb-1" onSubmit={handleSubmit}>
                 <ScrollPickerField
                     label={t("settings.profileSheet.provinceLabel")}
                     pickerKey="province"

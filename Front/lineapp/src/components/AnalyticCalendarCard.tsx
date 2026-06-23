@@ -191,7 +191,7 @@ export default function AnalyticCalendarCard({
                                 <button
                                     type="button"
                                     onClick={goToToday}
-                                    className="analytic-today-btn"
+                                    className="pill-control pill-control--chip pill-control--chip-today analytic-today-btn"
                                 >
                                     {t("analytic.today")}
                                 </button>

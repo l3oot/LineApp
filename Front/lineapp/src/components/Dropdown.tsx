@@ -64,12 +64,12 @@ export default function Dropdown({
                 aria-expanded={open}
                 aria-haspopup="listbox"
                 onClick={() => setOpen((prev) => !prev)}
-                className="flex w-full items-center justify-between gap-2 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm font-medium text-[var(--text)] shadow-[var(--shadow-soft)] transition-all hover:border-[var(--primary)]"
+                className="pill-control pill-control--select"
             >
                 <span className="truncate">{display}</span>
                 <FiChevronDown
                     size={16}
-                    className={`shrink-0 text-[var(--text-soft)] transition-transform ${open ? "rotate-180" : ""}`}
+                    className={`pill-control-chevron transition-transform ${open ? "rotate-180" : ""}`}
                 />
             </button>
             {open && (
