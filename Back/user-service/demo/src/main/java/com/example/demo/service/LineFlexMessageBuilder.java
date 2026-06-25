@@ -82,12 +82,12 @@ public class LineFlexMessageBuilder {
     }
 
     public String buildAltText(AiParseRes.Data data) {
-        return "บันทึก" + resolveTypeLabel(data.type()) + " " + data.main() + " " + formatPrice(data.price()) + " บาท";
+        return "บันทึก" + resolveTypeLabel(data.type()) + " " + data.main() + " " + formatPrice(data.price());
     }
 
     public String buildUpdatedAltText(TransactionRes tx) {
         String note = tx.note() != null ? tx.note() : "";
-        return "แก้ไข" + resolveTypeLabel(tx.txType()) + " " + note + " " + formatPrice(tx.amount()) + " บาท";
+        return "แก้ไข" + resolveTypeLabel(tx.txType()) + " " + note + " " + formatPrice(tx.amount());
     }
 
     private Map<String, Object> fillBubble(

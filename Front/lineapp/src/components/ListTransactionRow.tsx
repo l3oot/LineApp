@@ -1,4 +1,4 @@
-import { FiEdit2 } from "react-icons/fi";
+import { FiChevronRight } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 
 type ListTransactionRowProps = {
@@ -27,10 +27,12 @@ export default function ListTransactionRow({
     const { t } = useTranslation();
     const isIncome = type === "income";
     const sign = isIncome ? "+" : "-";
-    const currency = t("list.currencySuffix");
 
-    const row = (
-        <div className={`list-tx-row${isIncome ? " list-tx-row--income" : " list-tx-row--expense"}`}>
+    const rowClassName = `list-tx-row${isIncome ? " list-tx-row--income" : " list-tx-row--expense"}`;
+    const isClickable = Boolean(onEdit) && !selectable;
+
+    const rowContent = (
+        <>
             <div className="list-tx-icon-wrap" aria-hidden>
                 <span className="list-tx-icon">{icon || "💸"}</span>
             </div>
@@ -49,21 +51,25 @@ export default function ListTransactionRow({
 
             <div className="list-tx-amount-wrap">
                 <p className={`list-tx-amount${isIncome ? " list-tx-amount--income" : " list-tx-amount--expense"}`}>
-                    {sign}{amount.toLocaleString()} {currency}
+                    {sign}{amount.toLocaleString()}
                 </p>
             </div>
 
-            {onEdit && !selectable && (
-                <button
-                    type="button"
-                    className={`list-tx-edit-btn${isIncome ? " list-tx-edit-btn--income" : " list-tx-edit-btn--expense"}`}
-                    aria-label={t("list.editAria")}
-                    onClick={onEdit}
-                >
-                    <FiEdit2 size={14} aria-hidden />
-                </button>
-            )}
-        </div>
+            {isClickable && <FiChevronRight className="list-tx-chevron" size={18} aria-hidden />}
+        </>
+    );
+
+    const row = isClickable ? (
+        <button
+            type="button"
+            className={`${rowClassName} list-tx-row--clickable`}
+            aria-label={t("list.editAria")}
+            onClick={onEdit}
+        >
+            {rowContent}
+        </button>
+    ) : (
+        <div className={rowClassName}>{rowContent}</div>
     );
 
     if (!selectable) {

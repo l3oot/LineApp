@@ -38,7 +38,6 @@ export default function Addcycle({
     const PnL = calPnL(percent);
     const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
     const displayPercent = Number.isFinite(percent) ? percent : 0;
-    const currency = t("list.currencySuffix");
     const isEmptyBudget = safePercent === 0 && expense === 0;
     const [showBudgetPercent, setShowBudgetPercent] = useState(false);
     const percentLabel = `${displayPercent.toFixed(0)}%`;
@@ -72,7 +71,7 @@ export default function Addcycle({
                         onClick={onEdit}
                         className="cycle-card-action-btn cycle-card-action-btn--edit"
                     >
-                        <FiEdit2 size={13} aria-hidden />
+                        <FiEdit2 size={15} aria-hidden />
                         {t("addcycle.edit")}
                     </button>
                     <button
@@ -81,7 +80,7 @@ export default function Addcycle({
                         onClick={onDelete}
                         className="cycle-card-action-btn cycle-card-action-btn--delete"
                     >
-                        <FiTrash2 size={13} aria-hidden />
+                        <FiTrash2 size={15} aria-hidden />
                         {deleting ? "..." : t("addcycle.delete")}
                     </button>
                 </div>
@@ -92,7 +91,7 @@ export default function Addcycle({
                     <span className="cycle-stat-icon cycle-stat-icon--capital" aria-hidden />
                     <span className="cycle-stat-label">{t("addcycle.capital")}</span>
                     <span className="cycle-stat-value cycle-stat-value--capital">
-                        {capital.toLocaleString()} {currency}
+                        {capital.toLocaleString()}
                     </span>
                 </div>
 
@@ -100,7 +99,7 @@ export default function Addcycle({
                     <span className="cycle-stat-icon cycle-stat-icon--income-expense" aria-hidden />
                     <span className="cycle-stat-label">{t("addcycle.incomeExpense")}</span>
                     <span className="cycle-stat-value cycle-stat-value--flow">
-                        {income.toLocaleString()}-{expense.toLocaleString()} {currency}
+                        {income.toLocaleString()}-{expense.toLocaleString()}
                     </span>
                 </div>
 
@@ -108,7 +107,7 @@ export default function Addcycle({
                     <span className="cycle-stat-icon cycle-stat-icon--remaining" aria-hidden />
                     <span className="cycle-stat-label">{t("addcycle.remaining")}</span>
                     <span className="cycle-stat-value cycle-stat-value--remaining">
-                        {remaining.toLocaleString()} {currency}
+                        {remaining.toLocaleString()}
                     </span>
                 </div>
 

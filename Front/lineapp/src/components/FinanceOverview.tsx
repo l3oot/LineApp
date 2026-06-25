@@ -27,9 +27,6 @@ export default function FinanceOverview({ income, expense, balance }: FinanceOve
                         <p className="finance-overview-amount finance-overview-amount--income">
                             {formatAmount(income)}
                         </p>
-                        <p className="finance-overview-unit finance-overview-unit--income">
-                            {t("list.currencySuffix")}
-                        </p>
                     </div>
                 </div>
 
@@ -41,16 +38,13 @@ export default function FinanceOverview({ income, expense, balance }: FinanceOve
                         <p className="finance-overview-amount finance-overview-amount--expense">
                             {formatAmount(expense)}
                         </p>
-                        <p className="finance-overview-unit finance-overview-unit--expense">
-                            {t("list.currencySuffix")}
-                        </p>
                     </div>
                     <span className="finance-overview-illus-slot" aria-hidden />
                 </div>
 
                 <div className="finance-overview-center" aria-hidden>
                     <div className="finance-overview-icon-ring">
-                        <StatisticGrowIcon color="#5BB35F" className="h-5 w-5" />
+                        <StatisticGrowIcon color="#5BB35F" className="h-6 w-6" />
                     </div>
                 </div>
             </div>
@@ -61,9 +55,6 @@ export default function FinanceOverview({ income, expense, balance }: FinanceOve
                 </p>
                 <div className="finance-overview-balance-row">
                     <p className="finance-overview-balance-amount">{formatAmount(balance)}</p>
-                    <p className="finance-overview-unit finance-overview-unit--balance">
-                        {t("list.currencySuffix")}
-                    </p>
                     <button
                         type="button"
                         className="finance-overview-visibility-btn"

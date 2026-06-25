@@ -299,7 +299,7 @@ export default function Analytic() {
                 callbacks: {
                     label: (context: { dataset: { label?: string }; parsed: { y: number | null } }) => {
                         const value = context.parsed.y ?? 0;
-                        return ` ${context.dataset.label}: ${value.toLocaleString()} ${t("list.currencySuffix")}`;
+                        return ` ${context.dataset.label}: ${value.toLocaleString()}`;
                     },
                 },
             },

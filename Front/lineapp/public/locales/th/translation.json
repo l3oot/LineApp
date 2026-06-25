@@ -76,7 +76,6 @@
     "expense": "รายจ่าย",
     "income": "รายรับ",
     "dailyTotalPrefix": "รวม",
-    "currencySuffix": "บาท",
     "empty": "ไม่พบรายการในตัวกรองนี้"
   },
   "sum": {
@@ -106,7 +105,7 @@
     "namePlaceholder": "เช่น ข้าว รอบ 1/68",
     "iconLabel": "ไอคอน",
     "iconSearchPlaceholder": "ค้นหาไอคอน",
-    "budgetLabel": "งบประมาณ (บาท)",
+    "budgetLabel": "งบประมาณ",
     "budgetPlaceholder": "ไม่บังคับ",
     "startLabel": "วันเริ่ม",
     "endLabel": "วันสิ้นสุด",
@@ -138,7 +137,7 @@
     "loss": "ขาดทุน"
   },
   "cyclecard": {
-    "usedBudgetLine": "งบที่ใช้ไปแล้ว {{amount}} บาท"
+    "usedBudgetLine": "งบที่ใช้ไปแล้ว {{amount}}"
   },
   "analytic": {
     "trendTitle": "แนวโน้มรายรับ - รายจ่าย",

@@ -41,10 +41,11 @@
 }
 
 /* Greeting header on settings — light tone on icon buttons */
-.page-tone--purple .greeting-icon-btn {
+.page-tone--purple .greeting-icon-btn:not(.greeting-noti-btn) {
     background: color-mix(in srgb, var(--page-tone-soft) 45%, white);
 }
 
 .page-tone--purple .greeting-noti-btn {
-    color: color-mix(in srgb, var(--page-tone-accent) 75%, #5e35b1);
+    color: #8b6b47;
+    background: transparent;
 }

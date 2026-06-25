@@ -65,7 +65,8 @@ services:
       # HTTP Basic ของ /api/docs (override ผ่าน root .env ได้)
       DOCS_USERNAME: ${DOCS_USERNAME:-admin}
       DOCS_PASSWORD: ${DOCS_PASSWORD:-admin}
-      # MOPH HCode API — อ่านจาก root .env (สมัครที่ https://hcode.moph.go.th/signup/)
+      # MOPH HCode API — ใช้ local JSON เป็นค่าเริ่มต้น (HCode ถูก Cloudflare บล็อกจาก server)
+      HCODE_DATA_SOURCE: ${HCODE_DATA_SOURCE:-local}
       HCODE_BASE_URL: ${HCODE_BASE_URL:-https://hcode.moph.go.th}
       HCODE_USERNAME: ${HCODE_USERNAME:-chutiman}
       HCODE_PASSWORD: ${HCODE_PASSWORD:-@Chutiman123}

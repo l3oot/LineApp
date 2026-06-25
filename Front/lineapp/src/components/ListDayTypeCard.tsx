@@ -43,7 +43,6 @@ export default function ListDayTypeCard({
     const netTotal = useMemo(() => netTotalForTransactions(transactions), [transactions]);
     const isPositive = netTotal >= 0;
     const countLabel = t("list.itemCount", { count: transactions.length });
-    const currency = t("list.currencySuffix");
     const totalSign = isPositive ? "+" : "-";
 
     return (
@@ -62,7 +61,7 @@ export default function ListDayTypeCard({
                     <span
                         className={`list-day-card-total${isPositive ? " list-day-card-total--income" : " list-day-card-total--expense"}`}
                     >
-                        {totalSign}{Math.abs(netTotal).toLocaleString()} {currency}
+                        {totalSign}{Math.abs(netTotal).toLocaleString()}
                     </span>
                     {collapsed ? (
                         <FiChevronDown size={18} className="list-day-card-chevron" aria-hidden />

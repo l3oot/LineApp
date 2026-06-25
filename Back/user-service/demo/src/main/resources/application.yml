@@ -28,6 +28,8 @@ hcode:
   password: ${HCODE_PASSWORD:}
   page-size: ${HCODE_PAGE_SIZE:1000}
   timeout-seconds: ${HCODE_TIMEOUT_SECONDS:30}
+  # local = ใช้ JSON ใน resources/thai-admin (แนะนำ — HCode ถูก Cloudflare บล็อกจาก server)
+  data-source: ${HCODE_DATA_SOURCE:local}
 
 jwt:
   secret: ${JWT_SECRET}

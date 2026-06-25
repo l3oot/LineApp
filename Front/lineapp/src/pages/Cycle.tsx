@@ -6,11 +6,13 @@ import { FaPlus } from "react-icons/fa";
 import { FiX } from "react-icons/fi";
 import Addcycle from "../components/Addcycle";
 import BottomSheet from "../components/BottomSheet";
+import ConfirmBottomSheet from "../components/ConfirmBottomSheet";
 import IconPickerSheet from "../components/IconPickerSheet";
 import { useTranslation } from "react-i18next";
 import { icons } from "../assets/Iconlist";
 import { CalendarDate } from "@internationalized/date";
 import AppDateField from "../components/AppDateField";
+import FormattedNumberInput from "../components/FormattedNumberInput";
 import { ApiError } from "../lib/api";
 import { auth } from "../lib/auth";
 import { cycleApi, planApi, transactionApi, type Cycle, type PlanQuota } from "../lib/userService";
@@ -79,6 +81,7 @@ export default function CyclePage() {
     const [error, setError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [deletingCycleId, setDeletingCycleId] = useState<string | null>(null);
+    const [cycleToDelete, setCycleToDelete] = useState<Cycle | null>(null);
     const [editingCycle, setEditingCycle] = useState<Cycle | null>(null);
     const [planQuota, setPlanQuota] = useState<PlanQuota | null>(null);
 
@@ -185,10 +188,10 @@ export default function CyclePage() {
         }
     };
 
-    const handleDeleteCycle = async (cycle: Cycle) => {
-        if (!window.confirm(`ลบรอบ "${cycle.name}" ?\nงบประมาณจะถูกลบด้วย รายการธุรกรรมจะไม่ผูกรอบนี้แล้ว`)) {
-            return;
-        }
+    const confirmDeleteCycle = async () => {
+        if (!cycleToDelete) return;
+
+        const cycle = cycleToDelete;
         setDeletingCycleId(cycle.cycleId);
         setError(null);
         try {
@@ -197,6 +200,7 @@ export default function CyclePage() {
             const txRows = await transactionApi.list();
             setStatsByCycleId(aggregateTransactionsByCycle(txRows ?? []));
             await refreshQuota();
+            setCycleToDelete(null);
         } catch (err) {
             setError(err instanceof ApiError ? err.message : (err as Error).message);
         } finally {
@@ -296,7 +300,7 @@ export default function CyclePage() {
                                 icon={isIconName(cycle.icon) ? cycle.icon : "corn"}
                                 deleting={deletingCycleId === cycle.cycleId}
                                 onEdit={() => openEditSheet(cycle)}
-                                onDelete={() => handleDeleteCycle(cycle)}
+                                onDelete={() => setCycleToDelete(cycle)}
                             />
                         );
                     })}
@@ -360,7 +364,7 @@ export default function CyclePage() {
                             {!isEditMode && (
                                 <>
                                     <label className="text-sm font-semibold text-[var(--text)]">
-                                        ประเภท (farmType)
+                                        ประเภท
                                         <input
                                             type="text"
                                             value={farmType}
@@ -371,11 +375,9 @@ export default function CyclePage() {
                                     </label>
                                     <label className="text-sm font-semibold text-[var(--text)]">
                                         {t("cycle.budgetLabel")}
-                                        <input
-                                            type="number"
-                                            min={0}
+                                        <FormattedNumberInput
                                             value={budget}
-                                            onChange={(event) => setBudget(event.target.value)}
+                                            onChange={setBudget}
                                             placeholder={t("cycle.budgetPlaceholder")}
                                             className="mt-1.5 w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
                                         />
@@ -417,7 +419,7 @@ export default function CyclePage() {
                                     type="button"
                                     onClick={handleCloseSheet}
                                     disabled={submitting}
-                                    className="rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)] disabled:opacity-50"
+                                    className="pill-action-btn pill-action-btn--compact pill-action-btn--cancel"
                                 >
                                     {t("cycle.cancel")}
                                 </button>
@@ -447,6 +449,24 @@ export default function CyclePage() {
                             onClose={() => setIsIconPickerOpen(false)}
                         />
             </BottomSheet>
+            <ConfirmBottomSheet
+                open={cycleToDelete !== null}
+                title={t("cycle.deleteConfirmTitle")}
+                message={
+                    cycleToDelete
+                        ? t("cycle.deleteConfirmMessage", { name: cycleToDelete.name })
+                        : ""
+                }
+                confirmLabel={t("cycle.deleteConfirmButton")}
+                busy={deletingCycleId !== null}
+                danger
+                onClose={() => {
+                    if (deletingCycleId === null) {
+                        setCycleToDelete(null);
+                    }
+                }}
+                onConfirm={confirmDeleteCycle}
+            />
         </MainLayout>
     );
 }

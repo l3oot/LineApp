@@ -29,7 +29,10 @@ type AppDateTimeFieldProps = {
     className?: string;
 };
 
-const segmentClassName = "rounded-sm px-0 outline-none focus:bg-[var(--primary-soft)]";
+const segmentClassName =
+    "inline-block min-w-[1.25rem] rounded-sm px-0 text-center tabular-nums outline-none focus:bg-[var(--primary-soft)]";
+const timeInputClassName =
+    "inline-flex h-[2.375rem] w-[5.75rem] shrink-0 items-center justify-center rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold tabular-nums text-[var(--text)] focus-within:border-[var(--primary)]";
 
 export default function AppDateTimeField({
     date,
@@ -106,10 +109,19 @@ export default function AppDateTimeField({
                     if (value) onTimeChange(value);
                 }}
                 hourCycle={24}
-                className="shrink-0"
+                className="w-[5.75rem] shrink-0"
             >
-                <DateInput className="inline-flex items-center rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] focus-within:border-[var(--primary)]">
-                    {(segment) => <DateSegment segment={segment} className={segmentClassName} />}
+                <DateInput className={timeInputClassName}>
+                    {(segment) => (
+                        <DateSegment
+                            segment={segment}
+                            className={
+                                segment.type === "literal"
+                                    ? "inline-block min-w-[0.375rem] text-center tabular-nums"
+                                    : segmentClassName
+                            }
+                        />
+                    )}
                 </DateInput>
             </TimeField>
         </div>

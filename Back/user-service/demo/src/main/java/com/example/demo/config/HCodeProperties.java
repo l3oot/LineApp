@@ -12,10 +12,16 @@ public class HCodeProperties {
     private String password = "";
     private int pageSize = 1000;
     private int timeoutSeconds = 30;
+    /** local = bundled JSON (default); remote = MOPH HCode API */
+    private String dataSource = "local";
 
     public boolean isConfigured() {
         return username != null && !username.isBlank()
                 && password != null && !password.isBlank();
+    }
+
+    public boolean useRemoteData() {
+        return "remote".equalsIgnoreCase(dataSource) && isConfigured();
     }
 
     public String getBaseUrl() {
@@ -56,5 +62,13 @@ public class HCodeProperties {
 
     public void setTimeoutSeconds(int timeoutSeconds) {
         this.timeoutSeconds = timeoutSeconds;
+    }
+
+    public String getDataSource() {
+        return dataSource;
+    }
+
+    public void setDataSource(String dataSource) {
+        this.dataSource = dataSource;
     }
 }

@@ -6,6 +6,7 @@ import GreetingHeader from "../components/GreetingHeader";
 import CyclePageHeader from "../components/CyclePageHeader";
 import AnalyticPageHeader from "../components/AnalyticPageHeader";
 import ListPageHeader from "../components/ListPageHeader";
+import SettingPageHeader from "../components/SettingPageHeader";
 import AnnouncementBottomSheet from "../components/AnnouncementBottomSheet";
 import { GoHome } from "react-icons/go";
 import { GrPowerCycle } from "react-icons/gr";
@@ -41,6 +42,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     const isCyclePage = location.pathname === "/cycle";
     const isAnalyticsPage = location.pathname === "/analytics";
     const isListPage = location.pathname === "/list";
+    const isSettingsPage = location.pathname === "/settings";
     const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
     const [hasUnreadAnnouncement, setHasUnreadAnnouncement] = useState(true);
 
@@ -62,6 +64,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 <AnalyticPageHeader {...headerProps} />
             ) : isListPage ? (
                 <ListPageHeader {...headerProps} />
+            ) : isSettingsPage ? (
+                <SettingPageHeader {...headerProps} />
             ) : (
                 <GreetingHeader {...headerProps} />
             )}
@@ -86,7 +90,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 }
                             >
                                 <span className="main-layout-nav-icon" aria-hidden>
-                                    <Icon size={20} />
+                                    <Icon size={22} />
                                 </span>
                                 <span className="main-layout-nav-label">{t(item.labelKey)}</span>
                             </NavLink>

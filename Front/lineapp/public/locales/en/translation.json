@@ -76,7 +76,6 @@
     "expense": "Expense",
     "income": "Income",
     "dailyTotalPrefix": "Total",
-    "currencySuffix": "THB",
     "empty": "No transaction found for this filter"
   },
   "sum": {
@@ -106,7 +105,7 @@
     "namePlaceholder": "e.g. Rice season 1/68",
     "iconLabel": "Icon",
     "iconSearchPlaceholder": "Search icons",
-    "budgetLabel": "Budget (THB)",
+    "budgetLabel": "Budget",
     "budgetPlaceholder": "Optional",
     "startLabel": "Start date",
     "endLabel": "End date",

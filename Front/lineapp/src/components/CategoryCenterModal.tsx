@@ -142,13 +142,15 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
                             setActiveType("income");
                             resetEditor();
                         }}
-                        className={`rounded-[var(--radius-control)] border px-3 py-2 text-center text-sm font-semibold transition-all ${
+                        className={
                             activeType === "income"
-                                ? "border-2 border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary)]"
-                                : "border-[var(--border)] bg-[var(--surface-soft)] text-[var(--text-soft)]"
-                        }`}
+                                ? "pill-action-btn pill-action-btn--compact"
+                                : "pill-type-btn--idle pill-type-btn--income-idle"
+                        }
                     >
-                        {t("settings.categorySheet.income")}
+                        <span className={activeType === "income" ? "pill-action-btn-text" : undefined}>
+                            {t("settings.categorySheet.income")}
+                        </span>
                     </button>
                     <button
                         type="button"
@@ -157,13 +159,15 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
                             setActiveType("expense");
                             resetEditor();
                         }}
-                        className={`rounded-[var(--radius-control)] border px-3 py-2 text-center text-sm font-semibold transition-all ${
+                        className={
                             activeType === "expense"
-                                ? "border-2 border-[var(--danger)] bg-red-100 text-[var(--danger)]"
-                                : "border-red-100 bg-red-50 text-[var(--danger)] hover:bg-red-100"
-                        }`}
+                                ? "pill-action-btn pill-action-btn--compact pill-action-btn--expense"
+                                : "pill-type-btn--idle pill-type-btn--expense-idle"
+                        }
                     >
-                        {t("settings.categorySheet.expense")}
+                        <span className={activeType === "expense" ? "pill-action-btn-text" : undefined}>
+                            {t("settings.categorySheet.expense")}
+                        </span>
                     </button>
                 </div>
 
@@ -247,7 +251,9 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
                                                 className="min-w-0 flex-1 rounded-[var(--radius-control)] border border-[var(--border)] px-2 py-1 text-sm outline-none focus:border-[var(--primary)]"
                                             />
                                         ) : (
-                                            <span className="min-w-0 truncate">{item.name}</span>
+                                            <span className="min-w-0 truncate text-[14px] font-medium text-[var(--text)] md:text-[15px]">
+                                                {item.name}
+                                            </span>
                                         )}
                                         <div className="flex shrink-0 items-center gap-1.5">
                                             {isEditing ? (
@@ -279,7 +285,7 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
                                                             setEditingId(item.categoryId);
                                                             setEditName(item.name);
                                                         }}
-                                                        className="rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--text-soft)] transition-all hover:bg-[var(--surface)] disabled:opacity-50"
+                                                        className="rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 text-xs font-semibold text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)] disabled:opacity-50"
                                                     >
                                                         {t("addcycle.edit")}
                                                     </button>

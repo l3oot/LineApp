@@ -5,6 +5,7 @@ import MainLayout from "../layouts/MainLayout";
 import DateFilterBar from "../components/DateFilterBar";
 import ListDayTypeCard from "../components/ListDayTypeCard";
 import AppDateTimeField, { initialAppDateTime } from "../components/AppDateTimeField";
+import FormattedNumberInput from "../components/FormattedNumberInput";
 import FilterChipButton from "../components/FilterChipButton";
 import BottomSheet from "../components/BottomSheet";
 import { icons } from "../assets/Iconlist";
@@ -107,7 +108,7 @@ export default function List() {
     const [formCategories, setFormCategories] = useState<Category[]>([]);
     const [newCategoryId, setNewCategoryId] = useState("");
     const [newCycleId, setNewCycleId] = useState<string>("");
-    const [newAmount, setNewAmount] = useState("0");
+    const [newAmount, setNewAmount] = useState("");
     const [formDate, setFormDate] = useState<CalendarDate>(() => initialAppDateTime(i18n.language).date);
     const [formTime, setFormTime] = useState<Time>(() => initialAppDateTime(i18n.language).time);
     const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
@@ -363,7 +364,7 @@ export default function List() {
         setFormCategories([]);
         setNewCategoryId("");
         setNewCycleId("");
-        setNewAmount("0");
+        setNewAmount("");
         const initial = initialAppDateTime(i18n.language);
         setFormDate(initial.date);
         setFormTime(initial.time);
@@ -511,7 +512,6 @@ export default function List() {
                 />
 
                 <div className="list-filter-card">
-                    <p className="list-filter-title">{t("list.filterTitle")}</p>
                     <div className="relative list-filter-row">
                         <div className="list-filter-chips">
                             {filterButtons.map((filter) => (
@@ -666,7 +666,9 @@ export default function List() {
                 onClick={openAddSheet}
                 className="list-add-fab"
             >
-                <FaPlus size={18} />
+                <span className="pill-action-btn-icon" aria-hidden>
+                    <FaPlus size={14} />
+                </span>
             </button>
             <BottomSheet
                 open={isAddSheetOpen}
@@ -738,7 +740,7 @@ export default function List() {
                                 <button
                                     type="button"
                                     onClick={() => setIsAddCycleOpen((prev) => !prev)}
-                                    className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm font-medium text-[var(--text)] transition-all hover:border-[var(--primary)]"
+                                    className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm text-[var(--text)] transition-all hover:border-[var(--primary)]"
                                 >
                                     <span className={selectedCycle ? "text-[var(--text)]" : "text-[var(--text-soft)]"}>
                                         {selectedCycle ? selectedCycle.name : t("list.cycleNone")}
@@ -800,7 +802,7 @@ export default function List() {
                                 <button
                                     type="button"
                                     onClick={() => setIsAddCategoryOpen((prev) => !prev)}
-                                    className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm font-medium text-[var(--text)] transition-all hover:border-[var(--primary)]"
+                                    className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm text-[var(--text)] transition-all hover:border-[var(--primary)]"
                                 >
                                     <span className={selectedFormCategory ? "text-[var(--text)]" : "text-[var(--text-soft)]"}>
                                         {selectedFormCategory?.name ?? t("list.quickAddCategory")}
@@ -856,13 +858,12 @@ export default function List() {
                             <label className="text-sm font-bold text-[var(--text)]">
                                 {t("list.amountLabel")}
                                 <div className="mt-2 flex items-center rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 focus-within:border-[var(--primary)]">
-                                    <input
-                                        type="number"
-                                        min={0}
+                                    <FormattedNumberInput
                                         required
                                         value={newAmount}
-                                        onChange={(event) => setNewAmount(event.target.value)}
-                                        className="w-full bg-transparent text-sm text-[var(--text)] outline-none"
+                                        onChange={setNewAmount}
+                                        placeholder={t("list.amountPlaceholder")}
+                                        className="w-full bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-soft)]"
                                     />
                                     <span className="ml-2 text-sm text-[var(--text-soft)]">฿</span>
                                 </div>
@@ -888,7 +889,7 @@ export default function List() {
                                     type="button"
                                     disabled={submitting}
                                     onClick={handleCloseAddSheet}
-                                    className="rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)] disabled:opacity-50"
+                                    className="pill-action-btn pill-action-btn--compact pill-action-btn--cancel"
                                 >
                                     {t("cycle.cancel")}
                                 </button>

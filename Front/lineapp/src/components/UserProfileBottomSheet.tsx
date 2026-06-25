@@ -53,7 +53,7 @@ function ScrollPickerField({
                 type="button"
                 disabled={disabled}
                 onClick={() => onToggle(pickerKey)}
-                className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm font-medium text-[var(--text)] transition-all hover:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm transition-all hover:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
             >
                 <span className={selectedName ? "text-[var(--text)]" : "text-[var(--text-soft)]"}>
                     {selectedName ?? placeholder}
@@ -368,16 +368,18 @@ export default function UserProfileBottomSheet({
                         type="button"
                         disabled={submitting}
                         onClick={onClose}
-                        className="rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm font-semibold text-[var(--text-soft)] transition-all hover:bg-[var(--surface-soft)] disabled:opacity-50"
+                        className="pill-action-btn pill-action-btn--compact pill-action-btn--cancel"
                     >
                         {t("common.cancel")}
                     </button>
                     <button
                         type="submit"
                         disabled={submitting || adminLoading}
-                        className="rounded-[var(--radius-control)] bg-[var(--primary)] px-3 py-2.5 text-sm font-semibold text-white transition-all hover:brightness-95 disabled:opacity-50"
+                        className="pill-action-btn pill-action-btn--compact"
                     >
-                        {submitting ? t("settings.profileSheet.saving") : t("settings.profileSheet.save")}
+                        <span className="pill-action-btn-text">
+                            {submitting ? t("settings.profileSheet.saving") : t("settings.profileSheet.save")}
+                        </span>
                     </button>
                 </div>
             </form>

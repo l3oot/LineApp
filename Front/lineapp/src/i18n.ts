@@ -39,6 +39,8 @@ const resources = {
                 },
             },
             settings: {
+                pageTitle: "ตั้งค่า",
+                pageSubtitle: "จัดการข้อมูลส่วนตัว\nหมวดหมู่ และภาษาของคุณ",
                 userTitle: "ผู้ใช้งาน",
                 userSubtitle: "ตั้งค่าโปรไฟล์",
                 lineLogin: "เข้าสู่ระบบด้วย LINE",
@@ -107,7 +109,7 @@ const resources = {
             },
             list: {
                 pageTitle: "รายการ",
-                pageSubtitle: "ดูรายรับ-รายจ่ายแยกตามวัน",
+                pageSubtitle: "ดูรายรับ-รายจ่าย\nแยกตามวัน",
                 itemCount: "{{count}} รายการ",
                 incomeItemCount: "รายรับ {{count}} รายการ",
                 expenseItemCount: "รายจ่าย {{count}} รายการ",
@@ -124,7 +126,6 @@ const resources = {
                 expense: "รายจ่าย",
                 income: "รายรับ",
                 dailyTotalPrefix: "รวม",
-                currencySuffix: "บาท",
                 empty: "ไม่พบรายการในตัวกรองนี้",
                 loadMore: "โหลดเพิ่ม",
                 loadingMore: "กำลังโหลด...",
@@ -152,6 +153,7 @@ const resources = {
                 cycleLabel: "รอบการเกษตร",
                 cycleNone: "ไม่ระบุรอบ",
                 amountLabel: "จำนวนเงิน",
+                amountPlaceholder: "เช่น 10000",
                 timeLabel: "เวลา",
                 iconLabel: "ไอคอน",
                 detailPlaceholder: "เช่น ค่า Netflix, เงินเดือน",
@@ -195,7 +197,7 @@ const resources = {
             },
             cycle: {
                 pageTitle: "รอบการผลิต",
-                pageSubtitle: "จัดการแต่ละรอบการผลิต วางแผน และติดตามผล",
+                pageSubtitle: "จัดการแต่ละรอบการผลิต\nวางแผน และติดตามผล",
                 addNew: "เพิ่มรอบการเกษตรใหม่",
                 formTitle: "เพิ่มรอบการเกษตร",
                 editFormTitle: "แก้ไขรอบการเกษตร",
@@ -211,6 +213,10 @@ const resources = {
                 endLabel: "สิ้นสุด",
                 cancel: "ยกเลิก",
                 save: "บันทึก",
+                deleteConfirmTitle: "ยืนยันการลบ",
+                deleteConfirmMessage:
+                    "ลบรอบ \"{{name}}\" ใช่หรือไม่? งบประมาณจะถูกลบด้วย และรายการธุรกรรมจะไม่ผูกรอบนี้แล้ว",
+                deleteConfirmButton: "ลบรอบ",
             },
             icons: iconLabelsTh,
             addcycle: {
@@ -231,11 +237,11 @@ const resources = {
                 loss: "ขาดทุน",
             },
             cyclecard: {
-                usedBudgetLine: "งบที่ใช้ไปแล้ว {{amount}} บาท",
+                usedBudgetLine: "งบที่ใช้ไปแล้ว {{amount}}",
             },
             analytic: {
                 pageTitle: "วิเคราะห์",
-                pageSubtitle: "ดูแนวโน้มและสัดส่วนรายรับ-รายจ่ายของคุณ",
+                pageSubtitle: "ดูแนวโน้มและ\nสัดส่วนรายรับ-รายจ่ายของคุณ",
                 trendTitle: "แนวโน้มรายรับ - รายจ่าย",
                 income: "รายรับ",
                 expense: "รายจ่าย",
@@ -299,6 +305,8 @@ const resources = {
                 },
             },
             settings: {
+                pageTitle: "Settings",
+                pageSubtitle: "Manage your personal info\ncategories and language",
                 userTitle: "User",
                 userSubtitle: "Profile settings",
                 lineLogin: "Log in with LINE",
@@ -367,7 +375,7 @@ const resources = {
             },
             list: {
                 pageTitle: "Transactions",
-                pageSubtitle: "View daily income and expenses",
+                pageSubtitle: "View income and expenses\nby day",
                 itemCount: "{{count}} item(s)",
                 incomeItemCount: "{{count}} income item(s)",
                 expenseItemCount: "{{count}} expense item(s)",
@@ -384,7 +392,6 @@ const resources = {
                 expense: "Expense",
                 income: "Income",
                 dailyTotalPrefix: "Total",
-                currencySuffix: "THB",
                 empty: "No transaction found for this filter",
                 loadMore: "Load more",
                 loadingMore: "Loading...",
@@ -412,6 +419,7 @@ const resources = {
                 cycleLabel: "Cycle",
                 cycleNone: "No cycle",
                 amountLabel: "Amount",
+                amountPlaceholder: "e.g. 10000",
                 timeLabel: "Time",
                 iconLabel: "Icon",
                 detailPlaceholder: "e.g. Netflix, Salary",
@@ -455,7 +463,7 @@ const resources = {
             },
             cycle: {
                 pageTitle: "Production cycles",
-                pageSubtitle: "Manage each cycle, plan ahead, and track results",
+                pageSubtitle: "Manage each production cycle\nplan and track results",
                 addNew: "Add new farming cycle",
                 formTitle: "Add farming cycle",
                 editFormTitle: "Edit farming cycle",
@@ -471,6 +479,10 @@ const resources = {
                 endLabel: "End",
                 cancel: "Cancel",
                 save: "Save",
+                deleteConfirmTitle: "Confirm deletion",
+                deleteConfirmMessage:
+                    'Delete cycle "{{name}}"? Its budget will be removed and linked transactions will be unassigned from this cycle.',
+                deleteConfirmButton: "Delete cycle",
             },
             icons: iconLabelsEn,
             addcycle: {
@@ -495,7 +507,7 @@ const resources = {
             },
             analytic: {
                 pageTitle: "Analytics",
-                pageSubtitle: "Track trends and income-expense breakdown",
+                pageSubtitle: "View trends and\nincome-expense breakdown",
                 trendTitle: "Income - Expense trend",
                 income: "Income",
                 expense: "Expense",
@@ -559,6 +571,8 @@ const resources = {
                 },
             },
             settings: {
+                pageTitle: "設定",
+                pageSubtitle: "個人情報を管理\nカテゴリと言語",
                 userTitle: "ユーザー",
                 userSubtitle: "プロフィール設定",
                 lineLogin: "LINEでログイン",
@@ -627,7 +641,7 @@ const resources = {
             },
             list: {
                 pageTitle: "一覧",
-                pageSubtitle: "日別の収入と支出を確認",
+                pageSubtitle: "収入・支出を確認\n日別で表示",
                 itemCount: "{{count}} 件",
                 incomeItemCount: "収入 {{count}} 件",
                 expenseItemCount: "支出 {{count}} 件",
@@ -644,7 +658,6 @@ const resources = {
                 expense: "支出",
                 income: "収入",
                 dailyTotalPrefix: "合計",
-                currencySuffix: "バーツ",
                 empty: "この条件の取引はありません",
                 loadMore: "さらに読み込む",
                 loadingMore: "読み込み中...",
@@ -672,6 +685,7 @@ const resources = {
                 cycleLabel: "サイクル",
                 cycleNone: "サイクルなし",
                 amountLabel: "金額",
+                amountPlaceholder: "例: 10000",
                 timeLabel: "時間",
                 iconLabel: "アイコン",
                 detailPlaceholder: "例: Netflix、給料",
@@ -715,7 +729,7 @@ const resources = {
             },
             cycle: {
                 pageTitle: "生産サイクル",
-                pageSubtitle: "各サイクルを管理し、計画と成果を追跡",
+                pageSubtitle: "各栽培サイクルを管理\n計画と成果を追跡",
                 addNew: "新しい農業サイクルを追加",
                 formTitle: "農業サイクルを追加",
                 editFormTitle: "サイクルを編集",
@@ -731,6 +745,10 @@ const resources = {
                 endLabel: "終了",
                 cancel: "キャンセル",
                 save: "保存",
+                deleteConfirmTitle: "削除の確認",
+                deleteConfirmMessage:
+                    "サイクル「{{name}}」を削除しますか？予算も削除され、関連する取引はこのサイクルから外れます。",
+                deleteConfirmButton: "サイクルを削除",
             },
             icons: iconLabelsJp,
             addcycle: {
@@ -755,7 +773,7 @@ const resources = {
             },
             analytic: {
                 pageTitle: "分析",
-                pageSubtitle: "収支の傾向と内訳を確認",
+                pageSubtitle: "傾向を確認し\n収支の内訳を見る",
                 trendTitle: "収入 - 支出の推移",
                 income: "収入",
                 expense: "支出",

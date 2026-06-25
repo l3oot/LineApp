@@ -169,7 +169,7 @@ export default function Setting() {
                     <button
                         type="button"
                         onClick={handleLogout}
-                        className="mt-2 flex w-full min-h-[48px] items-center justify-center gap-2.5 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-4 text-[15px] font-semibold text-[var(--text-soft)] transition-colors hover:bg-[var(--surface-soft)] active:bg-[var(--surface-soft)]"
+                        className="mt-2 flex w-full min-h-[48px] items-center justify-center gap-2.5 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-4 text-[15px] font-semibold text-[var(--text-soft)] transition-colors hover:bg-[var(--surface-soft)] active:bg-[#fef2f2]"
                     >
                         <LuLogOut size={18} className="shrink-0" aria-hidden />
                         {t("settings.logout")}

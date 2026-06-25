@@ -153,6 +153,7 @@ export default function Sum() {
               </Link>
             </div>
 
+            <div className="recent-tx-card">
             {loading ? (
               <p className="home-empty-text">{t("sum.loading")}</p>
             ) : recentTransactions.length === 0 ? (
@@ -175,6 +176,7 @@ export default function Sum() {
                 ))}
               </div>
             )}
+            </div>
           </section>
         </div>
       </div>
