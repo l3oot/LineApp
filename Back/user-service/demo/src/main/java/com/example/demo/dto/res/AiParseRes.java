@@ -31,6 +31,7 @@ public record AiParseRes(
             UUID cycleId,
             String cycleName,
             UUID categoryId,
-            String categoryName) {
+            String categoryName,
+            String icon) {
     }
 }

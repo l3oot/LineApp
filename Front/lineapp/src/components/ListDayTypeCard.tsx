@@ -2,6 +2,7 @@ import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { Transaction } from "../lib/userService";
+import { resolveTxIconEmoji } from "../utils/resolveTxIcon";
 import ListTransactionRow from "./ListTransactionRow";
 
 type ListDayTypeCardProps = {
@@ -11,7 +12,7 @@ type ListDayTypeCardProps = {
     onToggle: () => void;
     categoryById: Record<string, string>;
     fallbackCategory: string;
-    icon?: string;
+    fallbackIcon?: string;
     selectable?: boolean;
     selectedTxIds: string[];
     onToggleSelect: (txId: string, selected: boolean) => void;
@@ -33,7 +34,7 @@ export default function ListDayTypeCard({
     onToggle,
     categoryById,
     fallbackCategory,
-    icon,
+    fallbackIcon,
     selectable = false,
     selectedTxIds,
     onToggleSelect,
@@ -87,7 +88,7 @@ export default function ListDayTypeCard({
                                     type={tx.txType}
                                     subtitle={category}
                                     amount={Number(tx.amount)}
-                                    icon={icon}
+                                    icon={resolveTxIconEmoji(tx.icon, fallbackIcon)}
                                     selectable={selectable}
                                     selected={selectedTxIds.includes(tx.txId)}
                                     onSelectedChange={(selected) => onToggleSelect(tx.txId, selected)}

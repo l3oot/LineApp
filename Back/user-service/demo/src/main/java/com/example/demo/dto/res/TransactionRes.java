@@ -12,6 +12,7 @@ public record TransactionRes(
         String txType,
         BigDecimal amount,
         String note,
+        String icon,
         LocalDateTime txDate,
         LocalDateTime createdAt) {
 }

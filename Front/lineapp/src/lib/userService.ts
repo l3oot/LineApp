@@ -169,6 +169,7 @@ export type Transaction = {
     txType: "expense" | "income";
     amount: number;
     note: string | null;
+    icon: string | null;
     txDate: string;          // ISO datetime
     createdAt: string;
 };
@@ -179,6 +180,7 @@ export type TransactionCreatePayload = {
     txType: "expense" | "income";
     amount: number;
     note?: string | null;
+    icon?: string | null;
     txDate: string;
 };
 

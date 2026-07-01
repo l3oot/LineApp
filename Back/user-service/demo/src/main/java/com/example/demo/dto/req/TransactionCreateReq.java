@@ -11,5 +11,6 @@ public record TransactionCreateReq(
         String txType,
         BigDecimal amount,
         String note,
+        String icon,
         LocalDateTime txDate) {
 }

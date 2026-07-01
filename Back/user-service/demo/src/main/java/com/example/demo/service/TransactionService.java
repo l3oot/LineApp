@@ -129,6 +129,7 @@ public class TransactionService {
                 normalizedType,
                 req.amount(),
                 req.note(),
+                req.icon(),
                 req.txDate());
         return toRes(transactionRepository.save(entity));
     }
@@ -154,6 +155,7 @@ public class TransactionService {
         entity.setTxType(normalizedType);
         entity.setAmount(req.amount());
         entity.setNote(req.note());
+        entity.setIcon(req.icon());
         entity.setTxDate(req.txDate());
 
         return toRes(transactionRepository.save(entity));
@@ -225,6 +227,7 @@ public class TransactionService {
                 e.getTxType(),
                 e.getAmount(),
                 e.getNote(),
+                e.getIcon(),
                 e.getTxDate(),
                 e.getCreatedAt());
     }

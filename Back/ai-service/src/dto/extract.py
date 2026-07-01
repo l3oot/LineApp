@@ -14,11 +14,13 @@ EXTRACT_JSON_SHAPE_FOR_PROMPT = """{
   "type": "expense",
   "cycleName": "ปลานิล",
   "cycleFarmType": "ประตุสัตว์",
-  "categoryName": "ค่าอาหาร"
+  "categoryName": "ค่าอาหาร",
+  "icon": "cow"
 }
 (type เป็น "expense" หรือ "income"; price เป็นตัวเลข;
  cycleName และ cycleFarmType ต้องตรงกับรายการ cycles ที่ให้ทุกตัวอักษร หรือ null ถ้าไม่ตรงรอบใด;
- categoryName ต้องตรงกับรายการ categories ที่ให้ทุกตัวอักษร หรือ null ถ้าไม่ตรงหมวดใด)"""
+ categoryName ต้องตรงกับรายการ categories ที่ให้ทุกตัวอักษร หรือ null ถ้าไม่ตรงหมวดใด;
+ icon ต้องเป็น key จากรายการ icons ที่ให้ทุกตัวอักษร หรือ null ถ้าไม่ตรง icon ใด)"""
 
 
 class AiExtractLlmRaw(BaseModel):
@@ -32,6 +34,7 @@ class AiExtractLlmRaw(BaseModel):
     cycleName: str | None = None
     cycleFarmType: str | None = None
     categoryName: str | None = None
+    icon: str | None = None
 
 
 class AiExtractStructured(BaseModel):
@@ -57,6 +60,10 @@ class AiExtractStructured(BaseModel):
     categoryName: str | None = Field(
         default=None,
         description="ชื่อหมวดหมู่ (canonical) ที่จับคู่ได้",
+    )
+    icon: str | None = Field(
+        default=None,
+        description="key icon จากรายการที่อนุญาต (เช่น cow, fish, money)",
     )
 
 

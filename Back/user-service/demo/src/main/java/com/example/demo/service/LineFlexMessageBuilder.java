@@ -33,8 +33,10 @@ public class LineFlexMessageBuilder {
             "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
             "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
     };
-    private static final String INCOME_TEMPLATE = "line/flex/income.json";
-    private static final String EXPENSE_TEMPLATE = "line/flex/expense.json";
+    private static final String TRANSACTION_TEMPLATE = "line/flex/transaction.json";
+    private static final String EDIT_TEMPLATE = "line/flex/edit.json";
+    private static final String INCOME_COLOR = "#30793F";
+    private static final String EXPENSE_COLOR = "#E36C64";
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /**
@@ -49,8 +51,10 @@ public class LineFlexMessageBuilder {
         LocalDateTime when = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestampMs), BANGKOK);
         String txId = tx.txId().toString();
         return fillBubble(
-                templateForType(data.type()),
+                TRANSACTION_TEMPLATE,
                 resolveTypeLabel(data.type()),
+                resolveTypeColor(data.type()),
+                resolveAmountColor(data.type()),
                 cycleSubtitle(data.cycleName()),
                 categorySubtitle(data.categoryName()),
                 data.main(),
@@ -70,8 +74,10 @@ public class LineFlexMessageBuilder {
         LocalDateTime when = tx.txDate() != null ? tx.txDate() : LocalDateTime.now(BANGKOK);
         String note = tx.note() != null ? tx.note() : "";
         return fillBubble(
-                templateForType(tx.txType()),
+                EDIT_TEMPLATE,
                 resolveTypeLabel(tx.txType()),
+                resolveTypeColor(tx.txType()),
+                resolveAmountColor(tx.txType()),
                 cycleSubtitle(cycleName),
                 categorySubtitle(categoryName),
                 note,
@@ -93,6 +99,8 @@ public class LineFlexMessageBuilder {
     private Map<String, Object> fillBubble(
             String templatePath,
             String typeLabel,
+            String typeColor,
+            String amountColor,
             String cycleName,
             String categoryName,
             String main,
@@ -105,6 +113,8 @@ public class LineFlexMessageBuilder {
 
         String filled = template
                 .replace("{{typeLabel}}", jsonEscape(typeLabel))
+                .replace("{{typeColor}}", typeColor)
+                .replace("{{amountColor}}", amountColor)
                 .replace("{{cycleName}}", jsonEscape(cycleName))
                 .replace("{{categoryName}}", jsonEscape(categoryName))
                 .replace("{{main}}", jsonEscape(main != null ? main : ""))
@@ -125,8 +135,16 @@ public class LineFlexMessageBuilder {
         }
     }
 
-    private static String templateForType(String type) {
-        return "income".equalsIgnoreCase(type) ? INCOME_TEMPLATE : EXPENSE_TEMPLATE;
+    private static String resolveAmountColor(String type) {
+        return isIncome(type) ? INCOME_COLOR : EXPENSE_COLOR;
+    }
+
+    private static String resolveTypeColor(String type) {
+        return isIncome(type) ? INCOME_COLOR : EXPENSE_COLOR;
+    }
+
+    private static boolean isIncome(String type) {
+        return "income".equalsIgnoreCase(type);
     }
 
     /** แปลง tx type code → ข้อความแสดงใน card (ไม่ hardcode ใน template) */
@@ -134,7 +152,7 @@ public class LineFlexMessageBuilder {
         if (type == null || type.isBlank()) {
             return "-";
         }
-        return "income".equalsIgnoreCase(type) ? "รายรับ" : "รายจ่าย";
+        return isIncome(type) ? "รายรับ" : "รายจ่าย";
     }
 
     private static String cycleSubtitle(String cycleName) {

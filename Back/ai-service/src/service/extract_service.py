@@ -12,13 +12,17 @@ from src.client.lineapp_api import (
     get_lineapp_api_base,
 )
 from src.config import settings
+from src.data.icons import icons_json_for_prompt
 from src.dto.extract import AiExtractStructured, AiParseResponse
 from src.prompts.extract import build_extract_prompt
 from src.service.category_service import categories_for_prompt
 from src.service.cycle_service import cycles_for_prompt
 from src.service.llm_response_parser import (
+    fallback_extract_from_text,
     is_valid_response,
+    looks_like_complete_transaction,
     parse_llm_payload,
+    sanitize_icon,
     sanitize_ids,
 )
 from src.service.llm_service import run_llm
@@ -28,8 +32,9 @@ logger = logging.getLogger(__name__)
 _RETRY_HINT = (
     "\n\n❗❗ ครั้งนี้ขอ JSON ตามรูปแบบเท่านั้น:\n"
     '{"main": "...", "price": 0, "type": "expense", '
-    '"cycleName": "..." หรือ null, "cycleFarmType": "..." หรือ null, '
-    '"categoryName": "..." หรือ null}\n'
+    '"cycleName": null, "cycleFarmType": null, '
+    '"categoryName": null, "icon": null}\n'
+    "ห้ามทวนข้อความหลานแล้วต่อท้าย จ๊ะ/จ๋า ถ้ามีราคาในข้อความแล้ว\n"
     "ห้ามมีข้อความอื่นนอก JSON ห้ามมี markdown code fence"
 )
 
@@ -66,7 +71,8 @@ def extract_transaction(text: str, user_id: str | None = None) -> AiParseRespons
 
     cycles_json = json.dumps(cycles_for_prompt(cycles), ensure_ascii=False)
     categories_json = json.dumps(categories_for_prompt(categories), ensure_ascii=False)
-    base_prompt = build_extract_prompt(text, cycles_json, categories_json)
+    icons_json = icons_json_for_prompt()
+    base_prompt = build_extract_prompt(text, cycles_json, categories_json, icons_json)
 
     max_attempts = max(1, settings.extract_max_retries + 1)
     last_response = _build_response("", None, None)
@@ -75,9 +81,10 @@ def extract_transaction(text: str, user_id: str | None = None) -> AiParseRespons
         llm_out = run_llm(prompt)
         structured, message = parse_llm_payload(llm_out["result"], cycles, categories)
         structured = sanitize_ids(structured, cycles, categories)
+        structured = sanitize_icon(structured)
         last_response = _build_response(llm_out["source_model"], structured, message)
 
-        if is_valid_response(last_response):
+        if is_valid_response(last_response, text):
             logger.info(
                 "extract_transaction attempt=%d/%d status=%s",
                 attempt,
@@ -92,6 +99,19 @@ def extract_transaction(text: str, user_id: str | None = None) -> AiParseRespons
             max_attempts,
             str(llm_out["result"])[:300],
         )
+
+    if looks_like_complete_transaction(text):
+        fallback = fallback_extract_from_text(text)
+        if fallback is not None:
+            fallback = sanitize_ids(fallback, cycles, categories)
+            fallback = sanitize_icon(fallback)
+            logger.info(
+                "extract_transaction: regex fallback structured type=%s main=%s price=%s",
+                fallback.type,
+                fallback.main,
+                fallback.price,
+            )
+            return _build_response("regex-fallback", fallback, None)
 
     logger.warning(
         "extract_transaction: gave up after %d attempts — returning last response",

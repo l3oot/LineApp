@@ -10,6 +10,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from src.dto.extract import AiExtractLlmRaw, AiExtractStructured, AiParseResponse
+from src.data.icons import normalize_icon
 from src.service.category_service import (
     allowed_category_ids,
     resolve_category,
@@ -23,6 +24,12 @@ logger = logging.getLogger(__name__)
 
 _JSON_FENCE = re.compile(r"^\s*```(?:json)?\s*|\s*```\s*$", re.IGNORECASE | re.MULTILINE)
 _GRANDMA_ENDINGS = ("จ๊ะ", "จ๋า")
+_PRICE_PATTERN = re.compile(
+    r"(?<!\d)(\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?\s*(?:บาท|฿)?(?!\d)",
+    re.IGNORECASE,
+)
+_INCOME_HINT = re.compile(r"(?:ขาย|ได้|รับ)", re.IGNORECASE)
+_EXPENSE_HINT = re.compile(r"(?:ซื้อ|จ่าย)", re.IGNORECASE)
 
 
 def strip_json_fences(raw: str) -> str:
@@ -48,6 +55,7 @@ def structured_from_dict(
             cycleName=cycle_name,
             categoryId=category_id,
             categoryName=category_name,
+            icon=normalize_icon(raw.icon),
         )
     except ValidationError:
         pass
@@ -115,6 +123,18 @@ def sanitize_ids(
     return structured.model_copy(update=updates) if updates else structured
 
 
+def sanitize_icon(structured: AiExtractStructured | None) -> AiExtractStructured | None:
+    """กัน LLM แต่ง icon key — ถ้าไม่อยู่ในรายการที่อนุญาต ให้ล้างเป็น null"""
+    if structured is None:
+        return structured
+    normalized = normalize_icon(structured.icon)
+    if normalized == structured.icon:
+        return structured
+    if normalized is None and structured.icon is not None:
+        logger.info("icon from LLM not in allowed list — cleared. got=%s", structured.icon)
+    return structured.model_copy(update={"icon": normalized})
+
+
 def is_grandma_reply(message: str | None) -> bool:
     """True เมื่อข้อความตอบกลับเป็น 'ยายตอบหลาน' ตามกฎข้อ 5 (ข้อมูลไม่ครบ)"""
     if not message:
@@ -123,7 +143,64 @@ def is_grandma_reply(message: str | None) -> bool:
     return any(stripped.endswith(ending) for ending in _GRANDMA_ENDINGS)
 
 
-def is_valid_response(response: AiParseResponse) -> bool:
+def looks_like_complete_transaction(text: str | None) -> bool:
+    """ข้อความหลานน่าจะมีรายการและราคาครบ — ต้องได้ JSON ไม่ใช่ยายทวนคำ"""
+    if not text or not text.strip():
+        return False
+    raw = text.strip()
+    matches = list(_PRICE_PATTERN.finditer(raw))
+    if not matches:
+        return False
+    m = matches[-1]
+    main = (raw[: m.start()] + raw[m.end() :]).strip()
+    main = re.sub(r"[\s,.!?。！？]+", " ", main).strip()
+    return len(main) >= 2
+
+
+def fallback_extract_from_text(text: str) -> AiExtractStructured | None:
+    """แยกรายการจากข้อความหลานเมื่อ LLM ตอบเป็นยายทั้งที่ข้อมูลครบ"""
+    raw = text.strip()
+    for ending in _GRANDMA_ENDINGS:
+        if raw.endswith(ending):
+            raw = raw[: -len(ending)].strip()
+    if not looks_like_complete_transaction(raw):
+        return None
+
+    matches = list(_PRICE_PATTERN.finditer(raw))
+    m = matches[-1]
+    price_str = m.group(1).replace(",", "")
+    try:
+        price = float(price_str)
+    except ValueError:
+        return None
+    if price <= 0:
+        return None
+
+    main = (raw[: m.start()] + raw[m.end() :]).strip()
+    main = re.sub(r"[\s,.!?。！？]+", " ", main).strip()
+    if not main:
+        return None
+
+    if _INCOME_HINT.search(raw) and not _EXPENSE_HINT.search(raw):
+        tx_type = "income"
+    elif _EXPENSE_HINT.search(raw):
+        tx_type = "expense"
+    else:
+        tx_type = "expense"
+
+    return AiExtractStructured(
+        main=main,
+        price=price,
+        type=tx_type,
+        cycleId=None,
+        cycleName=None,
+        categoryId=None,
+        categoryName=None,
+        icon=None,
+    )
+
+
+def is_valid_response(response: AiParseResponse, user_text: str | None = None) -> bool:
     """ตรวจว่า response พร้อมส่งกลับหรือไม่"""
     if response.structured_ok and response.data is not None:
         try:
@@ -131,4 +208,8 @@ def is_valid_response(response: AiParseResponse) -> bool:
             return True
         except ValidationError:
             return False
-    return is_grandma_reply(response.message)
+    if is_grandma_reply(response.message):
+        if looks_like_complete_transaction(user_text):
+            return False
+        return True
+    return False

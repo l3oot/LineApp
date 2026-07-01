@@ -217,6 +217,13 @@
     transition: color 180ms ease;
 }
 
+.main-layout-nav-img {
+    display: block;
+    width: 2rem;
+    height: 2rem;
+    object-fit: contain;
+}
+
 .main-layout-nav-label {
     max-width: 100%;
     overflow: hidden;

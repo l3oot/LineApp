@@ -8,6 +8,7 @@ import DateFilterBar from "../components/DateFilterBar";
 import FinanceOverview from "../components/FinanceOverview";
 import QuickMenu from "../components/QuickMenu";
 import RecentTransactionRow from "../components/RecentTransactionRow";
+import { icons } from "../assets/Iconlist";
 import "../styles/sum.css";
 import { ApiError } from "../lib/api";
 import { auth } from "../lib/auth";
@@ -23,6 +24,7 @@ import {
   filterTransactionsInRange,
   sumTransactionTotals,
 } from "../utils/transactionDateRange";
+import { resolveTxIconEmoji } from "../utils/resolveTxIcon";
 
 function formatRelativeTxDate(
   txDate: string,
@@ -172,6 +174,7 @@ export default function Sum() {
                     amount={Number(tx.amount)}
                     type={tx.txType}
                     timeLabel={formatRelativeTxDate(tx.txDate, dateLocale, relativeLabels)}
+                    icon={resolveTxIconEmoji(tx.icon, icons.bill)}
                   />
                 ))}
               </div>

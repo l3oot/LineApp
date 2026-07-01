@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LuEye, LuEyeOff } from "react-icons/lu";
+import cartIcon from "../assets/icon/cart.png";
+import bagIcon from "../assets/icon/bag.png";
 import StatisticGrowIcon from "./icons/StatisticGrowIcon";
 
 type FinanceOverviewProps = {
@@ -19,7 +21,9 @@ export default function FinanceOverview({ income, expense, balance }: FinanceOve
         <section className="finance-overview-card" aria-label={t("sum.financeOverview")}>
             <div className="finance-overview-top">
                 <div className="finance-overview-income">
-                    <span className="finance-overview-illus-slot" aria-hidden />
+                    <span className="finance-overview-illus-slot finance-overview-illus-slot--filled" aria-hidden>
+                        <img src={cartIcon} alt="" className="finance-overview-illus-img" />
+                    </span>
                     <div className="finance-overview-metric">
                         <p className="finance-overview-label finance-overview-label--income">
                             {t("sum.totalIncome")}
@@ -39,7 +43,9 @@ export default function FinanceOverview({ income, expense, balance }: FinanceOve
                             {formatAmount(expense)}
                         </p>
                     </div>
-                    <span className="finance-overview-illus-slot" aria-hidden />
+                    <span className="finance-overview-illus-slot finance-overview-illus-slot--filled" aria-hidden>
+                        <img src={bagIcon} alt="" className="finance-overview-illus-img" />
+                    </span>
                 </div>
 
                 <div className="finance-overview-center" aria-hidden>

@@ -30,6 +30,16 @@ EXTRACT_PROMPT_TEMPLATE = (
 - ถ้าไม่มีหมวดที่ตรง หรือรายการว่าง ให้ใส่ null สำหรับ categoryName
 - ห้ามแต่งชื่อหมวดที่ไม่อยู่ในรายการ
 
+รายการ icon (icons) ที่ใช้ได้ — JSON array แต่ละตัวมี key (ภาษาอังกฤษ) และ th (ชื่อไทย):
+{icons_json}
+
+หน้าที่เลือก icon (จาก key ในรายการด้านบนเท่านั้น):
+- ดูจากสิ่งของหรือความหมายใน main และข้อความของหลาน
+- ใส่ key ที่สอดคล้องที่สุด เช่น ซื้อวัว → cow, ค่าอาหารปลา → fish, ค่าไฟ/ค่าน้ำมัน → fire, ค่าน้ำประปา → water
+- รายการเกี่ยวกับเงินทั่วไปที่ไม่ระบุสินค้าเฉพาะ → money หรือ bill
+- ถ้าไม่ตรง icon ใดเลย → null
+- ห้ามแต่ง key ที่ไม่อยู่ในรายการ
+
 ข้อความ:
 "{text}"
 
@@ -51,7 +61,14 @@ EXTRACT_PROMPT_TEMPLATE = (
 
 4. ❗ ถ้ามีครบ:
 - สิ่งของ (หรือ กริยา+สิ่งของ)
-- ราคา
+- ราคา (ตัวเลข เช่น 6000 หรือ 6000 บาท)
+
+👉 ต้องตอบเป็น JSON เท่านั้น — ห้ามทวนข้อความหลานแล้วต่อท้าย "จ๊ะ" หรือ "จ๋า"
+
+ตัวอย่างที่ต้องตอบ JSON:
+- "ซื้อปุ๋ยใส่ข้าวโพด 6000 บาท" → type=expense, main="ซื้อปุ๋ยใส่ข้าวโพด", price=6000
+- "ขายวัว 20000" → type=income, main="ขายวัว", price=20000
+- cycleName / categoryName / icon ไม่แน่ใจให้ใส่ null ได้ แต่ยังต้องตอบ JSON
 
 👉 ต้องตอบเป็น JSON เท่านั้น:
 """
@@ -74,9 +91,12 @@ EXTRACT_PROMPT_TEMPLATE = (
 )
 
 
-def build_extract_prompt(text: str, cycles_json: str, categories_json: str) -> str:
+def build_extract_prompt(
+    text: str, cycles_json: str, categories_json: str, icons_json: str
+) -> str:
     return (
         EXTRACT_PROMPT_TEMPLATE.replace("{text}", text)
         .replace("{cycles_json}", cycles_json)
         .replace("{categories_json}", categories_json)
+        .replace("{icons_json}", icons_json)
     )

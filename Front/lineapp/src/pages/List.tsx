@@ -8,6 +8,7 @@ import AppDateTimeField, { initialAppDateTime } from "../components/AppDateTimeF
 import FormattedNumberInput from "../components/FormattedNumberInput";
 import FilterChipButton from "../components/FilterChipButton";
 import BottomSheet from "../components/BottomSheet";
+import IconPickerSheet, { type IconName } from "../components/IconPickerSheet";
 import { icons } from "../assets/Iconlist";
 import { FiCheck, FiChevronDown, FiX } from "react-icons/fi";
 import { FaPlus } from "react-icons/fa";
@@ -113,6 +114,9 @@ export default function List() {
     const [formTime, setFormTime] = useState<Time>(() => initialAppDateTime(i18n.language).time);
     const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
     const [isAddCycleOpen, setIsAddCycleOpen] = useState(false);
+    const [selectedIcon, setSelectedIcon] = useState<IconName>("bill");
+    const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
+    const [iconQuery, setIconQuery] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [addError, setAddError] = useState<string | null>(null);
     const [cycles, setCycles] = useState<Cycle[]>([]);
@@ -370,6 +374,9 @@ export default function List() {
         setFormTime(initial.time);
         setIsAddCategoryOpen(false);
         setIsAddCycleOpen(false);
+        setSelectedIcon("bill");
+        setIsIconPickerOpen(false);
+        setIconQuery("");
     };
 
     const openEditSheet = useCallback((tx: Transaction) => {
@@ -382,6 +389,9 @@ export default function List() {
         const { date, time } = calendarDateTimeFromTx(tx.txDate, i18n.language);
         setFormDate(date);
         setFormTime(time);
+        setSelectedIcon(isIconName(tx.icon) ? tx.icon : "bill");
+        setIsIconPickerOpen(false);
+        setIconQuery("");
         setAddError(null);
         setIsAddSheetOpen(true);
     }, [i18n.language]);
@@ -426,6 +436,9 @@ export default function List() {
     const openAddSheet = () => {
         setEditingTxId(null);
         setAddError(null);
+        setSelectedIcon("bill");
+        setIsIconPickerOpen(false);
+        setIconQuery("");
         setIsAddSheetOpen(true);
     };
 
@@ -433,6 +446,8 @@ export default function List() {
         setIsAddSheetOpen(false);
         setIsAddCategoryOpen(false);
         setIsAddCycleOpen(false);
+        setIsIconPickerOpen(false);
+        setIconQuery("");
         if (editingTxId) {
             resetAddForm();
         }
@@ -474,6 +489,7 @@ export default function List() {
                 txType: newType,
                 amount: amountNumber,
                 note: title,
+                icon: selectedIcon,
                 txDate: calendarDateTimeToApi(formDate, formTime),
                 cycleId: newCycleId || null,
                 categoryId: newCategoryId,
@@ -636,7 +652,7 @@ export default function List() {
                                 onToggle={() => toggleCardCollapsed(group.date)}
                                 categoryById={categoryById}
                                 fallbackCategory={fallbackCategory}
-                                icon={icons.bill}
+                                fallbackIcon={icons.bill}
                                 selectable={isBulkSelectMode}
                                 selectedTxIds={selectedTxIds}
                                 onToggleSelect={toggleTxSelection}
@@ -843,17 +859,28 @@ export default function List() {
                                 )}
                             </label>
 
-                            <label className="text-sm font-bold text-[var(--text)]">
-                                {t("list.titleLabel")}
-                                <input
-                                    type="text"
-                                    required
-                                    value={newTitle}
-                                    onChange={(event) => setNewTitle(event.target.value)}
-                                    placeholder={t("list.detailPlaceholder")}
-                                    className="mt-2 w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
-                                />
-                            </label>
+                            <div className="flex items-end gap-2">
+                                <label className="flex-1 text-sm font-bold text-[var(--text)]">
+                                    {t("list.titleLabel")}
+                                    <input
+                                        type="text"
+                                        required
+                                        value={newTitle}
+                                        onChange={(event) => setNewTitle(event.target.value)}
+                                        placeholder={t("list.detailPlaceholder")}
+                                        className="mt-1.5 w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
+                                    />
+                                </label>
+                                <button
+                                    type="button"
+                                    aria-label={t("cycle.iconLabel")}
+                                    title={`${t("cycle.iconLabel")} (${selectedIcon})`}
+                                    onClick={() => setIsIconPickerOpen((prev) => !prev)}
+                                    className="mt-1.5 flex h-[38px] w-[46px] items-center justify-center gap-0.5 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] transition-all hover:border-[var(--primary)]"
+                                >
+                                    <span className="text-[20px] leading-none">{icons[selectedIcon]}</span>
+                                </button>
+                            </div>
 
                             <label className="text-sm font-bold text-[var(--text)]">
                                 {t("list.amountLabel")}
@@ -904,6 +931,20 @@ export default function List() {
                                 </button>
                             </div>
                         </form>
+
+                        <IconPickerSheet
+                            open={isIconPickerOpen}
+                            title={t("cycle.iconLabel")}
+                            searchPlaceholder={t("cycle.iconSearchPlaceholder")}
+                            query={iconQuery}
+                            onQueryChange={setIconQuery}
+                            selectedIcon={selectedIcon}
+                            onSelect={(icon) => {
+                                setSelectedIcon(icon);
+                                setIsIconPickerOpen(false);
+                            }}
+                            onClose={() => setIsIconPickerOpen(false)}
+                        />
             </BottomSheet>
         </MainLayout>
     );

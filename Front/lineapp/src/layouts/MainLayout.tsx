@@ -8,9 +8,8 @@ import AnalyticPageHeader from "../components/AnalyticPageHeader";
 import ListPageHeader from "../components/ListPageHeader";
 import SettingPageHeader from "../components/SettingPageHeader";
 import AnnouncementBottomSheet from "../components/AnnouncementBottomSheet";
-import { GoHome } from "react-icons/go";
-import { GrPowerCycle } from "react-icons/gr";
-import { GrAnalytics } from "react-icons/gr";
+import { navIcons } from "../assets/icon/navIcons";
+import type { IconType } from "react-icons";
 import { CiCircleList } from "react-icons/ci";
 import { LuSettings } from "react-icons/lu";
 import { NavLink } from "react-router-dom";
@@ -20,13 +19,31 @@ type MainLayoutProps = {
     children: ReactNode;
 };
 
-const navItems = [
-    { to: "/", labelKey: "nav.summary", icon: GoHome, end: true },
-    { to: "/cycle", labelKey: "nav.cycle", icon: GrPowerCycle },
-    { to: "/analytics", labelKey: "nav.analytics", icon: GrAnalytics },
-    { to: "/list", labelKey: "nav.list", icon: CiCircleList },
-    { to: "/settings", labelKey: "nav.settings", icon: LuSettings },
+type NavItem = {
+    to: string;
+    labelKey: string;
+    end?: boolean;
+    src?: string;
+    Icon?: IconType;
+};
+
+const navItems: NavItem[] = [
+    { to: "/", labelKey: "nav.summary", src: navIcons.home, end: true },
+    { to: "/cycle", labelKey: "nav.cycle", src: navIcons.cycle },
+    { to: "/analytics", labelKey: "nav.analytics", src: navIcons.ana },
+    { to: "/list", labelKey: "nav.list", Icon: CiCircleList },
+    { to: "/settings", labelKey: "nav.settings", Icon: LuSettings },
 ];
+
+function NavIcon({ src, Icon }: { src?: string; Icon?: IconType }) {
+    if (src) {
+        return <img src={src} alt="" className="main-layout-nav-img" />;
+    }
+    if (Icon) {
+        return <Icon size={22} />;
+    }
+    return null;
+}
 
 function resolvePageTone(pathname: string): string {
     if (pathname.startsWith("/list")) return "green";
@@ -78,9 +95,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             </main>
             <footer className="main-layout-footer">
                 <nav className="main-layout-footer-nav" aria-label="Main navigation">
-                    {navItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
+                    {navItems.map((item) => (
                             <NavLink
                                 key={item.to}
                                 to={item.to}
@@ -90,12 +105,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 }
                             >
                                 <span className="main-layout-nav-icon" aria-hidden>
-                                    <Icon size={22} />
+                                    <NavIcon src={item.src} Icon={item.Icon} />
                                 </span>
                                 <span className="main-layout-nav-label">{t(item.labelKey)}</span>
                             </NavLink>
-                        );
-                    })}
+                    ))}
                 </nav>
             </footer>
         </div>

@@ -40,6 +40,9 @@ public class TransactionEntity {
     @Column(name = "note", columnDefinition = "text")
     private String note;
 
+    @Column(name = "icon", length = 64)
+    private String icon;
+
     @Column(name = "tx_date", nullable = false)
     private LocalDateTime txDate;
 
@@ -56,6 +59,7 @@ public class TransactionEntity {
             String txType,
             BigDecimal amount,
             String note,
+            String icon,
             LocalDateTime txDate) {
         this.userId = userId;
         this.cycleId = cycleId;
@@ -63,6 +67,7 @@ public class TransactionEntity {
         this.txType = txType;
         this.amount = amount;
         this.note = note;
+        this.icon = icon;
         this.txDate = txDate;
     }
 
@@ -120,6 +125,14 @@ public class TransactionEntity {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
     }
 
     public LocalDateTime getTxDate() {

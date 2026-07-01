@@ -9,6 +9,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.demo.config.LineProperties;
@@ -52,10 +53,10 @@ public class LineMessagingService {
     /**
      * ตอบกลับด้วย Flex Message bubble
      */
-    public void replyFlex(String replyToken, String altText, Map<String, Object> contents) {
+    public boolean replyFlex(String replyToken, String altText, Map<String, Object> contents) {
         if (replyToken == null || replyToken.isBlank()) {
             log.warn("replyFlex skipped: empty replyToken");
-            return;
+            return false;
         }
         Map<String, Object> flexMessage = Map.of(
                 "type", "flex",
@@ -66,15 +67,17 @@ public class LineMessagingService {
                 "replyToken", replyToken,
                 "messages", List.of(flexMessage)
         );
-        post(REPLY_URL, body);
+        return post(REPLY_URL, body);
     }
 
     public void send(LineReply reply, String replyToken) {
         if (reply.isFlex()) {
-            replyFlex(replyToken, reply.flexAltText(), reply.flexContents());
-        } else {
-            reply(replyToken, reply.text());
+            if (!replyFlex(replyToken, reply.flexAltText(), reply.flexContents())) {
+                reply(replyToken, reply.flexAltText());
+            }
+            return;
         }
+        reply(replyToken, reply.text());
     }
 
     /**
@@ -110,11 +113,11 @@ public class LineMessagingService {
         post(PUSH_URL, body);
     }
 
-    private void post(String url, Map<String, Object> body) {
+    private boolean post(String url, Map<String, Object> body) {
         String token = lineProperties.getChannelAccessToken();
         if (token == null || token.isBlank()) {
             log.error("LINE channel-access-token ไม่ได้ตั้งค่า — call ไป {} ไม่สำเร็จ", url);
-            return;
+            return false;
         }
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -122,8 +125,13 @@ public class LineMessagingService {
         HttpEntity<Map<String, Object>> req = new HttpEntity<>(body, headers);
         try {
             restTemplate.postForEntity(url, req, String.class);
+            return true;
+        } catch (HttpStatusCodeException e) {
+            log.error("LINE call {} failed: status={} body={}", url, e.getStatusCode(), e.getResponseBodyAsString());
+            return false;
         } catch (Exception e) {
             log.error("LINE call {} failed: {}", url, e.getMessage(), e);
+            return false;
         }
     }
 

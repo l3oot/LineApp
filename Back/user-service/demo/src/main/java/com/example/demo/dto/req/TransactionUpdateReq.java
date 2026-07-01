@@ -12,5 +12,6 @@ public record TransactionUpdateReq(
         String txType,
         BigDecimal amount,
         String note,
+        String icon,
         LocalDateTime txDate) {
 }

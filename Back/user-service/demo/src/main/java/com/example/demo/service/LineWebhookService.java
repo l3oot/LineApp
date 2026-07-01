@@ -200,10 +200,12 @@ public class LineWebhookService {
                 data.type(),
                 BigDecimal.valueOf(data.price()),
                 data.main(),
+                data.icon(),
                 AppTime.fromEpochMilli(timestampMs));
 
         try {
             TransactionRes saved = transactionService.createTransaction(req);
+            log.info("sending flex for txType={} txId={}", data.type(), saved.txId());
             return LineReply.flex(
                     lineFlexMessageBuilder.buildTransactionBubble(
                             data,
