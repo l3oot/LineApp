@@ -3,15 +3,8 @@ import '../styles/page-tones.css';
 import { useState, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import GreetingHeader from "../components/GreetingHeader";
-import CyclePageHeader from "../components/CyclePageHeader";
-import AnalyticPageHeader from "../components/AnalyticPageHeader";
-import ListPageHeader from "../components/ListPageHeader";
-import SettingPageHeader from "../components/SettingPageHeader";
 import AnnouncementBottomSheet from "../components/AnnouncementBottomSheet";
 import { navIcons } from "../assets/icon/navIcons";
-import type { IconType } from "react-icons";
-import { CiCircleList } from "react-icons/ci";
-import { LuSettings } from "react-icons/lu";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -23,26 +16,19 @@ type NavItem = {
     to: string;
     labelKey: string;
     end?: boolean;
-    src?: string;
-    Icon?: IconType;
+    src: string;
 };
 
 const navItems: NavItem[] = [
     { to: "/", labelKey: "nav.summary", src: navIcons.home, end: true },
     { to: "/cycle", labelKey: "nav.cycle", src: navIcons.cycle },
     { to: "/analytics", labelKey: "nav.analytics", src: navIcons.ana },
-    { to: "/list", labelKey: "nav.list", Icon: CiCircleList },
-    { to: "/settings", labelKey: "nav.settings", Icon: LuSettings },
+    { to: "/list", labelKey: "nav.list", src: navIcons.list },
+    { to: "/settings", labelKey: "nav.settings", src: navIcons.setting },
 ];
 
-function NavIcon({ src, Icon }: { src?: string; Icon?: IconType }) {
-    if (src) {
-        return <img src={src} alt="" className="main-layout-nav-img" />;
-    }
-    if (Icon) {
-        return <Icon size={22} />;
-    }
-    return null;
+function NavIcon({ src }: { src: string }) {
+    return <img src={src} alt="" className="main-layout-nav-img" />;
 }
 
 function resolvePageTone(pathname: string): string {
@@ -56,10 +42,6 @@ function resolvePageTone(pathname: string): string {
 export default function MainLayout({ children }: MainLayoutProps) {
     const { t } = useTranslation();
     const location = useLocation();
-    const isCyclePage = location.pathname === "/cycle";
-    const isAnalyticsPage = location.pathname === "/analytics";
-    const isListPage = location.pathname === "/list";
-    const isSettingsPage = location.pathname === "/settings";
     const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
     const [hasUnreadAnnouncement, setHasUnreadAnnouncement] = useState(true);
 
@@ -75,17 +57,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
     return (
         <div className="min-h-screen flex flex-col">
-            {isCyclePage ? (
-                <CyclePageHeader {...headerProps} />
-            ) : isAnalyticsPage ? (
-                <AnalyticPageHeader {...headerProps} />
-            ) : isListPage ? (
-                <ListPageHeader {...headerProps} />
-            ) : isSettingsPage ? (
-                <SettingPageHeader {...headerProps} />
-            ) : (
-                <GreetingHeader {...headerProps} />
-            )}
+            <GreetingHeader {...headerProps} />
             <AnnouncementBottomSheet
                 open={isAnnouncementOpen}
                 onClose={() => setIsAnnouncementOpen(false)}
@@ -105,7 +77,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 }
                             >
                                 <span className="main-layout-nav-icon" aria-hidden>
-                                    <NavIcon src={item.src} Icon={item.Icon} />
+                                    <NavIcon src={item.src} />
                                 </span>
                                 <span className="main-layout-nav-label">{t(item.labelKey)}</span>
                             </NavLink>

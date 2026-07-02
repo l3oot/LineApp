@@ -252,7 +252,7 @@ export default function List() {
                 const list = data ?? [];
                 setFormCategories(list);
                 setNewCategoryId((prev) =>
-                    prev && list.some((c) => c.categoryId === prev) ? prev : (list[0]?.categoryId ?? ""),
+                    prev && list.some((c) => c.categoryId === prev) ? prev : "",
                 );
             })
             .catch(() => {
@@ -821,7 +821,7 @@ export default function List() {
                                     className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm text-[var(--text)] transition-all hover:border-[var(--primary)]"
                                 >
                                     <span className={selectedFormCategory ? "text-[var(--text)]" : "text-[var(--text-soft)]"}>
-                                        {selectedFormCategory?.name ?? t("list.quickAddCategory")}
+                                        {selectedFormCategory?.name ?? t("list.categoryNone")}
                                     </span>
                                     <FiChevronDown
                                         size={18}
@@ -829,7 +829,22 @@ export default function List() {
                                     />
                                 </button>
                                 {isAddCategoryOpen && (
-                                    <div className="mt-2 overflow-hidden rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)]">
+                                    <div className="mt-2 max-h-[180px] overflow-y-auto rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)]">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setNewCategoryId("");
+                                                setIsAddCategoryOpen(false);
+                                            }}
+                                            className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-all ${
+                                                !newCategoryId
+                                                    ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                                                    : "text-[var(--text-soft)] hover:bg-[var(--surface-soft)]"
+                                            }`}
+                                        >
+                                            <span>{t("list.categoryNone")}</span>
+                                            {!newCategoryId && <FiCheck size={18} className="text-[var(--text-soft)]" />}
+                                        </button>
                                         {formCategories.length === 0 ? (
                                             <p className="px-4 py-3 text-sm text-[var(--text-soft)]">{t("list.empty")}</p>
                                         ) : (

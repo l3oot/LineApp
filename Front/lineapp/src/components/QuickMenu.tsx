@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { navIcons } from "../assets/icon/navIcons";
 
 const quickMenuItems = [
-    { to: "/list", labelKey: "sum.quickMenu.list", tone: "green" as const },
-    { to: "/cycle", labelKey: "sum.quickMenu.cycle", tone: "pink" as const },
-    { to: "/analytics", labelKey: "sum.quickMenu.analytics", tone: "blue" as const },
-    { to: "/settings", labelKey: "sum.quickMenu.settings", tone: "purple" as const },
+    { to: "/list", labelKey: "sum.quickMenu.list", tone: "green" as const, icon: navIcons.list },
+    { to: "/cycle", labelKey: "sum.quickMenu.cycle", tone: "pink" as const, icon: navIcons.cycle },
+    { to: "/analytics", labelKey: "sum.quickMenu.analytics", tone: "blue" as const, icon: navIcons.ana },
+    { to: "/settings", labelKey: "sum.quickMenu.settings", tone: "purple" as const, icon: navIcons.setting },
 ];
 
 export default function QuickMenu() {
@@ -25,7 +26,9 @@ export default function QuickMenu() {
                         to={item.to}
                         className={`quick-menu-item quick-menu-item--${item.tone}`}
                     >
-                        <span className="quick-menu-icon-slot" aria-hidden />
+                        <span className="quick-menu-icon-slot quick-menu-icon-slot--filled" aria-hidden>
+                            <img src={item.icon} alt="" className="quick-menu-icon-img" />
+                        </span>
                         <span className="quick-menu-label">{t(item.labelKey)}</span>
                     </NavLink>
                 ))}

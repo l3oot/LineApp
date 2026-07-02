@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f5f7f2;
+  --bg: #fbf2c9;
   --surface: #ffffff;
   --surface-soft: #f3f6ef;
   --border: #e8ebe4;
@@ -33,7 +33,7 @@
   --home-subpage-header-offset: calc(var(--home-greeting-header-offset) - 0.75rem);
 
   --app-bg-image: url("../assets/bg.png");
-  --app-bg-fallback: #fef9f2;
+  --app-bg-fallback: #fbf2c9;
   --app-bg-size: 100% auto;
   --app-bg-position: center -3.5rem;
   --app-bg-attachment: scroll;
@@ -70,6 +70,7 @@
 html {
   overflow-y: scroll;
   min-height: 100%;
+  background-color: var(--app-bg-fallback);
 }
 
 body {

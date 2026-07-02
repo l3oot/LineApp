@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { LuBell } from "react-icons/lu";
 import { useTranslation } from "react-i18next";
+import notiIcon from "../assets/icon/noti.png";
 import { getGreetingPeriod } from "../utils/greeting";
 
 type GreetingHeaderProps = {
@@ -9,7 +9,6 @@ type GreetingHeaderProps = {
 };
 
 export default function GreetingHeader({
-    hasNotification = true,
     onNotificationClick,
 }: GreetingHeaderProps) {
     const { t } = useTranslation();
@@ -28,8 +27,7 @@ export default function GreetingHeader({
                     aria-label={t("greeting.notificationAria")}
                     onClick={onNotificationClick}
                 >
-                    <LuBell size={20} aria-hidden />
-                    {hasNotification && <span className="greeting-noti-badge" aria-hidden />}
+                    <img src={notiIcon} alt="" className="greeting-noti-img" aria-hidden />
                 </button>
             </div>
 

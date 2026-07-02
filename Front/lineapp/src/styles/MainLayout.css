@@ -44,33 +44,14 @@
     border: none;
     box-shadow: none;
     border-radius: 0;
-    isolation: isolate;
+    padding: 0;
 }
 
-.greeting-noti-btn::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    background: url("../assets/noti-flower-frame.svg") center / 100% 100% no-repeat;
-    pointer-events: none;
-}
-
-.greeting-noti-btn > svg {
-    position: relative;
-    z-index: 1;
-}
-
-.greeting-noti-badge {
-    position: absolute;
-    top: 0.375rem;
-    right: 0.375rem;
-    z-index: 2;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 9999px;
-    background: #e88b8b;
-    border: 1.5px solid #ffffff;
+.greeting-noti-img {
+    display: block;
+    width: 2.75rem;
+    height: 2.75rem;
+    object-fit: contain;
 }
 
 .greeting-header-text,
@@ -83,7 +64,7 @@
 .greeting-title,
 .subpage-title {
     margin: 0;
-    font-size: 1.125rem;
+    font-size: clamp(1.125rem, 4.2vw, 1.75rem);
     font-weight: 800;
     line-height: 1.2;
     color: #744f31;
@@ -92,7 +73,7 @@
 .greeting-subtitle,
 .subpage-subtitle {
     margin: 0.3125rem 0 0;
-    font-size: 0.8125rem;
+    font-size: clamp(0.75rem, 3vw, 1rem);
     font-weight: 500;
     line-height: 1.4;
     white-space: pre-line;
