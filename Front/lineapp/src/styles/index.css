@@ -21,7 +21,7 @@
   --font-google-sans: "Google Sans", sans-serif;
   --sans: var(--font-mali);
 
-  /* bg.png — อัตราส่วนสูง/กว้าง (ปรับให้ตรงไฟล์จริงถ้าเปลี่ยนรูป) */
+  /* bg.png (แนวตั้ง) / bgn.png (แนวนอน) — อัตราส่วนสูง/กว้าง */
   --bg-aspect-ratio-h-w: 2.16;
   --bg-display-height: calc(100vw * var(--bg-aspect-ratio-h-w));
   --home-bg-anchor-ratio: 0.30;
@@ -62,6 +62,11 @@
 
   @media (min-width: 1024px) {
     --app-bg-attachment: fixed;
+  }
+
+  @media (orientation: landscape) {
+    --bg-aspect-ratio-h-w: 0.563;
+    --app-bg-image: url("../assets/bgn.png");
   }
 }
 

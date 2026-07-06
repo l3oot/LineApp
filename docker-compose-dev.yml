@@ -73,9 +73,9 @@ services:
       HCODE_PAGE_SIZE: ${HCODE_PAGE_SIZE:-1000}
       HCODE_TIMEOUT_SECONDS: ${HCODE_TIMEOUT_SECONDS:-30}
       # Spring DevTools — ใช้ polling ตรวจ target/classes (bind mount จาก host)
-      SPRING_DEVTOOLS_RESTART_ENABLED: ${SPRING_DEVTOOLS_RESTART_ENABLED:?SPRING_DEVTOOLS_RESTART_ENABLED is required}
-      SPRING_DEVTOOLS_RESTART_POLL_INTERVAL: ${SPRING_DEVTOOLS_RESTART_POLL_INTERVAL:?SPRING_DEVTOOLS_RESTART_POLL_INTERVAL is required}
-      SPRING_DEVTOOLS_RESTART_QUIET_PERIOD: ${SPRING_DEVTOOLS_RESTART_QUIET_PERIOD:?SPRING_DEVTOOLS_RESTART_QUIET_PERIOD is required}
+      SPRING_DEVTOOLS_RESTART_ENABLED: "true"
+      SPRING_DEVTOOLS_RESTART_POLL_INTERVAL: "2s"
+      SPRING_DEVTOOLS_RESTART_QUIET_PERIOD: "1s"
     volumes:
       # source code + pom + target/ จาก host → container
       # IDE compile-on-save จะอัปเดต target/classes/*.class → devtools restart
@@ -121,20 +121,6 @@ services:
       - /app/src
       - --reload-delay
       - "0.25"
-    restart: unless-stopped
-    networks:
-      - lineapp-net
-
-  nginx:
-    build:
-      context: ./Proxy
-      dockerfile: Dockerfile
-    container_name: lineapp-proxy
-    depends_on:
-      - frontend
-      - user-service
-    ports:
-      - "80:80"
     restart: unless-stopped
     networks:
       - lineapp-net

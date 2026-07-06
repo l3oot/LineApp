@@ -23,8 +23,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * Spring Security config — 2 filter chains:
- *  1) /swagger-ui/**, /v3/api-docs/**  → require HTTP Basic (DOCS_USERNAME / DOCS_PASSWORD)
- *  2) ทุก endpoint อื่น                 → permitAll (frontend ใช้ JWT จาก /api/auth/line ในรอบถัดไปได้)
+ *  1) Swagger/OpenAPI docs endpoints -> require HTTP Basic (DOCS_USERNAME / DOCS_PASSWORD)
+ *  2) ทุก endpoint อื่น               -> permitAll (frontend ใช้ JWT จาก /api/auth/line ในรอบถัดไปได้)
  *
  * Override credentials ผ่าน env:
  *  DOCS_USERNAME=admin
@@ -49,10 +49,13 @@ public class SecurityConfig {
     SecurityFilterChain docsSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher(
+                "/api/docs",
+                "/api/docs/**",
                 "/swagger-ui/**",
                 "/swagger-ui.html",
+                "/v3/api-docs",
                 "/v3/api-docs/**",
-                "/api/docs/**"
+                "/v3/api-docs.yaml"
             )
             .csrf(csrf -> csrf.disable())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
