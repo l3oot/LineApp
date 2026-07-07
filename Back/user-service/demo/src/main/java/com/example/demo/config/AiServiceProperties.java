@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 /**
  * Config ของ ai-service (FastAPI) ที่ user-service เรียกผ่าน HTTP
  *
- * Mapping จาก application.yml:
+ * Mapping จาก application.properties / .env:
  *   ai.base-url        → AI_SERVICE_URL
  *   ai.parse-path      → /parse (ไม่ต้อง override ปกติ)
  *   ai.timeout-seconds → 60 (LLM อาจช้าได้)

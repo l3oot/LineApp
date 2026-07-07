@@ -44,28 +44,13 @@ ENV VITE_LINE_REDIRECT_URI=$VITE_LINE_REDIRECT_URI
 COPY . .
 RUN npm run build
 
-# ---------- Stage: runner (production via nginx) ----------
-FROM nginx:1.27-alpine AS runner
-COPY --from=builder /app/dist /usr/share/nginx/html
+# ---------- Stage: runtime (production static server without nginx) ----------
+FROM node:20-alpine AS runtime
+WORKDIR /app
 
-# SPA: route ทั้งหมดที่ไม่ใช่ static file ให้คืน index.html
-RUN printf 'server {\n\
-  listen 80;\n\
-  server_name _;\n\
-  root /usr/share/nginx/html;\n\
-  index index.html;\n\
-\n\
-  location / {\n\
-    try_files $uri $uri/ /index.html;\n\
-  }\n\
-\n\
-  # cache static assets นาน ๆ\n\
-  location ~* \\.(?:js|css|woff2?|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico)$ {\n\
-    expires 7d;\n\
-    add_header Cache-Control "public, immutable";\n\
-    try_files $uri =404;\n\
-  }\n\
-}\n' > /etc/nginx/conf.d/default.conf
+RUN npm install -g serve@14.2.4 --no-audit --no-fund
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 5173
+CMD ["serve", "-s", "dist", "-l", "5173"]

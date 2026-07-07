@@ -65,13 +65,11 @@ uvicorn src.main:app --reload --port 8000
 
 ## Env ที่ต้องตั้ง
 
-แต่ละ service มี `.env` ของตัวเอง (ดูตัวอย่างใน `.env.example` ที่ root):
+ใช้ root `.env` ไฟล์เดียวสำหรับทั้ง stack แล้วให้ Docker Compose inject ค่าเข้าแต่ละ container:
 
-- `Back/user-service/demo/.env` — LINE OAuth (`LINE_CLIENT_ID`, `LINE_CLIENT_SECRET`, `LINE_REDIRECT_URI`), JWT (`JWT_SECRET`, `JWT_EXPIRATION`), Spring Security docs (`DOCS_USERNAME`, `DOCS_PASSWORD`), CORS (`APP_CORS_ALLOWED_ORIGINS`)
-- `Back/ai-service/.env` — LLM API keys (`OPENTYPHOON_API_KEY` ฯลฯ), `LINEAPP_API_BASE`
-- `Front/lineapp/.env` — `VITE_API_BASE_URL`, `VITE_LINE_CHANNEL_ID`, `VITE_LINE_REDIRECT_URI`
+- `root .env` — `VITE_*`, `POSTGRES_*`, `LINE_*`, `AI_*`, `HCODE_*`, `DOCS_*`, `SPRING_DEVTOOLS_*`, `SERVER_*`, `PYTHONUNBUFFERED`, `LINEAPP_API_BASE`, `WATCHFILES_FORCE_POLLING`
 
-> `.env` ทั้งหมดถูก ignore โดย git แล้ว ดูค่าที่จำเป็นได้จาก `.env.example` ในแต่ละโฟลเดอร์
+ไฟล์ `.env` แยกของแต่ละ service ถูกยกเลิกแล้ว เพื่อให้ source of truth อยู่ที่ root `.env` ตัวเดียว
 
 ## License
 

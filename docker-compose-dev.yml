@@ -22,13 +22,11 @@ services:
       # Vite dev server ฟังที่ 5173 → expose ตรง ๆ (ไม่ใช่ผ่าน nginx)
       - "5173:5173"
     environment:
-      # Vite จะอ่าน VITE_* จาก env ก่อน — fallback ไปอ่าน .env บน /app (bind mount)
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
-      VITE_LINE_CHANNEL_ID: ${VITE_LINE_CHANNEL_ID:-2010161037}
-      VITE_LINE_REDIRECT_URI: ${VITE_LINE_REDIRECT_URI:-http://localhost:5173/callback}
-      # polling: bind mount บน Windows host ไม่ส่ง inotify event
-      CHOKIDAR_USEPOLLING: "true"
-      WATCHPACK_POLLING: "true"
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+      VITE_LINE_CHANNEL_ID: ${VITE_LINE_CHANNEL_ID}
+      VITE_LINE_REDIRECT_URI: ${VITE_LINE_REDIRECT_URI}
+      CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING}
+      WATCHPACK_POLLING: ${WATCHPACK_POLLING}
     volumes:
       # source code จาก host → container (HMR จะ pick up การแก้ไฟล์)
       - ./Front/lineapp:/app
@@ -48,34 +46,36 @@ services:
     container_name: lineapp-user-service
     ports:
       - "8080:8080"
-    env_file:
-      - ./Back/user-service/demo/.env
     environment:
-      # Postgres รันบนเครื่อง host — ใช้ host.docker.internal ชี้ออกไปนอก container
-      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/${POSTGRES_DB:-Lineapp}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-chutiman}
-      SERVER_ADDRESS: 0.0.0.0
-      SERVER_PORT: "8080"
-      # CORS — ต้องเปิดให้ origin ของ frontend (รวม 5173 ทั้ง dev mode + nginx container)
-      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost:4173}
-      # AI service (FastAPI) — ภายใน docker network ใช้ service name แทน localhost
-      # override ค่าจาก env_file (.env) ที่เป็น http://localhost:8000 สำหรับ host-native dev
-      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai-service:8000}
-      # HTTP Basic ของ /api/docs (override ผ่าน root .env ได้)
-      DOCS_USERNAME: ${DOCS_USERNAME:-admin}
-      DOCS_PASSWORD: ${DOCS_PASSWORD:-admin}
-      # MOPH HCode API — ใช้ local JSON เป็นค่าเริ่มต้น (HCode ถูก Cloudflare บล็อกจาก server)
-      HCODE_DATA_SOURCE: ${HCODE_DATA_SOURCE:-local}
-      HCODE_BASE_URL: ${HCODE_BASE_URL:-https://hcode.moph.go.th}
-      HCODE_USERNAME: ${HCODE_USERNAME:-chutiman}
-      HCODE_PASSWORD: ${HCODE_PASSWORD:-@Chutiman123}
-      HCODE_PAGE_SIZE: ${HCODE_PAGE_SIZE:-1000}
-      HCODE_TIMEOUT_SECONDS: ${HCODE_TIMEOUT_SECONDS:-30}
-      # Spring DevTools — ใช้ polling ตรวจ target/classes (bind mount จาก host)
-      SPRING_DEVTOOLS_RESTART_ENABLED: "true"
-      SPRING_DEVTOOLS_RESTART_POLL_INTERVAL: "2s"
-      SPRING_DEVTOOLS_RESTART_QUIET_PERIOD: "1s"
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SERVER_ADDRESS: ${SERVER_ADDRESS}
+      SERVER_PORT: ${SERVER_PORT}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS}
+      AI_SERVICE_URL: ${AI_SERVICE_URL}
+      DOCS_USERNAME: ${DOCS_USERNAME}
+      DOCS_PASSWORD: ${DOCS_PASSWORD}
+      HCODE_DATA_SOURCE: ${HCODE_DATA_SOURCE}
+      HCODE_BASE_URL: ${HCODE_BASE_URL}
+      HCODE_USERNAME: ${HCODE_USERNAME}
+      HCODE_PASSWORD: ${HCODE_PASSWORD}
+      HCODE_PAGE_SIZE: ${HCODE_PAGE_SIZE}
+      HCODE_TIMEOUT_SECONDS: ${HCODE_TIMEOUT_SECONDS}
+      APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL}
+      LINE_CLIENT_ID: ${LINE_CLIENT_ID}
+      LINE_CLIENT_SECRET: ${LINE_CLIENT_SECRET}
+      LINE_REDIRECT_URI: ${LINE_REDIRECT_URI}
+      LINE_LIFF_URL: ${LINE_LIFF_URL}
+      LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN}
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET}
+      AI_PARSE_PATH: ${AI_PARSE_PATH}
+      AI_TIMEOUT_SECONDS: ${AI_TIMEOUT_SECONDS}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      SPRING_DEVTOOLS_RESTART_ENABLED: ${SPRING_DEVTOOLS_RESTART_ENABLED}
+      SPRING_DEVTOOLS_RESTART_POLL_INTERVAL: ${SPRING_DEVTOOLS_RESTART_POLL_INTERVAL}
+      SPRING_DEVTOOLS_RESTART_QUIET_PERIOD: ${SPRING_DEVTOOLS_RESTART_QUIET_PERIOD}
     volumes:
       # source code + pom + target/ จาก host → container
       # IDE compile-on-save จะอัปเดต target/classes/*.class → devtools restart
@@ -97,14 +97,12 @@ services:
       - user-service
     ports:
       - "8000:8000"
-    env_file:
-      - ./Back/ai-service/.env
     environment:
-      PYTHONUNBUFFERED: "1"
-      # ภายใน docker network เรียก user-service ตามชื่อ service ได้เลย
-      LINEAPP_API_BASE: http://user-service:8080
-      # bind mount + uvicorn --reload — บังคับ polling ให้เห็นการแก้ไฟล์บน Windows host
-      WATCHFILES_FORCE_POLLING: "true"
+      PYTHONUNBUFFERED: ${PYTHONUNBUFFERED}
+      LINEAPP_API_BASE: ${LINEAPP_API_BASE}
+      WATCHFILES_FORCE_POLLING: ${WATCHFILES_FORCE_POLLING}
+      api_key_openai: ${api_key_openai}
+      api_key_thaillm: ${api_key_thaillm}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

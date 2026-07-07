@@ -203,12 +203,9 @@ cd Back/ai-service && python -m venv .venv && .\.venv\Scripts\Activate.ps1 && pi
 
 | ไฟล์ | ตัวแปรสำคัญ |
 |---|---|
-| root `.env` | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `DOCS_USERNAME`, `DOCS_PASSWORD`, `APP_CORS_ALLOWED_ORIGINS`, `VITE_*` |
-| `Back/user-service/demo/.env` | `LINE_CLIENT_ID`, `LINE_CLIENT_SECRET`, `LINE_REDIRECT_URI`, `JWT_SECRET`, `JWT_EXPIRATION` |
-| `Back/ai-service/.env` | `api_key_openai`, `api_key_thaillm`, `OPENTYPHOON_API_KEY`, `LINEAPP_API_BASE`, `LINEAPP_DEFAULT_USER_ID`, `EXTRACT_MAX_RETRIES` |
-| `Front/lineapp/.env` | `VITE_API_BASE_URL`, `VITE_LINE_CHANNEL_ID`, `VITE_LINE_REDIRECT_URI` (หรือ `VITE_LINE_LOGIN_URL`) |
+| root `.env` | `VITE_*`, `POSTGRES_*`, `LINE_*`, `AI_*`, `HCODE_*`, `DOCS_*`, `SPRING_DEVTOOLS_*`, `SERVER_*`, `PYTHONUNBUFFERED`, `LINEAPP_API_BASE`, `WATCHFILES_FORCE_POLLING` |
 
-ทุก `.env` ถูก git ignore — ดู template ที่ `.env.example` แต่ละชั้น
+ใช้ `.env` ไฟล์เดียวที่ root แล้วให้ `docker compose` ส่งค่าลง container; ไม่ใช้ `.env` แยกตาม service แล้ว
 
 ## 9. กฎ / เคล็ดลับเวลาแก้โค้ด
 
