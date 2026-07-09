@@ -14,13 +14,13 @@ from src.config import settings
 logger = logging.getLogger(__name__)
 
 _LLM = settings.llm
-_THAILLM_HEADERS = {"Content-Type": "application/json", "apikey": _LLM.thaillm_api_key}
 
 
-def _is_rate_limited(exc: BaseException) -> bool:
-    return (hasattr(exc, "status_code") and getattr(exc, "status_code", None) == 429) or "429" in str(
-        exc
-    )
+def _thaillm_headers() -> dict[str, str]:
+    headers = {"Content-Type": "application/json"}
+    if _LLM.thaillm_api_key:
+        headers["apikey"] = _LLM.thaillm_api_key
+    return headers
 
 
 def _try_json(text: str) -> Any:
@@ -55,9 +55,13 @@ def _call_thaillm(url: str, prompt: str) -> str:
         "max_tokens": 2048,
         "temperature": 0.3,
     }
-    response = requests.post(url, headers=_THAILLM_HEADERS, json=body, timeout=60)
+    response = requests.post(url, headers=_thaillm_headers(), json=body, timeout=60)
     response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
+    payload = response.json()
+    try:
+        return payload["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise ValueError(f"thaillm unexpected response shape: {str(payload)[:300]}") from exc
 
 
 def run_llm(prompt: str) -> dict[str, Any]:
@@ -69,17 +73,17 @@ def run_llm(prompt: str) -> dict[str, Any]:
             "result": _try_json(text),
         }
     except Exception as exc:
-        if not _is_rate_limited(exc):
-            raise
-        logger.warning("opentyphoon rate-limited — fallback to thaillm typhoon")
+        logger.warning("opentyphoon failed — fallback to thaillm typhoon: %s", exc)
 
     try:
         text = _call_thaillm(_LLM.thaillm_typhoon_url, prompt)
         return {"source_model": "thaillm / typhoon", "result": _try_json(text)}
     except Exception as exc:
-        if not _is_rate_limited(exc):
-            raise
-        logger.warning("thaillm typhoon rate-limited — fallback to thaillm kbtg")
+        logger.warning("thaillm typhoon failed — fallback to thaillm kbtg: %s", exc)
 
-    text = _call_thaillm(_LLM.thaillm_kbtg_url, prompt)
-    return {"source_model": "thaillm / kbtg", "result": _try_json(text)}
+    try:
+        text = _call_thaillm(_LLM.thaillm_kbtg_url, prompt)
+        return {"source_model": "thaillm / kbtg", "result": _try_json(text)}
+    except Exception as exc:
+        logger.error("all LLM providers failed: %s", exc)
+        raise RuntimeError("all LLM providers failed") from exc

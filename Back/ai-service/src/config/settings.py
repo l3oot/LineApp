@@ -30,14 +30,16 @@ class Settings:
 
 
 def _load_settings() -> Settings:
+    openai_api_key = os.getenv("api_key_openai") or os.getenv("API_KEY_OPENAI")
+    thaillm_api_key = os.getenv("api_key_thaillm") or os.getenv("API_KEY_THAILLM")
     return Settings(
         lineapp_default_user_id=os.getenv(
             "LINEAPP_DEFAULT_USER_ID", _DEFAULT_CYCLE_USER_ID
         ).strip(),
         extract_max_retries=int(os.getenv("EXTRACT_MAX_RETRIES", "2")),
         llm=LlmSettings(
-            openai_api_key=os.getenv("api_key_openai"),
-            thaillm_api_key=os.getenv("api_key_thaillm"),
+            openai_api_key=openai_api_key,
+            thaillm_api_key=thaillm_api_key,
         ),
     )
 

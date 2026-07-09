@@ -78,11 +78,32 @@ def extract_transaction(text: str, user_id: str | None = None) -> AiParseRespons
     last_response = _build_response("", None, None)
     for attempt in range(1, max_attempts + 1):
         prompt = base_prompt if attempt == 1 else base_prompt + _RETRY_HINT
-        llm_out = run_llm(prompt)
-        structured, message = parse_llm_payload(llm_out["result"], cycles, categories)
-        structured = sanitize_ids(structured, cycles, categories)
-        structured = sanitize_icon(structured)
-        last_response = _build_response(llm_out["source_model"], structured, message)
+        try:
+            llm_out = run_llm(prompt)
+            structured, message = parse_llm_payload(llm_out["result"], cycles, categories)
+            structured = sanitize_ids(structured, cycles, categories)
+            structured = sanitize_icon(structured)
+            last_response = _build_response(llm_out["source_model"], structured, message)
+        except Exception as exc:
+            if "all LLM providers failed" in str(exc):
+                logger.warning(
+                    "extract_transaction attempt=%d/%d all LLM providers unavailable — skip retries",
+                    attempt,
+                    max_attempts,
+                )
+                last_response = _build_response(
+                    "llm-unavailable",
+                    None,
+                    "AI service unavailable",
+                )
+                break
+            logger.warning(
+                "extract_transaction attempt=%d/%d failed while calling/parsing LLM: %s",
+                attempt,
+                max_attempts,
+                exc,
+            )
+            continue
 
         if is_valid_response(last_response, text):
             logger.info(
