@@ -123,6 +123,39 @@ services:
     networks:
       - lineapp-net
 
+  nginx:
+    build:
+      context: ./Proxy
+      dockerfile: Dockerfile
+    container_name: lineapp-proxy
+    depends_on:
+      - frontend
+      - user-service
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    networks:
+      - lineapp-net
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: lineapp-ngrok
+    depends_on:
+      - nginx
+      - user-service
+    command:
+      - start
+      - --all
+      - --authtoken
+      - ${NGROK_AUTHTOKEN}
+      - --config
+      - /etc/ngrok.yml
+    volumes:
+      - ./ngrok/ngrok.yml:/etc/ngrok.yml:ro
+    restart: unless-stopped
+    networks:
+      - lineapp-net
+
 volumes:
   frontend-node-modules:
   user-service-m2:

@@ -38,6 +38,31 @@ docker compose up -d --build
 - User Service API: <http://localhost:8080>
 - Swagger UI (HTTP Basic): <http://localhost:8080/api/docs> (default `admin` / `admin`)
 - AI Service: <http://localhost:8000>
+- ngrok tunnels: รันผ่าน service `ngrok` เพื่อเปิด public URL ของ `nginx:80` และ `user-service:8080`
+
+## ใช้ ngrok กับ Docker Compose
+
+ตั้งค่าเพิ่มใน root `.env`:
+
+```powershell
+NGROK_AUTHTOKEN=your-ngrok-authtoken
+```
+
+จากนั้นรัน:
+
+```powershell
+docker compose up -d --build ngrok
+```
+
+service `ngrok` จะเปิด 2 tunnels:
+- `web` -> `http://nginx:80`
+- `api` -> `http://user-service:8080`
+
+ถ้าต้องการดู URL ที่ได้จาก ngrok ให้ใช้:
+
+```powershell
+docker compose logs -f ngrok
+```
 
 ## วิธีรันแบบ dev บน host
 

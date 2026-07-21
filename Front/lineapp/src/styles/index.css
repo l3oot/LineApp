@@ -33,7 +33,7 @@
   --home-subpage-header-offset: calc(var(--home-greeting-header-offset) - 0.75rem);
 
   --app-bg-image: url("../assets/bg.png");
-  --app-bg-fallback: #fbf2c9;
+  --app-bg-fallback: #F9EDB0;
   --app-bg-size: 100% auto;
   --app-bg-position: center -3.5rem;
   --app-bg-attachment: scroll;
