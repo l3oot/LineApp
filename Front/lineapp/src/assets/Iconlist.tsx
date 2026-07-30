@@ -49,3 +49,5 @@ export const icons = {
   analytics: "📊",
   bank: "🏦",
 };
+
+export type IconName = keyof typeof icons;

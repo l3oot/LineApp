@@ -3,7 +3,11 @@
  * อ่าน base URL จาก VITE_API_BASE_URL, แนบ JWT จาก localStorage, แกะ ApiRes envelope
  */
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, "") ||
+// path เรียก API ทุกจุดใน src ใส่ prefix "/api/..." เองอยู่แล้ว
+// ตัด "/api" ท้าย VITE_API_BASE_URL ออกกันไว้ (เผื่อตั้งค่ามาแบบมี /api ต่อท้าย) ป้องกัน path ซ้ำเป็น /api/api/...
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)
+    ?.replace(/\/+$/, "")
+    .replace(/\/api$/i, "") ||
     "http://localhost:8080";
 
 const TOKEN_KEY = "auth_token";

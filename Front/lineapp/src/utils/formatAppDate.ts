@@ -149,7 +149,7 @@ export function formatAppDateTime(
 }
 
 export function toGregorianCalendarDate(cd: DateValue): CalendarDate {
-    return toCalendar(cd, new GregorianCalendar());
+    return toCalendar(toCalendarDate(cd), new GregorianCalendar());
 }
 
 export function toAppCalendarDate(cd: DateValue, lang?: string): CalendarDate {

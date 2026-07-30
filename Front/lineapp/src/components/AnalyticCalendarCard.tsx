@@ -1,4 +1,4 @@
-import { type CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
+import { type CalendarDate, type DateValue, getLocalTimeZone, today } from "@internationalized/date";
 import {
     Button,
     Calendar,
@@ -111,8 +111,8 @@ export default function AnalyticCalendarCard({
         onFocusedDateChange(toAppCalendarDate(nowGregorian, lang));
     };
 
-    const handleDayActivate = (date: CalendarDate) => {
-        onDaySelect?.(date);
+    const handleDayActivate = (date: DateValue) => {
+        onDaySelect?.(toGregorianCalendarDate(date));
     };
 
     const handleCellClick = (date: CalendarDate, event: MouseEvent) => {

@@ -16,7 +16,11 @@ services:
     build:
       context: ./Front/lineapp
       dockerfile: Dockerfile
-      target: dev
+      target: runtime
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_LINE_CHANNEL_ID: ${VITE_LINE_CHANNEL_ID}
+        VITE_LINE_REDIRECT_URI: ${VITE_LINE_REDIRECT_URI}
     container_name: lineapp-frontend
     ports:
       # Vite dev server ฟังที่ 5173 → expose ตรง ๆ (ไม่ใช่ผ่าน nginx)
@@ -27,11 +31,11 @@ services:
       VITE_LINE_REDIRECT_URI: ${VITE_LINE_REDIRECT_URI}
       CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING}
       WATCHPACK_POLLING: ${WATCHPACK_POLLING}
-    volumes:
-      # source code จาก host → container (HMR จะ pick up การแก้ไฟล์)
-      - ./Front/lineapp:/app
-      # named volume ทับ /app/node_modules — กันไม่ให้ host เอา node_modules มาทับ
-      - frontend-node-modules:/app/node_modules
+    # volumes:
+    #   # source code จาก host → container (HMR จะ pick up การแก้ไฟล์)
+    #   - ./Front/lineapp:/app
+    #   # named volume ทับ /app/node_modules — กันไม่ให้ host เอา node_modules มาทับ
+    #   - frontend-node-modules:/app/node_modules
     depends_on:
       - user-service
     restart: unless-stopped
@@ -42,7 +46,7 @@ services:
     build:
       context: ./Back/user-service/demo
       dockerfile: Dockerfile
-      target: dev
+      target: runtime
     container_name: lineapp-user-service
     ports:
       - "8080:8080"
@@ -76,12 +80,12 @@ services:
       SPRING_DEVTOOLS_RESTART_ENABLED: ${SPRING_DEVTOOLS_RESTART_ENABLED}
       SPRING_DEVTOOLS_RESTART_POLL_INTERVAL: ${SPRING_DEVTOOLS_RESTART_POLL_INTERVAL}
       SPRING_DEVTOOLS_RESTART_QUIET_PERIOD: ${SPRING_DEVTOOLS_RESTART_QUIET_PERIOD}
-    volumes:
-      # source code + pom + target/ จาก host → container
-      # IDE compile-on-save จะอัปเดต target/classes/*.class → devtools restart
-      - ./Back/user-service/demo:/app
-      # Maven local repo เก็บใน named volume → ไม่ต้องโหลด deps ใหม่ทุกครั้งที่ rebuild
-      - user-service-m2:/root/.m2
+    # volumes:
+    #   # source code + pom + target/ จาก host → container
+    #   # IDE compile-on-save จะอัปเดต target/classes/*.class → devtools restart
+    #   - ./Back/user-service/demo:/app
+    #   # Maven local repo เก็บใน named volume → ไม่ต้องโหลด deps ใหม่ทุกครั้งที่ rebuild
+    #   - user-service-m2:/root/.m2
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -101,12 +105,12 @@ services:
       PYTHONUNBUFFERED: ${PYTHONUNBUFFERED}
       LINEAPP_API_BASE: ${LINEAPP_API_BASE}
       WATCHFILES_FORCE_POLLING: ${WATCHFILES_FORCE_POLLING}
-      API_KEY_OPENAI: ${API_KEY_OPENAI}
-      API_KEY_THAILLM: ${API_KEY_THAILLM}
+      api_key_openai: ${api_key_openai}
+      api_key_thaillm: ${api_key_thaillm}
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    volumes:
-      - ./Back/ai-service/src:/app/src
+    # volumes:
+    #   - ./Back/ai-service/src:/app/src
     command:
       - uvicorn
       - src.main:app
@@ -114,11 +118,6 @@ services:
       - "0.0.0.0"
       - --port
       - "8000"
-      - --reload
-      - --reload-dir
-      - /app/src
-      - --reload-delay
-      - "0.25"
     restart: unless-stopped
     networks:
       - lineapp-net
@@ -127,19 +126,23 @@ services:
     build:
       context: ./Proxy
       dockerfile: Dockerfile
+    volumes:
+      - ./Proxy/ssl:/etc/nginx/ssl:ro
+      - ./Proxy/nginx.conf:/etc/nginx/nginx.conf:ro
     container_name: lineapp-proxy
     depends_on:
       - frontend
       - user-service
     ports:
       - "80:80"
+      - "443:443"
     restart: unless-stopped
     networks:
       - lineapp-net
 
-volumes:
-  frontend-node-modules:
-  user-service-m2:
+# volumes:
+#   frontend-node-modules:
+#   user-service-m2:
 
 networks:
   lineapp-net:
