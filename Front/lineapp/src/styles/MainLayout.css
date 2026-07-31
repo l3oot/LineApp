@@ -4,7 +4,6 @@
     margin: 0 auto;
     padding:
         max(calc(env(safe-area-inset-top, 0px) + 0.5rem), calc(var(--bg-display-height) * 0.045))
-        1.25rem
         0.875rem;
 }
 
@@ -40,24 +39,23 @@
 
 .greeting-noti-btn {
     color: #8b6b47;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.88);
     border: none;
-    box-shadow: none;
-    border-radius: 0;
+    box-shadow: 0 4px 14px rgba(74, 74, 74, 0.08);
+    border-radius: 9999px;
     padding: 0;
 }
 
-.greeting-noti-img {
+.greeting-noti-icon {
     display: block;
-    width: 2.75rem;
-    height: 2.75rem;
-    object-fit: contain;
+    width: 1.75rem;
+    height: 1.75rem;
 }
 
 .greeting-header-text,
 .subpage-header-text {
-    margin-top: -2.875rem;
-    margin-left: 2.5rem;
+    margin-top: -1.875rem;
+    margin-left: 1rem;
     text-align: left;
 }
 

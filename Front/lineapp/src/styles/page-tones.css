@@ -47,5 +47,5 @@
 
 .page-tone--purple .greeting-noti-btn {
     color: #8b6b47;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.88);
 }

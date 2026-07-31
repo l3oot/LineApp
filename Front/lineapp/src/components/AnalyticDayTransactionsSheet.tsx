@@ -7,6 +7,7 @@ import type { Transaction } from "../lib/userService";
 import { formatCalendarDate, intlLocaleForAppLanguage } from "../utils/formatAppDate";
 import { formatTxTime } from "../utils/parseTxDateTime";
 import { icons } from "../assets/Iconlist";
+import { resolveTxIconEmoji } from "../utils/resolveTxIcon";
 
 type AnalyticDayTransactionsSheetProps = {
     open: boolean;
@@ -81,7 +82,7 @@ export default function AnalyticDayTransactionsSheet({
                                         }
                                         amount={Number(tx.amount)}
                                         time={formatTxTime(tx.txDate, intlLocaleForAppLanguage(i18n.language))}
-                                        icon={icons.bill}
+                                        icon={resolveTxIconEmoji(tx.icon, icons.bill)}
                                     />
                                 ))}
                             </div>

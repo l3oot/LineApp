@@ -476,9 +476,8 @@ export default function List() {
 
         const amountNumber = Number(newAmount);
         const title = newTitle.trim();
-        const categoryName = selectedFormCategory?.name?.trim() ?? "";
 
-        if (!title || !newCategoryId || !categoryName || Number.isNaN(amountNumber) || amountNumber <= 0) {
+        if (!title || Number.isNaN(amountNumber) || amountNumber <= 0) {
             return;
         }
 
@@ -492,7 +491,7 @@ export default function List() {
                 icon: selectedIcon,
                 txDate: calendarDateTimeToApi(formDate, formTime),
                 cycleId: newCycleId || null,
-                categoryId: newCategoryId,
+                categoryId: newCategoryId || null,
             };
 
             if (editingTxId) {
@@ -907,7 +906,6 @@ export default function List() {
                                         placeholder={t("list.amountPlaceholder")}
                                         className="w-full bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-soft)]"
                                     />
-                                    <span className="ml-2 text-sm text-[var(--text-soft)]">฿</span>
                                 </div>
                             </label>
 

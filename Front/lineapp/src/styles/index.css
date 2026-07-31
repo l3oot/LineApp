@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #fbf2c9;
+  --bg: #FDFBF5;
   --surface: #ffffff;
   --surface-soft: #f3f6ef;
   --border: #e8ebe4;
@@ -21,8 +21,8 @@
   --font-google-sans: "Google Sans", sans-serif;
   --sans: var(--font-mali);
 
-  /* bg.png (แนวตั้ง) / bgn.png (แนวนอน) — อัตราส่วนสูง/กว้าง */
-  --bg-aspect-ratio-h-w: 2.16;
+  /* view.png — อัตราส่วนสูง/กว้าง */
+  --bg-aspect-ratio-h-w: 0.34;
   --bg-display-height: calc(100vw * var(--bg-aspect-ratio-h-w));
   --home-bg-anchor-ratio: 0.30;
   --home-content-top: calc(var(--bg-display-height) * var(--home-bg-anchor-ratio));
@@ -32,10 +32,10 @@
   /* subpage header สั้นกว่า greeting เล็กน้อย — ชดเชยให้การ์ดอยู่ตำแหน่งเดียวกัน */
   --home-subpage-header-offset: calc(var(--home-greeting-header-offset) - 0.75rem);
 
-  --app-bg-image: url("../assets/bg.png");
-  --app-bg-fallback: #F9EDB0;
+  --app-bg-image: url("../assets/view.png");
+  --app-bg-fallback: #FDFBF5;
   --app-bg-size: 100% auto;
-  --app-bg-position: center -3.5rem;
+  --app-bg-position: top center;
   --app-bg-attachment: scroll;
 
   font: 17px/145% var(--sans);
@@ -65,8 +65,7 @@
   }
 
   @media (orientation: landscape) {
-    --bg-aspect-ratio-h-w: 0.563;
-    --app-bg-image: url("../assets/bgn.png");
+    --bg-aspect-ratio-h-w: 0.34;
   }
 }
 
