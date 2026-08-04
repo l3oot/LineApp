@@ -19,4 +19,5 @@ jobs:
             cd ${{ secrets.DEPLOY_PATH }}
             git pull origin main
             docker compose down
-            docker compose up -d --build --no-cache
+            docker compose build --no-cache
+            docker compose up -d --force-recreate
