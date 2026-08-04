@@ -66,6 +66,7 @@
 
   @media (orientation: landscape) {
     --bg-aspect-ratio-h-w: 0.34;
+    --app-bg-image: url("../assets/viewcom.png");
   }
 }
 
