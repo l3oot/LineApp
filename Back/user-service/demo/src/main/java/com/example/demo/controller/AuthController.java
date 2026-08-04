@@ -26,4 +26,6 @@ public class AuthController {
         AuthRes data = lineAuthService.loginWithLine(req.code());
         return ResponseEntity.ok(ApiRes.success(data, "Login Success"));
     }
+
+    test
 }
