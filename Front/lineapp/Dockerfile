@@ -34,9 +34,10 @@ COPY package.json package-lock.json* ./
 RUN npm ci --no-audit --no-fund
 
 # build args → Vite จะอ่าน VITE_* ตอน build เท่านั้น (frame-time, ไม่ใช่ runtime)
-ARG VITE_API_BASE_URL=http://localhost:8080
+ARG VITE_API_BASE_URL
 ARG VITE_LINE_CHANNEL_ID
-ARG VITE_LINE_REDIRECT_URI=http://localhost:5173/callback
+ARG VITE_LINE_REDIRECT_URI
+
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_LINE_CHANNEL_ID=$VITE_LINE_CHANNEL_ID
 ENV VITE_LINE_REDIRECT_URI=$VITE_LINE_REDIRECT_URI
