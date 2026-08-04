@@ -28,4 +28,5 @@ public class AuthController {
     }
 
     test
+    test2
 }
