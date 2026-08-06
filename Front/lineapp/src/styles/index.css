@@ -21,7 +21,7 @@
   --font-google-sans: "Google Sans", sans-serif;
   --sans: var(--font-mali);
 
-  /* view.png — อัตราส่วนสูง/กว้าง */
+  /* อัตราส่วนพื้นที่ส่วนหัวสำหรับการคำนวณเลย์เอาต์ */
   --bg-aspect-ratio-h-w: 0.34;
   --bg-display-height: calc(100vw * var(--bg-aspect-ratio-h-w));
   --home-bg-anchor-ratio: 0.30;
@@ -32,11 +32,7 @@
   /* subpage header สั้นกว่า greeting เล็กน้อย — ชดเชยให้การ์ดอยู่ตำแหน่งเดียวกัน */
   --home-subpage-header-offset: calc(var(--home-greeting-header-offset) - 0.75rem);
 
-  --app-bg-image: url("../assets/view.png");
   --app-bg-fallback: #FDFBF5;
-  --app-bg-size: 100% auto;
-  --app-bg-position: top center;
-  --app-bg-attachment: scroll;
 
   font: 17px/145% var(--sans);
   letter-spacing: 0.18px;
@@ -53,20 +49,13 @@
   }
 
   @media (min-width: 768px) {
-    --app-bg-size: cover;
-    --app-bg-position: center clamp(-8rem, -9vw, -5rem);
     --home-content-top: 30dvh;
     --home-greeting-header-offset: 19dvh;
     --home-subpage-header-offset: calc(19dvh - 0.75rem);
   }
 
-  @media (min-width: 1024px) {
-    --app-bg-attachment: fixed;
-  }
-
   @media (orientation: landscape) {
     --bg-aspect-ratio-h-w: 0.34;
-    --app-bg-image: url("../assets/viewcom.png");
   }
 }
 
@@ -83,17 +72,6 @@ body {
   min-height: 100vh;
   color: var(--text);
   background-color: var(--app-bg-fallback);
-  background-image: var(--app-bg-image);
-  background-size: var(--app-bg-size);
-  background-position: var(--app-bg-position);
-  background-repeat: no-repeat;
-  background-attachment: var(--app-bg-attachment);
-}
-
-@media (max-width: 1023px), (hover: none) {
-  body {
-    background-attachment: scroll;
-  }
 }
 
 #root {
@@ -540,10 +518,10 @@ body {
 
 .home-content-card {
   margin-top: 0;
-  border-radius: 1rem 1rem var(--radius-control) var(--radius-control);
-  background: var(--surface);
-  padding: 0.75rem 0.75rem 0.875rem;
-  box-shadow: 0 4px 24px rgba(74, 74, 74, 0.06);
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
 }
 
 /* Date range picker trigger (home + list) */
