@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { clearLineOAuthState, parseLineCallback } from "../lib/lineLogin";
+import {
+    clearLineOAuthState,
+    consumePostLoginRedirect,
+    parseLineCallback,
+} from "../lib/lineLogin";
 import { auth, exchangeLineCode, type AuthUser } from "../lib/auth";
 import { ApiError } from "../lib/api";
 
@@ -16,7 +20,7 @@ export default function LineCallback() {
 
     useEffect(() => {
         if (auth.isAuthed()) {
-            navigate("/", { replace: true });
+            navigate(consumePostLoginRedirect() ?? "/", { replace: true });
             return;
         }
 
@@ -36,7 +40,7 @@ export default function LineCallback() {
                 console.log("[LineCallback] Login success:", user);
                 if (ignore) return;
                 setStatus({ kind: "ok", user });
-                navigate("/", { replace: true });
+                navigate(consumePostLoginRedirect() ?? "/", { replace: true });
             } catch (err) {
                 console.error("[LineCallback] Login failed:", err);
                 if (ignore) return;

@@ -1,6 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { auth } from "../lib/auth";
-import { getLineLoginUrl, isLineLoginConfigured } from "../lib/lineLogin";
+import {
+    getLineLoginUrl,
+    isLineLoginConfigured,
+    savePostLoginRedirect,
+} from "../lib/lineLogin";
 
 type RequireAuthProps = {
     children: ReactNode;
@@ -31,6 +35,7 @@ export default function RequireAuth({ children }: RequireAuthProps) {
             setState("misconfigured");
             return;
         }
+        savePostLoginRedirect(window.location.pathname + window.location.search + window.location.hash);
         setState("redirecting");
         // replace เพื่อไม่ให้กด back กลับเข้ามาแล้วซ้ำ effect
         window.location.replace(loginUrl);

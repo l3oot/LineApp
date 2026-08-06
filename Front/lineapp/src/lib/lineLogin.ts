@@ -2,9 +2,21 @@ const LINE_AUTH = "https://access.line.me/oauth2/v2.1/authorize";
 
 /** OAuth state for CSRF check after redirect; verify with sessionStorage. */
 const STATE_KEY = "line_oauth_state";
+const POST_LOGIN_REDIRECT_KEY = "line_post_login_redirect";
 export type LineCallbackPayload =
     | { ok: true; code: string }
     | { ok: false; message: string };
+
+function normalizePostLoginRedirect(target: string): string | null {
+    const value = target.trim();
+    if (!value.startsWith("/") || value.startsWith("//")) {
+        return null;
+    }
+    if (value === "/callback" || value.startsWith("/callback?")) {
+        return null;
+    }
+    return value;
+}
 
 function isFullLineLoginUrl(value: string): boolean {
     try {
@@ -86,6 +98,23 @@ export function parseLineCallback(search: string): LineCallbackPayload {
     }
 
     return { ok: true, code };
+}
+
+export function savePostLoginRedirect(target: string): void {
+    const safeTarget = normalizePostLoginRedirect(target);
+    if (!safeTarget) {
+        return;
+    }
+    localStorage.setItem(POST_LOGIN_REDIRECT_KEY, safeTarget);
+}
+
+export function consumePostLoginRedirect(): string | null {
+    const value = localStorage.getItem(POST_LOGIN_REDIRECT_KEY);
+    localStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
+    if (!value) {
+        return null;
+    }
+    return normalizePostLoginRedirect(value);
 }
 
 /** ลบ OAuth state หลังแลก code สำเร็จ — อย่าลบตอน parse เพื่อให้ StrictMode remount ใช้ซ้ำได้ */
