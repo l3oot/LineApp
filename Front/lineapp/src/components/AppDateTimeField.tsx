@@ -44,6 +44,24 @@ export default function AppDateTimeField({
 }: AppDateTimeFieldProps) {
     const { i18n } = useTranslation();
 
+    const focusTimeSegmentOnPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+        if (event.button !== 0) return;
+
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+
+        const clickedSegment = target.closest("[role='spinbutton']");
+        const firstSegment = event.currentTarget.querySelector("[role='spinbutton']");
+        const segmentToFocus = clickedSegment ?? firstSegment;
+
+        if (!(segmentToFocus instanceof HTMLElement)) return;
+
+        if (document.activeElement !== segmentToFocus) {
+            event.preventDefault();
+            segmentToFocus.focus();
+        }
+    };
+
     return (
         <div className={`flex items-center gap-2 ${className}`}>
             <DatePicker
@@ -109,9 +127,10 @@ export default function AppDateTimeField({
                     if (value) onTimeChange(value);
                 }}
                 hourCycle={24}
+                shouldForceLeadingZeros
                 className="w-[5.75rem] shrink-0"
             >
-                <DateInput className={timeInputClassName}>
+                <DateInput className={timeInputClassName} onPointerDown={focusTimeSegmentOnPointerDown}>
                     {(segment) => (
                         <DateSegment
                             segment={segment}
