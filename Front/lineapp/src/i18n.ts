@@ -48,7 +48,7 @@ const resources = {
                 logout: "ออกจากระบบ",
                 loggedInAs: "เข้าสู่ระบบแล้ว",
                 item: {
-                    profile: "ข้อมูลส่วนตัว",
+                    profile: "ข้อมูลการเกษตร",
                     category: "ตั้งค่าหมวด",
                     currency: "ตั้งค่าสกุลเงิน",
                     language: "ตั้งค่าภาษา",
@@ -68,7 +68,7 @@ const resources = {
                     chooseLabel: "เลือกภาษาที่ระบบจะแสดงผล",
                 },
                 profileSheet: {
-                    title: "ข้อมูลส่วนตัว",
+                    title: "ข้อมูลการเกษตร",
                     provinceLabel: "จังหวัด",
                     provincePlaceholder: "เช่น นครราชสีมา",
                     districtLabel: "อำเภอ",
@@ -315,7 +315,7 @@ const resources = {
                 logout: "Log out",
                 loggedInAs: "Signed in",
                 item: {
-                    profile: "Personal info",
+                    profile: "Agriculture info",
                     category: "Category settings",
                     currency: "Currency settings",
                     language: "Language settings",
@@ -335,7 +335,7 @@ const resources = {
                     chooseLabel: "Choose display language",
                 },
                 profileSheet: {
-                    title: "Personal info",
+                    title: "Agriculture info",
                     provinceLabel: "Province",
                     provincePlaceholder: "e.g. Nakhon Ratchasima",
                     districtLabel: "District",
@@ -582,7 +582,7 @@ const resources = {
                 logout: "ログアウト",
                 loggedInAs: "ログイン中",
                 item: {
-                    profile: "個人情報",
+                    profile: "農業情報",
                     category: "カテゴリ設定",
                     currency: "通貨設定",
                     language: "言語設定",
@@ -602,7 +602,7 @@ const resources = {
                     chooseLabel: "表示言語を選択",
                 },
                 profileSheet: {
-                    title: "個人情報",
+                    title: "農業情報",
                     provinceLabel: "都道府県",
                     provincePlaceholder: "例: ナコーンラーチャシーマー",
                     districtLabel: "郡・区",
