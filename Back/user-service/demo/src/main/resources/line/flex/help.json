@@ -1,0 +1,72 @@
+{
+  "type": "carousel",
+  "contents": [
+    {
+      "type": "bubble",
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "md",
+        "contents": [
+          {
+            "type": "text",
+            "text": "ลองพิมพ์บอกยายได้เลย เช่น",
+            "weight": "bold",
+            "size": "lg",
+            "wrap": true
+          },
+          {
+            "type": "separator",
+            "margin": "md"
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "margin": "md",
+            "spacing": "sm",
+            "contents": [
+              {
+                "type": "text",
+                "text": "• ค่าปุ๋ย 500 บาท",
+                "size": "sm",
+                "wrap": true
+              },
+              {
+                "type": "text",
+                "text": "• ค่ายาบำรุงวัว 500 บาท",
+                "size": "sm",
+                "wrap": true
+              },
+              {
+                "type": "text",
+                "text": "• ขายข้าว 3,500 บาท",
+                "size": "sm",
+                "wrap": true
+              }
+            ]
+          }
+        ]
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "button",
+            "style": "primary",
+            "height": "md",
+            "action": {
+              "type": "postback",
+              "label": "📝 พิมพ์รายการ",
+              "data": "action=open_keyboard",
+              "inputOption": "openKeyboard",
+              "fillInText": "ค่าปุ๋ย 500 บาท"
+            },
+            "color": "#61B35F"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -106,6 +106,14 @@ public class LineWebhookService {
         String userText = msg.text();
         long timestampMs = event.timestamp() != null ? event.timestamp() : System.currentTimeMillis();
 
+        if ("แนะนำ".equals(userText.trim())) {
+            lineMessagingService.replyFlex(
+                    replyToken,
+                    "วิธีพิมพ์รายการให้ยายช่วยบันทึก",
+                    lineFlexMessageBuilder.buildHelpContents());
+            return;
+        }
+
         try {
             UserEntity user = upsertUserBySub(userSub);
 

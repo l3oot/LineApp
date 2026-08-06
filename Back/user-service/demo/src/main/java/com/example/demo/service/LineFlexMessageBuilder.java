@@ -35,6 +35,7 @@ public class LineFlexMessageBuilder {
     };
     private static final String TRANSACTION_TEMPLATE = "line/flex/transaction.json";
     private static final String EDIT_TEMPLATE = "line/flex/edit.json";
+    private static final String HELP_TEMPLATE = "line/flex/help.json";
     private static final String INCOME_COLOR = "#30793F";
     private static final String EXPENSE_COLOR = "#E36C64";
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -94,6 +95,17 @@ public class LineFlexMessageBuilder {
     public String buildUpdatedAltText(TransactionRes tx) {
         String note = tx.note() != null ? tx.note() : "";
         return "แก้ไข" + resolveTypeLabel(tx.txType()) + " " + note + " " + formatPrice(tx.amount());
+    }
+
+    /** Flex แนะนำตัวอย่างข้อความที่ผู้ใช้พิมพ์ได้ */
+    public Map<String, Object> buildHelpContents() {
+        String template = loadTemplate(HELP_TEMPLATE);
+        try {
+            return MAPPER.readValue(template, new TypeReference<>() {});
+        } catch (IOException e) {
+            log.error("parse help flex template failed: {}", e.getMessage(), e);
+            throw new IllegalStateException("invalid help flex template", e);
+        }
     }
 
     private Map<String, Object> fillBubble(
