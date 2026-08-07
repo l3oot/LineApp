@@ -26,12 +26,11 @@ import com.example.demo.util.AppTime;
  * Orchestrate flow ของ LINE chatbot:
  *
  * <ol>
- * <li>upsert UserEntity ตาม LINE userId (source.userId → user_sub)</li>
- * <li>เรียก ai-service /parse?text=&userId= → AiParseRes</li>
- * <li>{@code structured_ok=true} → map → insert ลง public.transaction → ส่ง
- * Flex Message</li>
- * <li>มี {@code message} (ยายตอบ) → reply ข้อความนั้นกลับ</li>
- * <li>error → reply fallback</li>
+ *   <li>upsert UserEntity ตาม LINE userId (source.userId → user_sub)</li>
+ *   <li>เรียก ai-service /parse?text=&userId= → AiParseRes</li>
+ *   <li>{@code structured_ok=true} → map → insert ลง public.transaction → ส่ง Flex Message</li>
+ *   <li>มี {@code message} (ยายตอบ) → reply ข้อความนั้นกลับ</li>
+ *   <li>error → reply fallback</li>
  * </ol>
  *
  * Mapping AI → transaction:
@@ -45,8 +44,7 @@ import com.example.demo.util.AppTime;
  *   tx_date     ← event timestamp (Asia/Bangkok)
  * </pre>
  *
- * วิ่งบน {@code lineWebhookExecutor} เพื่อไม่ block response 200 ที่ต้องตอบ
- * LINE ทันที
+ * วิ่งบน {@code lineWebhookExecutor} เพื่อไม่ block response 200 ที่ต้องตอบ LINE ทันที
  */
 @Service
 public class LineWebhookService {
@@ -108,13 +106,14 @@ public class LineWebhookService {
         String userText = msg.text();
         long timestampMs = event.timestamp() != null ? event.timestamp() : System.currentTimeMillis();
 
-        // if ("แนะนำ".equals(userText.trim())) {
-        //     lineMessagingService.replyFlex(
-        //             replyToken,
-        //             "ค่าปุ๋ย 500 บาท",
-        //             lineFlexMessageBuilder.buildHelpContents());
-        //     return;
-        // }
+        if ("แนะนำ".equals(userText.trim())) {
+            lineMessagingService.replyFlex(
+                    replyToken,
+                    "ค่าปุ๋ย 500 บาท",
+                    lineFlexMessageBuilder.buildHelpContents());
+            return;
+        }
+
         try {
             UserEntity user = upsertUserBySub(userSub);
 
@@ -139,15 +138,12 @@ public class LineWebhookService {
         String action = params.get("action");
         String id = params.get("id");
 
-        if (!"delete".equals(action) || id == null || id.isBlank()) {
-            lineMessagingService.reply(replyToken, "ไม่เข้าใจคำสั่ง กรุณาลองใหม่อีกครั้ง");
+        if ("open_keyboard".equals(action)) {
             return;
         }
-        if ("แนะนำ".equals(action) || id.isBlank()) {
-            lineMessagingService.replyFlex(
-                    replyToken,
-                    "ค่าปุ๋ย 500 บาท",
-                    lineFlexMessageBuilder.buildHelpContents());
+
+        if (!"delete".equals(action) || id == null || id.isBlank()) {
+            lineMessagingService.reply(replyToken, "ไม่เข้าใจคำสั่ง กรุณาลองใหม่อีกครั้ง");
             return;
         }
 
@@ -177,9 +173,7 @@ public class LineWebhookService {
         return out;
     }
 
-    /**
-     * หา UserEntity ตาม LINE userId — สร้างใหม่ถ้ายังไม่เคย OAuth login
-     */
+    /** หา UserEntity ตาม LINE userId — สร้างใหม่ถ้ายังไม่เคย OAuth login */
     @Transactional
     UserEntity upsertUserBySub(String userSub) {
         return userRepository.findByUserSub(userSub).orElseGet(() -> {
@@ -188,10 +182,7 @@ public class LineWebhookService {
         });
     }
 
-    /**
-     * ตัดสินว่าจะ reply อะไรกลับ LINE — และถ้า AI extract ได้ครบ ให้ insert
-     * transaction ที่นี่
-     */
+    /** ตัดสินว่าจะ reply อะไรกลับ LINE — และถ้า AI extract ได้ครบ ให้ insert transaction ที่นี่ */
     private LineReply decideReply(UserEntity user, AiParseRes parsed, long timestampMs) {
         if (parsed == null) {
             return LineReply.text("ขออภัย ระบบ AI ขัดข้องชั่วคราว ลองพิมพ์ใหม่อีกครั้งนะจ๊ะ");
