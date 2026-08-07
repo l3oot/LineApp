@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import com.example.demo.config.LineProperties;
 import com.example.demo.dto.req.LineWebhookReq;
 import com.example.demo.exception.ApiException;
 import com.example.demo.dto.req.TransactionCreateReq;
+import com.example.demo.dto.res.LineProfileRes;
 import com.example.demo.dto.res.AiParseRes;
 import com.example.demo.dto.res.TransactionRes;
 import com.example.demo.entity.UserEntity;
@@ -104,7 +106,7 @@ public class LineWebhookService {
         }
 
         String userText = msg.text();
-        long timestampMs = event.timestamp() != null ? event.timestamp() : System.currentTimeMillis();
+        long timestampMs = Optional.ofNullable(event.timestamp()).orElseGet(System::currentTimeMillis);
 
         if ("แนะนำ".equals(userText.trim())) {
             lineMessagingService.replyFlex(
@@ -176,10 +178,30 @@ public class LineWebhookService {
     /** หา UserEntity ตาม LINE userId — สร้างใหม่ถ้ายังไม่เคย OAuth login */
     @Transactional
     UserEntity upsertUserBySub(String userSub) {
-        return userRepository.findByUserSub(userSub).orElseGet(() -> {
-            UserEntity fresh = new UserEntity(null, null, userSub, null, LocalDateTime.now());
+        LineProfileRes profile = lineMessagingService.getUserProfile(userSub);
+
+        UserEntity user = userRepository.findByUserSub(userSub).orElse(null);
+        if (user == null) {
+            UserEntity fresh = new UserEntity(
+                    null,
+                    profile != null ? profile.pictureUrl() : null,
+                    userSub,
+                    profile != null ? profile.displayName() : null,
+                    LocalDateTime.now());
             return userRepository.save(fresh);
-        });
+        }
+
+        user.setLastLoginAt(LocalDateTime.now());
+        if (profile != null) {
+            if (profile.pictureUrl() != null) {
+                user.setUserPicture(profile.pictureUrl());
+            }
+            if (profile.displayName() != null) {
+                user.setUserName(profile.displayName());
+            }
+            // Messaging API profile ไม่มี email, จึงไม่ overwrite userEmail ที่มีอยู่
+        }
+        return userRepository.save(user);
     }
 
     /** ตัดสินว่าจะ reply อะไรกลับ LINE — และถ้า AI extract ได้ครบ ให้ insert transaction ที่นี่ */

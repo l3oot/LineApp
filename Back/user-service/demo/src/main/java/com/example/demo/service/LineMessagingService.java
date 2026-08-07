@@ -7,12 +7,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.demo.config.LineProperties;
+import com.example.demo.dto.res.LineProfileRes;
 
 /**
  * เรียก LINE Messaging API — Reply (ใช้ replyToken จาก webhook) และ Push (ใช้ userId)
@@ -81,6 +85,38 @@ public class LineMessagingService {
     }
 
     /**
+     * ดึงโปรไฟล์จาก LINE Messaging API ด้วย userId จาก webhook source
+     * (ได้ displayName/pictureUrl/statusMessage แต่ไม่ได้ email)
+     */
+    public LineProfileRes getUserProfile(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return null;
+        }
+        String token = lineProperties.getChannelAccessToken();
+        if (token == null || token.isBlank()) {
+            log.warn("getUserProfile skipped: missing channel-access-token");
+            return null;
+        }
+
+        String url = "https://api.line.me/v2/bot/profile/" + userId;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        HttpEntity<Void> req = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<LineProfileRes> res = restTemplate.exchange(url, HttpMethod.GET, req, LineProfileRes.class);
+            return res.getBody();
+        } catch (HttpStatusCodeException e) {
+            log.warn("LINE get profile failed: userId={} status={} body={}",
+                    userId, e.getStatusCode(), e.getResponseBodyAsString());
+            return null;
+        } catch (RestClientException e) {
+            log.warn("LINE get profile failed: userId={} error={}", userId, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Push message หา user โดยตรง (ใช้ userId จาก source.userId / userSub)
      */
     public void push(String userId, String text) {
@@ -129,7 +165,7 @@ public class LineMessagingService {
         } catch (HttpStatusCodeException e) {
             log.error("LINE call {} failed: status={} body={}", url, e.getStatusCode(), e.getResponseBodyAsString());
             return false;
-        } catch (Exception e) {
+        } catch (RestClientException e) {
             log.error("LINE call {} failed: {}", url, e.getMessage(), e);
             return false;
         }
