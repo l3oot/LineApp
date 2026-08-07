@@ -1,10 +1,17 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { auth } from "../lib/auth";
+import { auth, exchangeLiffSession } from "../lib/auth";
 import {
     getLineLoginUrl,
     isLineLoginConfigured,
     savePostLoginRedirect,
 } from "../lib/lineLogin";
+import {
+    getLiffTokens,
+    initLiff,
+    isLiffConfigured,
+    isLiffLoggedIn,
+    loginWithLiff,
+} from "../lib/liff";
 
 type RequireAuthProps = {
     children: ReactNode;
@@ -22,23 +29,60 @@ export default function RequireAuth({ children }: RequireAuthProps) {
     );
 
     useEffect(() => {
-        if (auth.isAuthed()) {
-            setState("ready");
-            return;
-        }
-        if (!isLineLoginConfigured()) {
-            setState("misconfigured");
-            return;
-        }
-        const loginUrl = getLineLoginUrl();
-        if (!loginUrl) {
-            setState("misconfigured");
-            return;
-        }
-        savePostLoginRedirect(window.location.pathname + window.location.search + window.location.hash);
-        setState("redirecting");
-        // replace เพื่อไม่ให้กด back กลับเข้ามาแล้วซ้ำ effect
-        window.location.replace(loginUrl);
+        let ignore = false;
+
+        const run = async () => {
+            if (auth.isAuthed()) {
+                if (!ignore) setState("ready");
+                return;
+            }
+
+            const currentPath =
+                window.location.pathname + window.location.search + window.location.hash;
+
+            if (isLiffConfigured()) {
+                const liffReady = await initLiff();
+                if (liffReady) {
+                    if (!isLiffLoggedIn()) {
+                        savePostLoginRedirect(currentPath);
+                        if (!ignore) setState("redirecting");
+                        loginWithLiff(window.location.href);
+                        return;
+                    }
+
+                    const tokens = getLiffTokens();
+                    if (tokens) {
+                        try {
+                            await exchangeLiffSession(tokens);
+                            if (!ignore) setState("ready");
+                            return;
+                        } catch (err) {
+                            console.warn("[RequireAuth] LIFF exchange failed, fallback to OAuth:", err);
+                        }
+                    }
+                }
+            }
+
+            if (!isLineLoginConfigured()) {
+                if (!ignore) setState("misconfigured");
+                return;
+            }
+            const loginUrl = getLineLoginUrl();
+            if (!loginUrl) {
+                if (!ignore) setState("misconfigured");
+                return;
+            }
+            savePostLoginRedirect(currentPath);
+            if (!ignore) setState("redirecting");
+            // replace เพื่อไม่ให้กด back กลับเข้ามาแล้วซ้ำ effect
+            window.location.replace(loginUrl);
+        };
+
+        void run();
+
+        return () => {
+            ignore = true;
+        };
     }, []);
 
     if (state === "ready") {
@@ -58,7 +102,7 @@ export default function RequireAuth({ children }: RequireAuthProps) {
                     <div className="space-y-2">
                         <p className="text-sm font-semibold text-red-600">LINE Login ยังไม่ถูกตั้งค่า</p>
                         <p className="text-xs text-[var(--text-soft)]">
-                            กรุณาตั้ง <code>VITE_LINE_CHANNEL_ID</code> และ <code>VITE_LINE_REDIRECT_URI</code> ใน .env
+                            กรุณาตั้ง <code>VITE_LIFF_ID</code> หรือ <code>VITE_LINE_CHANNEL_ID</code> กับ <code>VITE_LINE_REDIRECT_URI</code> ใน .env
                         </p>
                     </div>
                 )}

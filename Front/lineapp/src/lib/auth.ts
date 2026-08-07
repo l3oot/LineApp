@@ -24,6 +24,11 @@ type LineLoginRes = {
     pictureUrl: string | null;
 };
 
+type LineLiffLoginReq = {
+    idToken: string;
+    accessToken: string;
+};
+
 export const auth = {
     getToken(): string | null {
         return localStorage.getItem(TOKEN_KEY);
@@ -79,5 +84,37 @@ export async function exchangeLineCode(code: string): Promise<AuthUser> {
     });
 
     pendingExchange = { code, promise };
+    return promise;
+}
+
+let pendingLiffExchange: { key: string; promise: Promise<AuthUser> } | null = null;
+
+/**
+ * แลก LIFF token (id/access token) → JWT + user profile แล้ว save session
+ * ใช้ใน RequireAuth เมื่อเปิดแอปผ่าน LINE browser
+ */
+export async function exchangeLiffSession(payload: LineLiffLoginReq): Promise<AuthUser> {
+    const key = `${payload.idToken}:${payload.accessToken}`;
+    if (pendingLiffExchange?.key === key) {
+        return pendingLiffExchange.promise;
+    }
+
+    const promise = (async () => {
+        const res = await api.post<LineLoginRes>("/api/auth/line/liff", payload);
+        const user: AuthUser = {
+            userId: res.userId,
+            lineUserId: res.lineUserId,
+            displayName: res.displayName,
+            pictureUrl: res.pictureUrl,
+        };
+        auth.setSession(res.token, user);
+        return user;
+    })().finally(() => {
+        if (pendingLiffExchange?.key === key) {
+            pendingLiffExchange = null;
+        }
+    });
+
+    pendingLiffExchange = { key, promise };
     return promise;
 }

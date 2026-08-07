@@ -149,18 +149,32 @@ public class LineAuthService {
         return profile;
     }
 
-    public AuthRes loginWithLine(String code) {
-        LineTokenRes tokenResponse = exchangeToken(code);
-        UserEntity user = verifyIdTokenAndUpsertUser(tokenResponse.idToken());
-        LineProfileRes profile = getProfile(tokenResponse.accessToken());
-
+    private AuthRes buildAuthRes(UserEntity user, LineProfileRes profile) {
         String jwt = jwtUtil.generateToken(user.getUserId().toString(), profile.displayName());
-
         return new AuthRes(
                 jwt,
                 user.getUserId(),
                 profile.userId(),
                 profile.displayName(),
                 profile.pictureUrl());
+    }
+
+    public AuthRes loginWithLine(String code) {
+        LineTokenRes tokenResponse = exchangeToken(code);
+        UserEntity user = verifyIdTokenAndUpsertUser(tokenResponse.idToken());
+        LineProfileRes profile = getProfile(tokenResponse.accessToken());
+
+        return buildAuthRes(user, profile);
+    }
+
+    public AuthRes loginWithLiff(String idToken, String accessToken) {
+        if (idToken == null || idToken.isBlank() || accessToken == null || accessToken.isBlank()) {
+            throw new ApiException(ErrorCode.INVALID_CREDENTIAL, "Missing LIFF token");
+        }
+
+        UserEntity user = verifyIdTokenAndUpsertUser(idToken);
+        LineProfileRes profile = getProfile(accessToken);
+
+        return buildAuthRes(user, profile);
     }
 }
