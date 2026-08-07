@@ -60,7 +60,7 @@
               "type": "postback",
               "label": "📝 พิมพ์รายการ",
               "data": "action=open_keyboard",
-              "inputOption": "openKeyboard",
+              "inputOption": "openKeyboard"
             },
             "color": "#61B35F"
           }
