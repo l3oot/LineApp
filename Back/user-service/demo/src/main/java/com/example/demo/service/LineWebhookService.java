@@ -109,7 +109,7 @@ public class LineWebhookService {
         if ("แนะนำ".equals(userText.trim())) {
             lineMessagingService.replyFlex(
                     replyToken,
-                    "วิธีพิมพ์รายการให้ยายช่วยบันทึก",
+                    "ค่าปุ๋ย 500 บาท",
                     lineFlexMessageBuilder.buildHelpContents());
             return;
         }
