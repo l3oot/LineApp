@@ -21,6 +21,7 @@ services:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_LINE_CHANNEL_ID: ${VITE_LINE_CHANNEL_ID}
         VITE_LINE_REDIRECT_URI: ${VITE_LINE_REDIRECT_URI}
+        VITE_LIFF_ID: ${VITE_LIFF_ID}
     container_name: lineapp-frontend
     ports:
       # Vite dev server ฟังที่ 5173 → expose ตรง ๆ (ไม่ใช่ผ่าน nginx)
@@ -29,6 +30,7 @@ services:
       VITE_API_BASE_URL: ${VITE_API_BASE_URL}
       VITE_LINE_CHANNEL_ID: ${VITE_LINE_CHANNEL_ID}
       VITE_LINE_REDIRECT_URI: ${VITE_LINE_REDIRECT_URI}
+      VITE_LIFF_ID: ${VITE_LIFF_ID}
       CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING}
       WATCHPACK_POLLING: ${WATCHPACK_POLLING}
     # volumes:
