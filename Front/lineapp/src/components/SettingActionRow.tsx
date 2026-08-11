@@ -4,6 +4,7 @@ type SettingActionRowProps = {
     label: string;
     value?: string;
     danger?: boolean;
+    lineTone?: boolean;
     disabled?: boolean;
     onClick?: () => void;
 };
@@ -12,12 +13,13 @@ export default function SettingActionRow({
     label,
     value,
     danger = false,
+    lineTone = false,
     disabled = false,
     onClick,
 }: SettingActionRowProps) {
-    const textColor = danger ? "text-[var(--danger)]" : "text-[var(--text)]";
-    const iconColor = danger ? "text-[var(--danger)]" : "text-[var(--text-soft)]";
-    const valueColor = danger ? "text-[var(--danger)]" : "text-[var(--text-soft)]";
+    const textColor = danger ? "text-[var(--danger)]" : lineTone ? "text-[#03C755]" : "text-[var(--text)]";
+    const iconColor = danger ? "text-[var(--danger)]" : lineTone ? "text-[#03C755]" : "text-[var(--text-soft)]";
+    const valueColor = danger ? "text-[var(--danger)]" : lineTone ? "text-[#03C755]" : "text-[var(--text-soft)]";
 
     return (
         <button

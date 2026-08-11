@@ -40,6 +40,10 @@ import {
 } from "../utils/formatAppDate";
 import { parseTxDateTime } from "../utils/parseTxDateTime";
 
+const LINE_APP_ICON_URL =
+    "https://upload.wikimedia.org/wikipedia/commons/2/2e/LINE_New_App_Icon_%282020-12%29.png";
+const LINE_ADD_URL = "https://lin.ee/wwtM9K1";
+
 function isIconName(value: string | null | undefined): value is keyof typeof icons {
     return Boolean(value && Object.prototype.hasOwnProperty.call(icons, value));
 }
@@ -718,6 +722,21 @@ export default function List() {
                         </div>
 
                         <form className="bottom-sheet-scroll flex flex-1 flex-col gap-4 overflow-y-auto pb-1" onSubmit={handleSaveTransaction}>
+                            <button
+                                type="button"
+                                onClick={() => window.open(LINE_ADD_URL, "_blank", "noopener,noreferrer")}
+                                className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-control)] border border-[#03C755] bg-[#03C755] px-3 py-2.5 text-sm font-bold text-white transition-all hover:brightness-95"
+                            >
+                                <img
+                                    src={LINE_APP_ICON_URL}
+                                    alt="LINE"
+                                    className="h-5 w-5 rounded-md bg-white object-cover"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                                <span>{t("list.addViaLine")}</span>
+                            </button>
+
                             <div>
                                 <p className="text-sm font-bold text-[var(--text)]">{t("list.typeLabel")}</p>
                                 <div className="grid grid-cols-2 gap-2">

@@ -17,6 +17,11 @@ services:
       context: ./Front/lineapp
       dockerfile: Dockerfile
       target: dev
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_LINE_CHANNEL_ID: ${VITE_LINE_CHANNEL_ID}
+        VITE_LINE_REDIRECT_URI: ${VITE_LINE_REDIRECT_URI}
+        VITE_LIFF_ID: ${VITE_LIFF_ID}
     container_name: lineapp-frontend
     ports:
       # Vite dev server ฟังที่ 5173 → expose ตรง ๆ (ไม่ใช่ผ่าน nginx)
@@ -25,6 +30,7 @@ services:
       VITE_API_BASE_URL: ${VITE_API_BASE_URL}
       VITE_LINE_CHANNEL_ID: ${VITE_LINE_CHANNEL_ID}
       VITE_LINE_REDIRECT_URI: ${VITE_LINE_REDIRECT_URI}
+      VITE_LIFF_ID: ${VITE_LIFF_ID}
       CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING}
       WATCHPACK_POLLING: ${WATCHPACK_POLLING}
     volumes:
@@ -115,43 +121,6 @@ services:
       - --port
       - "8000"
       - --reload
-      - --reload-dir
-      - /app/src
-      - --reload-delay
-      - "0.25"
-    restart: unless-stopped
-    networks:
-      - lineapp-net
-
-  nginx:
-    build:
-      context: ./Proxy
-      dockerfile: Dockerfile
-    container_name: lineapp-proxy
-    depends_on:
-      - frontend
-      - user-service
-    ports:
-      - "80:80"
-    restart: unless-stopped
-    networks:
-      - lineapp-net
-
-  ngrok:
-    image: ngrok/ngrok:latest
-    container_name: lineapp-ngrok
-    depends_on:
-      - nginx
-      - user-service
-    command:
-      - start
-      - --all
-      - --authtoken
-      - ${NGROK_AUTHTOKEN}
-      - --config
-      - /etc/ngrok.yml
-    volumes:
-      - ./ngrok/ngrok.yml:/etc/ngrok.yml:ro
     restart: unless-stopped
     networks:
       - lineapp-net
