@@ -41,7 +41,9 @@ public class TransactionController {
     @GetMapping("")
     public ResponseEntity<ApiRes<List<TransactionRes>>> listTransactions(
             @RequestParam UUID userId,
-            @RequestParam(required = false) UUID cycleId) {
+            @RequestParam(required = false) UUID cycleId
+            // @RequestParam String txType, TODO: เพื่อ filter ชื่อรายการ
+            ) {
         List<TransactionRes> data = transactionService.listTransactions(userId, cycleId);
         return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
