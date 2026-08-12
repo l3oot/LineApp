@@ -7,14 +7,11 @@ import {
     CalendarGridBody,
     CalendarGridHeader,
     CalendarHeaderCell,
-    DateInput,
     DatePicker,
-    DateSegment,
     Dialog,
     Group,
     Heading,
     Popover,
-    TimeField,
 } from "react-aria-components";
 import { FiCalendar } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
@@ -29,10 +26,12 @@ type AppDateTimeFieldProps = {
     className?: string;
 };
 
-const segmentClassName =
-    "inline-block min-w-[1.25rem] rounded-sm px-0 text-center tabular-nums outline-none focus:bg-[var(--primary-soft)]";
 const timeInputClassName =
-    "inline-flex h-[2.375rem] w-[5.75rem] shrink-0 items-center justify-center rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold tabular-nums text-[var(--text)] focus-within:border-[var(--primary)]";
+    "h-[2.375rem] w-[2.6rem] rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-1 py-2 text-center text-sm font-semibold tabular-nums text-[var(--text)] outline-none focus:border-[var(--primary)]";
+
+function clamp(value: number, min: number, max: number) {
+    return Math.min(max, Math.max(min, value));
+}
 
 export default function AppDateTimeField({
     date,
@@ -44,30 +43,18 @@ export default function AppDateTimeField({
 }: AppDateTimeFieldProps) {
     const { i18n } = useTranslation();
 
-    const focusTimeSegmentOnPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-        const isMouseClick = event.pointerType === "mouse" && event.button === 0;
-        const isTouchTap = event.pointerType === "touch";
+    const handleHourChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const nextHour = Number(event.target.value);
+        if (Number.isNaN(nextHour)) return;
 
-        if (!isMouseClick && !isTouchTap) return;
+        onTimeChange(new Time(clamp(nextHour, 0, 23), time.minute));
+    };
 
-        // Prevent event from bubbling to DatePicker
-        event.stopPropagation();
-        if (isMouseClick) {
-            event.preventDefault();
-        }
+    const handleMinuteChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const nextMinute = Number(event.target.value);
+        if (Number.isNaN(nextMinute)) return;
 
-        const target = event.target;
-        if (!(target instanceof HTMLElement)) return;
-
-        const clickedSegment = target.closest("[role='spinbutton']");
-        const firstSegment = event.currentTarget.querySelector("[role='spinbutton']");
-        const segmentToFocus = clickedSegment ?? firstSegment;
-
-        if (!(segmentToFocus instanceof HTMLElement)) return;
-
-        if (document.activeElement !== segmentToFocus) {
-            segmentToFocus.focus();
-        }
+        onTimeChange(new Time(time.hour, clamp(nextMinute, 0, 59)));
     };
 
     return (
@@ -128,29 +115,37 @@ export default function AppDateTimeField({
                 </Popover>
             </DatePicker>
 
-            <TimeField
-                aria-label={ariaLabel}
-                value={time}
-                onChange={(value) => {
-                    if (value) onTimeChange(value);
-                }}
-                hourCycle={24}
-                shouldForceLeadingZeros
-                className="relative w-[5.75rem] shrink-0 pointer-events-auto"
+            <div
+                className="flex items-center gap-1"
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
             >
-                <DateInput className={timeInputClassName} onPointerDown={focusTimeSegmentOnPointerDown}>
-                    {(segment) => (
-                        <DateSegment
-                            segment={segment}
-                            className={
-                                segment.type === "literal"
-                                    ? "inline-block min-w-[0.375rem] text-center tabular-nums"
-                                    : segmentClassName
-                            }
-                        />
-                    )}
-                </DateInput>
-            </TimeField>
+                <input
+                    aria-label={`${ariaLabel} hour`}
+                    type="number"
+                    min={0}
+                    max={23}
+                    inputMode="numeric"
+                    value={String(time.hour).padStart(2, "0")}
+                    onChange={handleHourChange}
+                    className={timeInputClassName}
+                    onClick={(event) => event.stopPropagation()}
+                    onPointerDown={(event) => event.stopPropagation()}
+                />
+                <span className="text-sm font-semibold text-[var(--text-soft)]">:</span>
+                <input
+                    aria-label={`${ariaLabel} minute`}
+                    type="number"
+                    min={0}
+                    max={59}
+                    inputMode="numeric"
+                    value={String(time.minute).padStart(2, "0")}
+                    onChange={handleMinuteChange}
+                    className={timeInputClassName}
+                    onClick={(event) => event.stopPropagation()}
+                    onPointerDown={(event) => event.stopPropagation()}
+                />
+            </div>
         </div>
     );
 }
