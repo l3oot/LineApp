@@ -37,6 +37,7 @@ import {
     toAppCalendarDate,
     toGregorianCalendarDate,
 } from "../utils/formatAppDate";
+import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
 import { parseTxDateTime } from "../utils/parseTxDateTime";
 
 const LINE_APP_ICON_URL =

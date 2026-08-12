@@ -1,4 +1,5 @@
-import type { CalendarDate, Time } from "@internationalized/date";
+import { Time } from "@internationalized/date";
+import type { CalendarDate } from "@internationalized/date";
 import {
     Button,
     Calendar,
