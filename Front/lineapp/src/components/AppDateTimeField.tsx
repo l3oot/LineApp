@@ -50,6 +50,12 @@ export default function AppDateTimeField({
 
         if (!isMouseClick && !isTouchTap) return;
 
+        // Prevent event from bubbling to DatePicker
+        event.stopPropagation();
+        if (isMouseClick) {
+            event.preventDefault();
+        }
+
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
 
@@ -60,9 +66,6 @@ export default function AppDateTimeField({
         if (!(segmentToFocus instanceof HTMLElement)) return;
 
         if (document.activeElement !== segmentToFocus) {
-            if (isMouseClick) {
-                event.preventDefault();
-            }
             segmentToFocus.focus();
         }
     };
@@ -133,7 +136,7 @@ export default function AppDateTimeField({
                 }}
                 hourCycle={24}
                 shouldForceLeadingZeros
-                className="w-[5.75rem] shrink-0"
+                className="relative w-[5.75rem] shrink-0 pointer-events-auto"
             >
                 <DateInput className={timeInputClassName} onPointerDown={focusTimeSegmentOnPointerDown}>
                     {(segment) => (
