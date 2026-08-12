@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { FiCheck, FiChevronDown, FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import BottomSheet from "./BottomSheet";
-import { ApiError } from "../lib/api";
+import { ApiError, getApiErrorMessage } from "../lib/api";
 import {
     thaiAdminApi,
     userProfileApi,
@@ -187,7 +187,7 @@ export default function UserProfileBottomSheet({
                 setSubDistrictCode(matchedSubdistrict?.code ?? "");
             } catch (err) {
                 if (cancelled) return;
-                setAdminError(err instanceof ApiError ? err.message : (err as Error).message);
+                setAdminError(getApiErrorMessage(err, t));
             } finally {
                 if (!cancelled) {
                     setAdminLoading(false);
@@ -219,7 +219,7 @@ export default function UserProfileBottomSheet({
         try {
             await loadDistricts(nextProvinceCode);
         } catch (err) {
-            setAdminError(err instanceof ApiError ? err.message : (err as Error).message);
+            setAdminError(getApiErrorMessage(err, t));
         } finally {
             setAdminLoading(false);
         }
@@ -237,7 +237,7 @@ export default function UserProfileBottomSheet({
         try {
             await loadSubdistricts(nextDistrictCode);
         } catch (err) {
-            setAdminError(err instanceof ApiError ? err.message : (err as Error).message);
+            setAdminError(getApiErrorMessage(err, t));
         } finally {
             setAdminLoading(false);
         }
@@ -263,7 +263,7 @@ export default function UserProfileBottomSheet({
             onSaved(saved);
             onClose();
         } catch (err) {
-            setError(err instanceof ApiError ? err.message : (err as Error).message);
+            setError(getApiErrorMessage(err, t));
         } finally {
             setSubmitting(false);
         }

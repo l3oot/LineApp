@@ -7,7 +7,7 @@ import ConfirmBottomSheet from "../components/ConfirmBottomSheet";
 import CategoryCenterModal from "../components/CategoryCenterModal";
 import { LuUserRound, LuLogOut } from "react-icons/lu";
 import { useTranslation } from "react-i18next";
-import { ApiError } from "../lib/api";
+import { ApiError, getApiErrorMessage } from "../lib/api";
 import { auth } from "../lib/auth";
 import { transactionApi, userProfileApi, type UserProfile } from "../lib/userService";
 
@@ -112,7 +112,7 @@ export default function Setting() {
             await transactionApi.deleteAllByUser();
             setIsDeleteAllConfirmOpen(false);
         } catch (err) {
-            setDeleteAllError(err instanceof ApiError ? err.message : (err as Error).message);
+            setDeleteAllError(getApiErrorMessage(err, t));
         } finally {
             setDeleteAllBusy(false);
         }

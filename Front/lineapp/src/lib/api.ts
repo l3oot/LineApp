@@ -3,6 +3,9 @@
  * อ่าน base URL จาก VITE_API_BASE_URL, แนบ JWT จาก localStorage, แกะ ApiRes envelope
  */
 
+import { isJwtExpired } from "./jwt";
+import { savePostLoginRedirect } from "./lineLogin";
+
 // path เรียก API ทุกจุดใน src ใส่ prefix "/api/..." เองอยู่แล้ว
 // ตัด "/api" ท้าย VITE_API_BASE_URL ออกกันไว้ (เผื่อตั้งค่ามาแบบมี /api ต่อท้าย) ป้องกัน path ซ้ำเป็น /api/api/...
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)
@@ -11,6 +14,25 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)
     "http://localhost:8080";
 
 const TOKEN_KEY = "auth_token";
+const USER_KEY = "auth_user";
+let reauthRedirecting = false;
+
+function clearSessionStorage(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+}
+
+function triggerReauthRedirect(): void {
+    if (reauthRedirecting) return;
+    reauthRedirecting = true;
+
+    const currentPath =
+        window.location.pathname + window.location.search + window.location.hash;
+    savePostLoginRedirect(currentPath);
+
+    // Redirect into protected root; RequireAuth will continue LINE login flow.
+    window.location.replace("/");
+}
 
 export type ApiRes<T> = {
     success: boolean;
@@ -29,6 +51,44 @@ export class ApiError extends Error {
         this.status = status;
         this.typeError = typeError;
     }
+}
+
+export function getApiErrorMessage(
+    error: unknown,
+    t: (key: string, options?: Record<string, unknown>) => string,
+): string {
+    if (error instanceof ApiError) {
+        const statusKeyMap: Record<number, string> = {
+            400: "badRequest",
+            401: "unauthorized",
+            403: "forbidden",
+            404: "notFound",
+            409: "conflict",
+            422: "validation",
+            429: "tooManyRequests",
+        };
+
+        if (error.status === 0) {
+            if (error.typeError === "TIMEOUT") return t("errors.http.timeout");
+            if (error.typeError === "NETWORK_ERROR") return t("errors.http.network");
+        }
+
+        if (statusKeyMap[error.status]) {
+            return t(`errors.http.${statusKeyMap[error.status]}`);
+        }
+
+        if (error.status >= 500) {
+            return t("errors.http.server");
+        }
+
+        return t("errors.http.unknown");
+    }
+
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return t("errors.http.unknown");
 }
 
 type Query = Record<string, string | number | boolean | null | undefined>;
@@ -58,6 +118,11 @@ async function request<T>(
     headers.set("Accept", "application/json");
     const token = localStorage.getItem(TOKEN_KEY);
     if (token) {
+        if (isJwtExpired(token)) {
+            clearSessionStorage();
+            triggerReauthRedirect();
+            throw new ApiError(401, "TOKEN_EXPIRED", "Session expired. Please sign in again.");
+        }
         headers.set("Authorization", `Bearer ${token}`);
     }
 
@@ -94,6 +159,10 @@ async function request<T>(
     }
 
     if (!res.ok || !body || body.success === false) {
+        if (res.status === 401 && !path.startsWith("/api/auth/")) {
+            clearSessionStorage();
+            triggerReauthRedirect();
+        }
         throw new ApiError(
             res.status,
             body?.typeError ?? null,

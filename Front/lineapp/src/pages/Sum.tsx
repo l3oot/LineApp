@@ -10,7 +10,7 @@ import QuickMenu from "../components/QuickMenu";
 import RecentTransactionRow from "../components/RecentTransactionRow";
 import { icons } from "../assets/Iconlist";
 import "../styles/sum.css";
-import { ApiError } from "../lib/api";
+import { ApiError, getApiErrorMessage } from "../lib/api";
 import { auth } from "../lib/auth";
 import {
   categoryApi,
@@ -80,7 +80,7 @@ export default function Sum() {
         if (cancelled) return;
         setTransactions([]);
         setCategories([]);
-        setError(err instanceof ApiError ? err.message : (err as Error).message);
+        setError(getApiErrorMessage(err, t));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

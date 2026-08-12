@@ -4,7 +4,7 @@ import MainLayout from "../layouts/MainLayout";
 import AnalyticCalendarCard from "../components/AnalyticCalendarCard";
 import AnalyticDayTransactionsSheet from "../components/AnalyticDayTransactionsSheet";
 import "../styles/analytic.css";
-import { ApiError } from "../lib/api";
+import { ApiError, getApiErrorMessage } from "../lib/api";
 import { auth } from "../lib/auth";
 import { categoryApi, transactionApi, type Category, type Transaction } from "../lib/userService";
 import dayjs from "dayjs";
@@ -152,7 +152,7 @@ export default function Analytic() {
                     setTransactions([]);
                     setExpenseCategories([]);
                     setIncomeCategories([]);
-                    setLoadError(err instanceof ApiError ? err.message : (err as Error).message);
+                    setLoadError(getApiErrorMessage(err, t));
                 }
             })
             .finally(() => {

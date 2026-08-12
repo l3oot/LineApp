@@ -16,7 +16,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import { useTranslation } from "react-i18next";
 import "../styles/list.css";
 import type { GroupedTransaction } from "../data/listMockData";
-import { ApiError } from "../lib/api";
+import { ApiError, getApiErrorMessage } from "../lib/api";
 import {
     categoryApi,
     cycleApi,
@@ -165,7 +165,7 @@ export default function List() {
             setTransactions([]);
             setHasMoreTransactions(false);
             setNextPage(0);
-            setListError(err instanceof ApiError ? err.message : (err as Error).message);
+            setListError(getApiErrorMessage(err, t));
         } finally {
             setListLoading(false);
         }
@@ -192,7 +192,7 @@ export default function List() {
             setHasMoreTransactions(txPage.hasNext);
             setNextPage(txPage.page + 1);
         } catch (err) {
-            setListError(err instanceof ApiError ? err.message : (err as Error).message);
+            setListError(getApiErrorMessage(err, t));
         } finally {
             setListLoadingMore(false);
         }
@@ -349,7 +349,7 @@ export default function List() {
             exitBulkSelectMode();
             await loadTransactions();
         } catch (err) {
-            setListError(err instanceof ApiError ? err.message : (err as Error).message);
+            setListError(getApiErrorMessage(err, t));
         } finally {
             setBulkDeleting(false);
         }
@@ -428,7 +428,7 @@ export default function List() {
             })
             .catch((err) => {
                 if (cancelled) return;
-                setListError(err instanceof ApiError ? err.message : (err as Error).message);
+                setListError(getApiErrorMessage(err, t));
                 setSearchParams({}, { replace: true });
             });
 
@@ -469,7 +469,7 @@ export default function List() {
             resetAddForm();
             setIsAddSheetOpen(false);
         } catch (err) {
-            setAddError(err instanceof ApiError ? err.message : (err as Error).message);
+            setAddError(getApiErrorMessage(err, t));
         } finally {
             setSubmitting(false);
         }
@@ -508,7 +508,7 @@ export default function List() {
             resetAddForm();
             setIsAddSheetOpen(false);
         } catch (err) {
-            setAddError(err instanceof ApiError ? err.message : (err as Error).message);
+            setAddError(getApiErrorMessage(err, t));
         } finally {
             setSubmitting(false);
         }
@@ -928,8 +928,8 @@ export default function List() {
                                 </div>
                             </label>
 
-                            <label className="text-sm font-bold text-[var(--text)]">
-                                {t("list.dateTimeLabel")}
+                            <div className="text-sm font-bold text-[var(--text)]">
+                                <span className="block">{t("list.dateTimeLabel")}</span>
                                 <AppDateTimeField
                                     className="mt-2"
                                     ariaLabel={t("list.dateTimeLabel")}
@@ -938,7 +938,7 @@ export default function List() {
                                     onDateChange={setFormDate}
                                     onTimeChange={setFormTime}
                                 />
-                            </label>
+                            </div>
 
                             {addError && (
                                 <p className="text-sm text-[var(--danger)]">{addError}</p>

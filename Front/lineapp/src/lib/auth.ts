@@ -5,9 +5,23 @@
  */
 
 import { api } from "./api";
+import { isJwtExpired } from "./jwt";
 
 const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
+
+function clearAuthStorage(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+}
+
+function getStoredValidToken(): string | null {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return null;
+    if (!isJwtExpired(token)) return token;
+    clearAuthStorage();
+    return null;
+}
 
 export type AuthUser = {
     userId: string;          // UUID ของระบบ (ใช้เรียก /api/* ต่าง ๆ)
@@ -31,27 +45,30 @@ type LineLiffLoginReq = {
 
 export const auth = {
     getToken(): string | null {
-        return localStorage.getItem(TOKEN_KEY);
+        return getStoredValidToken();
     },
     getUser(): AuthUser | null {
+        if (!getStoredValidToken()) {
+            return null;
+        }
         const raw = localStorage.getItem(USER_KEY);
         if (!raw) return null;
         try {
             return JSON.parse(raw) as AuthUser;
         } catch {
+            clearAuthStorage();
             return null;
         }
     },
     isAuthed(): boolean {
-        return Boolean(localStorage.getItem(TOKEN_KEY));
+        return Boolean(getStoredValidToken());
     },
     setSession(token: string, user: AuthUser): void {
         localStorage.setItem(TOKEN_KEY, token);
         localStorage.setItem(USER_KEY, JSON.stringify(user));
     },
     clear(): void {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(USER_KEY);
+        clearAuthStorage();
     },
 };
 
