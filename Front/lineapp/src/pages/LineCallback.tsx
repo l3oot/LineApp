@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
     clearLineOAuthState,
     consumePostLoginRedirect,
     parseLineCallback,
 } from "../lib/lineLogin";
 import { auth, exchangeLineCode, type AuthUser } from "../lib/auth";
-import { ApiError } from "../lib/api";
+import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
 
 type CallbackStatus =
     | { kind: "loading" }
@@ -14,6 +15,7 @@ type CallbackStatus =
     | { kind: "error"; message: string };
 
 export default function LineCallback() {
+    const { t } = useTranslation();
     const location = useLocation();
     const navigate = useNavigate();
     const [status, setStatus] = useState<CallbackStatus>({ kind: "loading" });
@@ -44,11 +46,7 @@ export default function LineCallback() {
             } catch (err) {
                 console.error("[LineCallback] Login failed:", err);
                 if (ignore) return;
-                const message =
-                    err instanceof ApiError
-                        ? `${err.message}${err.typeError ? ` (${err.typeError})` : ""}`
-                        : (err as Error).message;
-                setStatus({ kind: "error", message });
+                setStatus({ kind: "error", message: getFriendlyApiErrorMessage(err, t) });
             }
         })();
 

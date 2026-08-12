@@ -53,44 +53,6 @@ export class ApiError extends Error {
     }
 }
 
-export function getApiErrorMessage(
-    error: unknown,
-    t: (key: string, options?: Record<string, unknown>) => string,
-): string {
-    if (error instanceof ApiError) {
-        const statusKeyMap: Record<number, string> = {
-            400: "badRequest",
-            401: "unauthorized",
-            403: "forbidden",
-            404: "notFound",
-            409: "conflict",
-            422: "validation",
-            429: "tooManyRequests",
-        };
-
-        if (error.status === 0) {
-            if (error.typeError === "TIMEOUT") return t("errors.http.timeout");
-            if (error.typeError === "NETWORK_ERROR") return t("errors.http.network");
-        }
-
-        if (statusKeyMap[error.status]) {
-            return t(`errors.http.${statusKeyMap[error.status]}`);
-        }
-
-        if (error.status >= 500) {
-            return t("errors.http.server");
-        }
-
-        return t("errors.http.unknown");
-    }
-
-    if (error instanceof Error && error.message) {
-        return error.message;
-    }
-
-    return t("errors.http.unknown");
-}
-
 type Query = Record<string, string | number | boolean | null | undefined>;
 
 function buildUrl(path: string, query?: Query): string {

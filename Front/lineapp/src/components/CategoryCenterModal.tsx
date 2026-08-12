@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { FiX } from "react-icons/fi";
 import { FaPlus } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
-import { ApiError, getApiErrorMessage } from "../lib/api";
 import { auth } from "../lib/auth";
 import { categoryApi, type Category } from "../lib/userService";
+import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
 
 type CategoryCenterModalProps = {
     open: boolean;
@@ -37,7 +37,7 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
             setCategories(data ?? []);
         } catch (err) {
             setCategories([]);
-            setError(getApiErrorMessage(err, t));
+            setError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setLoading(false);
         }
@@ -71,7 +71,7 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
             resetEditor();
             await loadCategories();
         } catch (err) {
-            setError(getApiErrorMessage(err, t));
+            setError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setSaving(false);
         }
@@ -88,7 +88,7 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
             resetEditor();
             await loadCategories();
         } catch (err) {
-            setError(getApiErrorMessage(err, t));
+            setError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setSaving(false);
         }
@@ -106,7 +106,7 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
             }
             await loadCategories();
         } catch (err) {
-            setError(getApiErrorMessage(err, t));
+            setError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setSaving(false);
         }

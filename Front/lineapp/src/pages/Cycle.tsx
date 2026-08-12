@@ -13,9 +13,9 @@ import { icons } from "../assets/Iconlist";
 import { CalendarDate } from "@internationalized/date";
 import AppDateField from "../components/AppDateField";
 import FormattedNumberInput from "../components/FormattedNumberInput";
-import { ApiError, getApiErrorMessage } from "../lib/api";
 import { auth } from "../lib/auth";
 import { cycleApi, planApi, transactionApi, type Cycle, type PlanQuota } from "../lib/userService";
+import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
 import { aggregateTransactionsByCycle } from "../utils/cycleStats";
 import {
     gregorianDateKey,
@@ -128,7 +128,7 @@ export default function CyclePage() {
                 setCycles([]);
                 setStatsByCycleId({});
                 setPlanQuota(null);
-                setError(getApiErrorMessage(err, t));
+                setError(getFriendlyApiErrorMessage(err, t));
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);
@@ -202,7 +202,7 @@ export default function CyclePage() {
             await refreshQuota();
             setCycleToDelete(null);
         } catch (err) {
-            setError(getApiErrorMessage(err, t));
+            setError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setDeletingCycleId(null);
         }
@@ -251,7 +251,7 @@ export default function CyclePage() {
             resetForm();
             handleCloseSheet();
         } catch (err) {
-            setError(getApiErrorMessage(err, t));
+            setError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setSubmitting(false);
         }

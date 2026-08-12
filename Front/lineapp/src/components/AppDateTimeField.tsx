@@ -45,7 +45,10 @@ export default function AppDateTimeField({
     const { i18n } = useTranslation();
 
     const focusTimeSegmentOnPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-        if (event.button !== 0) return;
+        const isMouseClick = event.pointerType === "mouse" && event.button === 0;
+        const isTouchTap = event.pointerType === "touch";
+
+        if (!isMouseClick && !isTouchTap) return;
 
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
@@ -57,7 +60,9 @@ export default function AppDateTimeField({
         if (!(segmentToFocus instanceof HTMLElement)) return;
 
         if (document.activeElement !== segmentToFocus) {
-            event.preventDefault();
+            if (isMouseClick) {
+                event.preventDefault();
+            }
             segmentToFocus.focus();
         }
     };

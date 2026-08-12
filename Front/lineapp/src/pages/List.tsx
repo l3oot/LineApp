@@ -16,7 +16,6 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import { useTranslation } from "react-i18next";
 import "../styles/list.css";
 import type { GroupedTransaction } from "../data/listMockData";
-import { ApiError, getApiErrorMessage } from "../lib/api";
 import {
     categoryApi,
     cycleApi,
@@ -165,7 +164,7 @@ export default function List() {
             setTransactions([]);
             setHasMoreTransactions(false);
             setNextPage(0);
-            setListError(getApiErrorMessage(err, t));
+            setListError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setListLoading(false);
         }
@@ -192,7 +191,7 @@ export default function List() {
             setHasMoreTransactions(txPage.hasNext);
             setNextPage(txPage.page + 1);
         } catch (err) {
-            setListError(getApiErrorMessage(err, t));
+            setListError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setListLoadingMore(false);
         }
@@ -349,7 +348,7 @@ export default function List() {
             exitBulkSelectMode();
             await loadTransactions();
         } catch (err) {
-            setListError(getApiErrorMessage(err, t));
+            setListError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setBulkDeleting(false);
         }
@@ -428,7 +427,7 @@ export default function List() {
             })
             .catch((err) => {
                 if (cancelled) return;
-                setListError(getApiErrorMessage(err, t));
+                setListError(getFriendlyApiErrorMessage(err, t));
                 setSearchParams({}, { replace: true });
             });
 
@@ -469,7 +468,7 @@ export default function List() {
             resetAddForm();
             setIsAddSheetOpen(false);
         } catch (err) {
-            setAddError(getApiErrorMessage(err, t));
+            setAddError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setSubmitting(false);
         }
@@ -508,7 +507,7 @@ export default function List() {
             resetAddForm();
             setIsAddSheetOpen(false);
         } catch (err) {
-            setAddError(getApiErrorMessage(err, t));
+            setAddError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setSubmitting(false);
         }

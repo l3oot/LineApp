@@ -2,13 +2,13 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { FiCheck, FiChevronDown, FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import BottomSheet from "./BottomSheet";
-import { ApiError, getApiErrorMessage } from "../lib/api";
 import {
     thaiAdminApi,
     userProfileApi,
     type ThaiAdminOption,
     type UserProfile,
 } from "../lib/userService";
+import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
 
 type UserProfileBottomSheetProps = {
     open: boolean;
@@ -187,7 +187,7 @@ export default function UserProfileBottomSheet({
                 setSubDistrictCode(matchedSubdistrict?.code ?? "");
             } catch (err) {
                 if (cancelled) return;
-                setAdminError(getApiErrorMessage(err, t));
+                setAdminError(getFriendlyApiErrorMessage(err, t));
             } finally {
                 if (!cancelled) {
                     setAdminLoading(false);
@@ -219,7 +219,7 @@ export default function UserProfileBottomSheet({
         try {
             await loadDistricts(nextProvinceCode);
         } catch (err) {
-            setAdminError(getApiErrorMessage(err, t));
+            setAdminError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setAdminLoading(false);
         }
@@ -237,7 +237,7 @@ export default function UserProfileBottomSheet({
         try {
             await loadSubdistricts(nextDistrictCode);
         } catch (err) {
-            setAdminError(getApiErrorMessage(err, t));
+            setAdminError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setAdminLoading(false);
         }
@@ -263,7 +263,7 @@ export default function UserProfileBottomSheet({
             onSaved(saved);
             onClose();
         } catch (err) {
-            setError(getApiErrorMessage(err, t));
+            setError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setSubmitting(false);
         }
