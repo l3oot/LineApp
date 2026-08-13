@@ -14,7 +14,7 @@ type CallbackStatus =
     | { kind: "ok"; user: AuthUser }
     | { kind: "error"; message: string };
 
-export default function LineCallback() {
+export function LineCallback() {
     const { t } = useTranslation();
     const location = useLocation();
     const navigate = useNavigate();
@@ -29,6 +29,7 @@ export default function LineCallback() {
         const parsed = parseLineCallback(location.search);
         if (!parsed.ok) {
             console.warn("[LineCallback] parse failed:", parsed.message);
+            clearLineOAuthState();
             setStatus({ kind: "error", message: parsed.message });
             return;
         }
@@ -92,3 +93,5 @@ export default function LineCallback() {
         </main>
     );
 }
+
+export default LineCallback;
