@@ -216,10 +216,11 @@ public class LineFlexMessageBuilder {
     }
 
     private static String buildEditUri(String liffBaseUrl, String txId) {
+        String Uri = "https://yaiphao.com";
         if (liffBaseUrl == null || liffBaseUrl.isBlank()) {
             return null;
         }
-        return liffBaseUrl.replaceAll("/+$", "") + "/list?editTxId=" + txId;
+        return Uri.replaceAll("/+$", "") + "/list?openExternalBrowser=1&editTxId=" + txId;
     }
 
     private static String jsonEscape(String value) {

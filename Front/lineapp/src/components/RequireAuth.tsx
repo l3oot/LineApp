@@ -39,8 +39,9 @@ export default function RequireAuth({ children }: RequireAuthProps) {
 
             const currentPath =
                 window.location.pathname + window.location.search + window.location.hash;
+            const forceExternalBrowser = new URLSearchParams(window.location.search).get("openExternalBrowser") === "1";
 
-            if (isLiffConfigured()) {
+            if (isLiffConfigured() && !forceExternalBrowser) {
                 const liffReady = await initLiff();
                 if (liffReady) {
                     if (!isLiffLoggedIn()) {
