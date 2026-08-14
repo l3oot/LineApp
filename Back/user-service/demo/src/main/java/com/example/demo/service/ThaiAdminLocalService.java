@@ -120,5 +120,5 @@ public class ThaiAdminLocalService {
             String subdistrictNameEn,
             String subdistrictNameTh,
             int postalCode) {
-    }
+    } 
 }
