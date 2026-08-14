@@ -70,12 +70,12 @@ public class LineFlexMessageBuilder {
     }
 
     public static ZoneId detectLanguage(String main) {
+        String text = main.trim();
+        boolean hasThai = text.codePoints().anyMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.THAI);
 
-        boolean hasThai = main.codePoints().anyMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.THAI);
+        boolean hasEnglish = text.codePoints().anyMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.LATIN);
 
-        boolean hasEnglish = main.codePoints().anyMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.LATIN);
-
-        boolean hasJapanese = main.codePoints().anyMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.HIRAGANA
+        boolean hasJapanese = text.codePoints().anyMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.HIRAGANA
                 || Character.UnicodeScript.of(cp) == Character.UnicodeScript.KATAKANA);
 
         if (hasThai) {
