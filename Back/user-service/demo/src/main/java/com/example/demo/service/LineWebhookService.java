@@ -236,7 +236,7 @@ public class LineWebhookService {
         TransactionCreateReq req = new TransactionCreateReq(
                 user.getUserId(),
                 data.cycleId(),
-                data.categoryId(),
+                data.categoryId(), 
                 data.type(),
                 BigDecimal.valueOf(data.price()),
                 data.main(),
