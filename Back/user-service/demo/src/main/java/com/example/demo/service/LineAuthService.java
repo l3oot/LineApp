@@ -74,7 +74,7 @@ public class LineAuthService {
         return tokenResponse;
     }
 
-    public UserEntity verifyIdTokenAndUpsertUser(String idToken) {
+    public UserEntity verifyIdTokenAndUpsertUser(String idToken) { 
         String url = "https://api.line.me/oauth2/v2.1/verify";
 
         HttpHeaders headers = new HttpHeaders();
