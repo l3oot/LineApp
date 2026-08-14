@@ -6,6 +6,11 @@ const STATE_CREATED_AT_KEY = "line_oauth_state_created_at";
 const INFLIGHT_LOGIN_URL_KEY = "line_oauth_inflight_login_url";
 const STATE_TTL_MS = 10 * 60 * 1000;
 const POST_LOGIN_REDIRECT_KEY = "line_post_login_redirect";
+
+// กัน redirect ไป LINE OAuth ซ้ำในช่วงสั้น ๆ (เช่น StrictMode remount, browser refresh กลางทาง)
+const REDIRECT_GUARD_KEY = "line_oauth_redirect_started_at";
+const REDIRECT_GUARD_TTL_MS = 5_000;
+
 export type LineCallbackPayload =
     | { ok: true; code: string }
     | { ok: false; message: string };
@@ -155,11 +160,26 @@ function clearLineOAuthState(): void {
     localStorage.removeItem(INFLIGHT_LOGIN_URL_KEY);
 }
 
+/** เรียกก่อน location.replace(loginUrl) ทุกครั้ง เพื่อ mark ว่า redirect เริ่มไปแล้ว */
+function markOAuthRedirectStarted(): void {
+    sessionStorage.setItem(REDIRECT_GUARD_KEY, String(Date.now()));
+}
+
+/** true ถ้าเพิ่งเริ่ม redirect ไป LINE OAuth ไปหมาด ๆ — ใช้กัน trigger ซ้ำจาก effect/remount อื่น */
+function isOAuthRedirectRecentlyStarted(): boolean {
+    const raw = sessionStorage.getItem(REDIRECT_GUARD_KEY);
+    if (!raw) return false;
+    const startedAt = Number(raw);
+    return Number.isFinite(startedAt) && Date.now() - startedAt < REDIRECT_GUARD_TTL_MS;
+}
+
 export {
     clearLineOAuthState,
     consumePostLoginRedirect,
     getLineLoginUrl,
     isLineLoginConfigured,
+    isOAuthRedirectRecentlyStarted,
+    markOAuthRedirectStarted,
     parseLineCallback,
     savePostLoginRedirect,
 };

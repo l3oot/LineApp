@@ -3,6 +3,8 @@ import { auth, exchangeLiffSession } from "../lib/auth";
 import {
     getLineLoginUrl,
     isLineLoginConfigured,
+    isOAuthRedirectRecentlyStarted,
+    markOAuthRedirectStarted,
     savePostLoginRedirect,
 } from "../lib/lineLogin";
 import {
@@ -16,6 +18,9 @@ import {
 type RequireAuthProps = {
     children: ReactNode;
 };
+
+// module-level lock — กัน effect รัน 2 รอบ (StrictMode remount) ยิง redirect ซ้ำในหน้าเดียวกัน
+let redirectLock = false;
 
 /**
  * Guard ที่:
@@ -37,6 +42,18 @@ export default function RequireAuth({ children }: RequireAuthProps) {
                 return;
             }
 
+            // /callback มีหน้าที่ exchange code เอง — ไม่ควรมาถูก guard นี้ trigger login ซ้ำ
+            if (window.location.pathname.startsWith("/callback")) {
+                return;
+            }
+
+            // กัน redirect ซ้ำ: ทั้ง lock ในหน่วยความจำ (StrictMode remount) และ flag ใน sessionStorage
+            // (เผื่อ browser refresh/redirect ไม่สมบูรณ์ระหว่างพา user ไป LINE OAuth)
+            if (redirectLock || isOAuthRedirectRecentlyStarted()) {
+                if (!ignore) setState("redirecting");
+                return;
+            }
+
             const currentPath =
                 window.location.pathname + window.location.search + window.location.hash;
             const forceExternalBrowser = new URLSearchParams(window.location.search).get("openExternalBrowser") === "1";
@@ -46,6 +63,8 @@ export default function RequireAuth({ children }: RequireAuthProps) {
                 if (liffReady) {
                     if (!isLiffLoggedIn()) {
                         savePostLoginRedirect(currentPath);
+                        redirectLock = true;
+                        markOAuthRedirectStarted();
                         if (!ignore) setState("redirecting");
                         loginWithLiff(window.location.href);
                         return;
@@ -74,6 +93,8 @@ export default function RequireAuth({ children }: RequireAuthProps) {
                 return;
             }
             savePostLoginRedirect(currentPath);
+            redirectLock = true;
+            markOAuthRedirectStarted();
             if (!ignore) setState("redirecting");
             // replace เพื่อไม่ให้กด back กลับเข้ามาแล้วซ้ำ effect
             window.location.replace(loginUrl);
