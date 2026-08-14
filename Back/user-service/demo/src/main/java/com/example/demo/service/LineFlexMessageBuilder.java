@@ -28,6 +28,8 @@ public class LineFlexMessageBuilder {
 
     private static final Logger log = LoggerFactory.getLogger(LineFlexMessageBuilder.class);
     private static final ZoneId BANGKOK = ZoneId.of("Asia/Bangkok");
+    private static final ZoneId TOKYO = ZoneId.of("Asia/Tokyo");
+    private static final ZoneId UTC = ZoneId.of("UTC");
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
     private static final String[] THAI_MONTHS = {
         "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
@@ -51,7 +53,7 @@ public class LineFlexMessageBuilder {
             TransactionRes tx,
             long timestampMs,
             String liffBaseUrl) {
-        LocalDateTime when = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestampMs), BANGKOK);
+        LocalDateTime when = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestampMs), detectLanguage(data.main()));
         String txId = tx.txId().toString();
         return fillBubble(
                 TRANSACTION_TEMPLATE,
@@ -65,6 +67,27 @@ public class LineFlexMessageBuilder {
                 formatPrice(data.price()),
                 txId,
                 liffBaseUrl);
+    }
+
+    public static ZoneId detectLanguage(String main) {
+
+        boolean hasThai = main.codePoints().anyMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.THAI);
+
+        boolean hasEnglish = main.codePoints().anyMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.LATIN);
+
+        boolean hasJapanese = main.codePoints().anyMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.HIRAGANA
+                || Character.UnicodeScript.of(cp) == Character.UnicodeScript.KATAKANA);
+
+        if (hasThai) {
+            return BANGKOK;
+        }
+        if (hasJapanese) {
+            return TOKYO;
+        }
+        if (hasEnglish) {
+            return UTC;
+        }
+        return BANGKOK;
     }
 
     /**
@@ -198,7 +221,7 @@ public class LineFlexMessageBuilder {
     }
 
     private static String formatThaiDateTime(LocalDateTime dt) {
-        return formatThaiDate(dt) + "〡" + dt.format(TIME_FMT) + " น.";
+        return formatThaiDate(dt) + "〡" + dt.format(TIME_FMT);
     }
 
     private static String formatPrice(Double price) {
