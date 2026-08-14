@@ -194,7 +194,7 @@ public class LineWebhookService {
                     LocalDateTime.now());
             return userRepository.save(fresh);
         }
-
+ 
         user.setLastLoginAt(LocalDateTime.now());
         if (profile != null) {
             if (profile.pictureUrl() != null) {
