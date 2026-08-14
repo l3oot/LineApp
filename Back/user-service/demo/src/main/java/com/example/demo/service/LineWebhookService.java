@@ -203,7 +203,6 @@ public class LineWebhookService {
             if (profile.displayName() != null) {
                 user.setUserName(profile.displayName());
             }
-            // Messaging API profile ไม่มี email, จึงไม่ overwrite userEmail ที่มีอยู่
         }
         return userRepository.save(user);
     }
