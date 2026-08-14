@@ -240,7 +240,7 @@ public class LineWebhookService {
                 data.type(),
                 BigDecimal.valueOf(data.price()),
                 data.main(),
-                data.icon(), 
+                data.icon(),  
                 AppTime.fromEpochMilli(timestampMs));
 
         try {
