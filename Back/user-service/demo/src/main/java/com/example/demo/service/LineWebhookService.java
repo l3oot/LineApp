@@ -157,7 +157,7 @@ public class LineWebhookService {
             transactionService.deleteTransaction(txId, user.getUserId());
             lineMessagingService.reply(replyToken, "ลบรายการเรียบร้อยแล้วจ้า");
         } catch (ApiException e) {
-            lineMessagingService.reply(replyToken, "ลบไม่สำเร็จจ้า ลองใหม่อีกครั้งนะจ๊ะ"+ e.getMessage());
+            lineMessagingService.reply(replyToken, "ลบไม่สำเร็จจ้า ลองใหม่อีกครั้งนะจ๊ะ");
         } catch (IllegalArgumentException e) {
             lineMessagingService.reply(replyToken, "รหัสรายการไม่ถูกต้อง  ลองพิมพ์ใหม่อีกรอบหน่อยนะจ๊ะ");
         } catch (Exception e) {
@@ -256,7 +256,7 @@ public class LineWebhookService {
                     lineFlexMessageBuilder.buildAltText(data));
         } catch (ApiException e) {
             log.warn("createTransaction failed: {}", e.getMessage());
-            return LineReply.text("บันทึกไม่สำเร็จจ้า ลองใหม่อีกครั้งนะจ๊ะ: " + e.getMessage());
+            return LineReply.text("บันทึกไม่สำเร็จจ้า ลองใหม่อีกครั้งนะจ๊ะ");
         }
     }
 }
