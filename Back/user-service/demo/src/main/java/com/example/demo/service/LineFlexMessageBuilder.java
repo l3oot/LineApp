@@ -30,8 +30,8 @@ public class LineFlexMessageBuilder {
     private static final ZoneId BANGKOK = ZoneId.of("Asia/Bangkok");
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
     private static final String[] THAI_MONTHS = {
-            "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
-            "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
+        "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+        "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
     };
     private static final String TRANSACTION_TEMPLATE = "line/flex/transaction.json";
     private static final String EDIT_TEMPLATE = "line/flex/edit.json";
@@ -39,10 +39,12 @@ public class LineFlexMessageBuilder {
     private static final String INCOME_COLOR = "#30793F";
     private static final String EXPENSE_COLOR = "#E36C64";
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final String YAIPHAO_URI = "https://yaiphao.com";
 
     /**
      * @param timestampMs LINE webhook event timestamp (epoch millis)
-     * @param liffBaseUrl ฐาน URL ของ LIFF/Web app สำหรับปุ่มแก้ไข (null = ใช้ postback แทน)
+     * @param liffBaseUrl ฐาน URL ของ LIFF/Web app สำหรับปุ่มแก้ไข (null = ใช้
+     * postback แทน)
      */
     public Map<String, Object> buildTransactionBubble(
             AiParseRes.Data data,
@@ -65,7 +67,9 @@ public class LineFlexMessageBuilder {
                 liffBaseUrl);
     }
 
-    /** Flex card หลังแก้ไขรายการ */
+    /**
+     * Flex card หลังแก้ไขรายการ
+     */
     public Map<String, Object> buildUpdatedTransactionBubble(
             TransactionRes tx,
             String cycleName,
@@ -97,11 +101,14 @@ public class LineFlexMessageBuilder {
         return "แก้ไข" + resolveTypeLabel(tx.txType()) + " " + note + " " + formatPrice(tx.amount());
     }
 
-    /** Flex แนะนำตัวอย่างข้อความที่ผู้ใช้พิมพ์ได้ */
+    /**
+     * Flex แนะนำตัวอย่างข้อความที่ผู้ใช้พิมพ์ได้
+     */
     public Map<String, Object> buildHelpContents() {
         String template = loadTemplate(HELP_TEMPLATE);
         try {
-            return MAPPER.readValue(template, new TypeReference<>() {});
+            return MAPPER.readValue(template, new TypeReference<>() {
+            });
         } catch (IOException e) {
             log.error("parse help flex template failed: {}", e.getMessage(), e);
             throw new IllegalStateException("invalid help flex template", e);
@@ -140,7 +147,8 @@ public class LineFlexMessageBuilder {
                 .replace("{{deleteData}}", jsonEscape("action=delete&id=" + txId));
 
         try {
-            return MAPPER.readValue(filled, new TypeReference<>() {});
+            return MAPPER.readValue(filled, new TypeReference<>() {
+            });
         } catch (IOException e) {
             log.error("parse flex template failed: {}", e.getMessage(), e);
             throw new IllegalStateException("invalid flex template", e);
@@ -159,7 +167,9 @@ public class LineFlexMessageBuilder {
         return "income".equalsIgnoreCase(type);
     }
 
-    /** แปลง tx type code → ข้อความแสดงใน card (ไม่ hardcode ใน template) */
+    /**
+     * แปลง tx type code → ข้อความแสดงใน card (ไม่ hardcode ใน template)
+     */
     private static String resolveTypeLabel(String type) {
         if (type == null || type.isBlank()) {
             return "-";
@@ -216,11 +226,10 @@ public class LineFlexMessageBuilder {
     }
 
     private static String buildEditUri(String liffBaseUrl, String txId) {
-        String Uri = "https://yaiphao.com";
         if (liffBaseUrl == null || liffBaseUrl.isBlank()) {
             return null;
         }
-        return Uri.replaceAll("/+$", "") + "/list?openExternalBrowser=1&editTxId=" + txId;
+        return YAIPHAO_URI.replaceAll("/+$", "") + "/list?openExternalBrowser=1&editTxId=" + txId;
     }
 
     private static String jsonEscape(String value) {
