@@ -99,8 +99,8 @@ public class LineFlexMessageBuilder {
             String categoryName,
             String liffBaseUrl) {
         String txId = tx.txId().toString();
-        LocalDateTime when = tx.txDate() != null ? tx.txDate() : LocalDateTime.now(BANGKOK);
         String note = tx.note() != null ? tx.note() : "";
+        LocalDateTime when = tx.txDate() != null ? tx.txDate() : LocalDateTime.now(detectLanguage(note));
         return fillBubble(
                 EDIT_TEMPLATE,
                 resolveTypeLabel(tx.txType()),
@@ -160,9 +160,9 @@ public class LineFlexMessageBuilder {
                 .replace("{{cycleName}}", jsonEscape(cycleName))
                 .replace("{{categoryName}}", jsonEscape(categoryName))
                 .replace("{{main}}", jsonEscape(main != null ? main : ""))
-                .replace("{{txDate}}", jsonEscape(formatThaiDate(when)))
+                .replace("{{txDate}}", jsonEscape(formatThaiDate(when, main)))
                 .replace("{{txTime}}", jsonEscape(when.format(TIME_FMT)))
-                .replace("{{txDateTime}}", jsonEscape(formatThaiDateTime(when)))
+                .replace("{{txDateTime}}", jsonEscape(formatThaiDateTime(when, main)))
                 .replace("{{price}}", jsonEscape(priceText))
                 .replace("{{txDisplayId}}", jsonEscape(formatDisplayId(txId)))
                 .replace("{{txId}}", jsonEscape(txId))
@@ -214,14 +214,21 @@ public class LineFlexMessageBuilder {
         return categoryName;
     }
 
-    private static String formatThaiDate(LocalDateTime dt) {
-        int buddhistYear = dt.getYear() + 543;
-        String month = THAI_MONTHS[dt.getMonthValue() - 1];
-        return dt.getDayOfMonth() + " " + month + " " + buddhistYear;
+    private static String formatThaiDate(LocalDateTime dt, String main) {
+        String month;
+        String lang = detectLanguage(main).toString();
+
+        if ("Asia/Bangkok".equals(lang)) {
+            month = THAI_MONTHS[dt.getMonthValue() - 1];
+            return dt.getDayOfMonth() + " " + month + " " + (dt.getYear() + 543);
+        }
+
+        month = dt.getMonth().toString();
+        return dt.getDayOfMonth() + " " + month + " " + dt.getYear();
     }
 
-    private static String formatThaiDateTime(LocalDateTime dt) {
-        return formatThaiDate(dt) + "〡" + dt.format(TIME_FMT);
+    private static String formatThaiDateTime(LocalDateTime dt, String main) {
+        return formatThaiDate(dt, main) + "〡" + dt.format(TIME_FMT);
     }
 
     private static String formatPrice(Double price) {
