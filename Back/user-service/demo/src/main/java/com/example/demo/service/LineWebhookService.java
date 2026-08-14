@@ -28,11 +28,12 @@ import com.example.demo.util.AppTime;
  * Orchestrate flow ของ LINE chatbot:
  *
  * <ol>
- *   <li>upsert UserEntity ตาม LINE userId (source.userId → user_sub)</li>
- *   <li>เรียก ai-service /parse?text=&userId= → AiParseRes</li>
- *   <li>{@code structured_ok=true} → map → insert ลง public.transaction → ส่ง Flex Message</li>
- *   <li>มี {@code message} (ยายตอบ) → reply ข้อความนั้นกลับ</li>
- *   <li>error → reply fallback</li>
+ * <li>upsert UserEntity ตาม LINE userId (source.userId → user_sub)</li>
+ * <li>เรียก ai-service /parse?text=&userId= → AiParseRes</li>
+ * <li>{@code structured_ok=true} → map → insert ลง public.transaction → ส่ง
+ * Flex Message</li>
+ * <li>มี {@code message} (ยายตอบ) → reply ข้อความนั้นกลับ</li>
+ * <li>error → reply fallback</li>
  * </ol>
  *
  * Mapping AI → transaction:
@@ -46,7 +47,8 @@ import com.example.demo.util.AppTime;
  *   tx_date     ← event timestamp (Asia/Bangkok)
  * </pre>
  *
- * วิ่งบน {@code lineWebhookExecutor} เพื่อไม่ block response 200 ที่ต้องตอบ LINE ทันที
+ * วิ่งบน {@code lineWebhookExecutor} เพื่อไม่ block response 200 ที่ต้องตอบ
+ * LINE ทันที
  */
 @Service
 public class LineWebhookService {
@@ -126,7 +128,7 @@ public class LineWebhookService {
 
         } catch (Exception e) {
             log.error("LINE webhook handle failed for user={}: {}", userSub, e.getMessage(), e);
-            lineMessagingService.reply(replyToken, "ขออภัย ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้งจ้ะ");
+            lineMessagingService.reply(replyToken, "ยายขอโทษน้า ระบบขัดข้องชั่วคราว ลองใหม่อีกครั้งนะจ๊ะ");
         }
     }
 
@@ -145,7 +147,7 @@ public class LineWebhookService {
         }
 
         if (!"delete".equals(action) || id == null || id.isBlank()) {
-            lineMessagingService.reply(replyToken, "ไม่เข้าใจคำสั่ง กรุณาลองใหม่อีกครั้ง");
+            lineMessagingService.reply(replyToken, "ยายไม่เข้าใจ ลองพิมพ์ใหม่อีกรอบหน่อยนะจ๊ะ");
             return;
         }
 
@@ -153,14 +155,14 @@ public class LineWebhookService {
             UserEntity user = upsertUserBySub(userSub);
             UUID txId = UUID.fromString(id);
             transactionService.deleteTransaction(txId, user.getUserId());
-            lineMessagingService.reply(replyToken, "ลบรายการเรียบร้อยแล้ว");
+            lineMessagingService.reply(replyToken, "ลบรายการเรียบร้อยแล้วจ้า");
         } catch (ApiException e) {
-            lineMessagingService.reply(replyToken, "ลบไม่สำเร็จ: " + e.getMessage());
+            lineMessagingService.reply(replyToken, "ลบไม่สำเร็จจ้า ลองใหม่อีกครั้งนะจ๊ะ");
         } catch (IllegalArgumentException e) {
-            lineMessagingService.reply(replyToken, "รหัสรายการไม่ถูกต้อง");
+            lineMessagingService.reply(replyToken, "รหัสรายการไม่ถูกต้อง  ลองพิมพ์ใหม่อีกรอบหน่อยนะจ๊ะ");
         } catch (Exception e) {
             log.error("postback delete failed for user={}: {}", userSub, e.getMessage(), e);
-            lineMessagingService.reply(replyToken, "ขออภัย ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง");
+            lineMessagingService.reply(replyToken, "ยายขอโทษน้า ระบบขัดข้องชั่วคราว ลองใหม่อีกครั้งนะจ๊ะ");
         }
     }
 
@@ -175,7 +177,9 @@ public class LineWebhookService {
         return out;
     }
 
-    /** หา UserEntity ตาม LINE userId — สร้างใหม่ถ้ายังไม่เคย OAuth login */
+    /**
+     * หา UserEntity ตาม LINE userId — สร้างใหม่ถ้ายังไม่เคย OAuth login
+     */
     @Transactional
     UserEntity upsertUserBySub(String userSub) {
         LineProfileRes profile = lineMessagingService.getUserProfile(userSub);
@@ -204,10 +208,13 @@ public class LineWebhookService {
         return userRepository.save(user);
     }
 
-    /** ตัดสินว่าจะ reply อะไรกลับ LINE — และถ้า AI extract ได้ครบ ให้ insert transaction ที่นี่ */
+    /**
+     * ตัดสินว่าจะ reply อะไรกลับ LINE — และถ้า AI extract ได้ครบ ให้ insert
+     * transaction ที่นี่
+     */
     private LineReply decideReply(UserEntity user, AiParseRes parsed, long timestampMs) {
         if (parsed == null) {
-            return LineReply.text("ขออภัย ระบบ AI ขัดข้องชั่วคราว ลองพิมพ์ใหม่อีกครั้งนะจ๊ะ");
+            return LineReply.text("ยายขอโทษน้า ระบบขัดข้องชั่วคราว ลองใหม่อีกครั้งนะจ๊ะ");
         }
 
         if (parsed.structured_ok() && parsed.data() != null) {
@@ -219,12 +226,12 @@ public class LineWebhookService {
             return LineReply.text(parsed.message());
         }
 
-        return LineReply.text("ขออภัย ฉันยังไม่เข้าใจ ช่วยพิมพ์ใหม่อีกครั้งนะจ๊ะ");
+        return LineReply.text("ยายขอโทษน้า ยายยังไม่เข้าใจ ช่วยพิมพ์ใหม่อีกครั้งนะจ๊ะ");
     }
 
     private LineReply insertTransactionAndBuildReply(UserEntity user, AiParseRes.Data data, long timestampMs) {
         if (data.price() == null || data.type() == null || data.main() == null) {
-            return LineReply.text("ขออภัย ฉันยังแยกข้อมูลไม่ครบ ช่วยพิมพ์ใหม่อีกครั้งนะจ๊ะ");
+            return LineReply.text("ยายขอโทษน้า ยายยังแยกข้อมูลไม่ครบ ช่วยพิมพ์ใหม่อีกครั้งนะจ๊ะ");
         }
 
         TransactionCreateReq req = new TransactionCreateReq(
@@ -249,7 +256,7 @@ public class LineWebhookService {
                     lineFlexMessageBuilder.buildAltText(data));
         } catch (ApiException e) {
             log.warn("createTransaction failed: {}", e.getMessage());
-            return LineReply.text("บันทึกไม่สำเร็จ: " + e.getMessage());
+            return LineReply.text("บันทึกไม่สำเร็จจ้า: " + e.getMessage());
         }
     }
 }

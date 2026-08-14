@@ -124,7 +124,7 @@ export default function RequireAuth({ children }: RequireAuthProps) {
                     <div className="space-y-2">
                         <p className="text-sm font-semibold text-red-600">LINE Login ยังไม่ถูกตั้งค่า</p>
                         <p className="text-xs text-[var(--text-soft)]">
-                            กรุณาตั้ง <code>VITE_LIFF_ID</code> หรือ <code>VITE_LINE_CHANNEL_ID</code> กับ <code>VITE_LINE_REDIRECT_URI</code> ใน .env
+                            ตั้ง <code>VITE_LIFF_ID</code> หรือ <code>VITE_LINE_CHANNEL_ID</code> กับ <code>VITE_LINE_REDIRECT_URI</code> ใน .env
                         </p>
                     </div>
                 )}

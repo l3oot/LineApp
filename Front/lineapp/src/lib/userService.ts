@@ -66,7 +66,7 @@ function normalizeTransactionPage(
 function requireUserId(): string {
     const user = auth.getUser();
     if (!user?.userId) {
-        throw new Error("ยังไม่ได้ login — กรุณาเข้าสู่ระบบด้วย LINE ก่อน");
+        throw new Error("ยังไม่ได้ login — เข้าสู่ระบบด้วย LINE ก่อน");
     }
     return user.userId;
 }
