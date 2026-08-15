@@ -245,7 +245,6 @@ public class LineWebhookService {
 
         try {
             TransactionRes saved = transactionService.createTransaction(req);
-            log.info("sending flex for txType={} txId={}", data.type(), saved.txId());
             return LineReply.flex(
                     lineFlexMessageBuilder.buildTransactionBubble(
                             data,
