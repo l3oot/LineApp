@@ -35,11 +35,6 @@ public class ThaiAdminLocalService {
             provinces = loadJson("thai-admin/provinces.json", new TypeReference<>() {});
             districts = loadJson("thai-admin/districts.json", new TypeReference<>() {});
             subdistricts = loadJson("thai-admin/subdistricts.json", new TypeReference<>() {});
-            log.info(
-                    "Loaded Thai admin data: {} provinces, {} districts, {} subdistricts",
-                    provinces.size(),
-                    districts.size(),
-                    subdistricts.size());
         } catch (IOException ex) {
             log.error("Failed to load Thai admin JSON data", ex);
             throw new ApiException(ErrorCode.INTERNAL_ERROR, "Failed to load Thai admin data");

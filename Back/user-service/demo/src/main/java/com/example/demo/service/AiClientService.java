@@ -54,7 +54,6 @@ public class AiClientService {
                     .build()
                     .toUri();
 
-            log.info("calling ai-service: {}", uri);
             ResponseEntity<AiParseRes> resp = restTemplate.exchange(uri, HttpMethod.GET, null, AiParseRes.class);
             return resp.getBody();
         } catch (Exception e) {
