@@ -296,6 +296,7 @@ export default function CyclePage() {
                                 income={stats.income}
                                 expense={stats.expense}
                                 budget={cycle.budgetAmount}
+                                dateComeIn={cycle.dateComeIn}
                                 length={cycleLengthLabel(cycle, i18n.language)}
                                 icon={isIconName(cycle.icon) ? cycle.icon : "corn"}
                                 deleting={deletingCycleId === cycle.cycleId}

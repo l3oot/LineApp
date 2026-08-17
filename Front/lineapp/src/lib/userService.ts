@@ -84,6 +84,7 @@ export type Cycle = {
     icon: string | null;
     createdAt: string;
     budgetAmount: number | null;
+    dateComeIn?: number | null;
 };
 
 export type CycleCreatePayload = {
