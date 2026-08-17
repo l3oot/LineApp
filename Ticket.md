@@ -1,27 +1,27 @@
-# TICKET
+# Ticket
 
-FrontEnd
+## Frontend
 
-- Feat : Add Date Income (Deadline : 17.08.26)
+- [ ] **Feature:** Add date income — **Deadline:** 17.08.26
 
-- Feat : Export Transaction to Excel/PDF (Deadline : 22.08.26)
+- [ ] **Feature:** Export transactions to Excel/PDF — **Deadline:** 22.08.26
 
-- Feat : Add Fild "note" In Component (Deadline : 22.08.26)
+- [ ] **Feature:** Add field `note` to the component — **Deadline:** 22.08.26
 
-BackEnd
+## Backend
 
-- Feat : Add Fild "note" In Cycle Entity And Check Server Controller (Deadline : 22.08.26)
+- [ ] **Feature:** Add field `note` to the cycle entity and check the server controller — **Deadline:** 22.08.26
 
-DevOps
+## DevOps
 
--
+- No tasks.
 
-DB
+## Database
 
-- Feat : Add Colunm "note" in Cycle Table (Deadline : 22.08.26)
+- [ ] **Feature:** Add column `note` to the cycle table — **Deadline:** 22.08.26
 
-Sec
+## Security
 
-- Fix : Add Tunnel Cloudflare (Deadline : 23.08.26)
+- [ ] **Fix:** Add a Cloudflare tunnel — **Deadline:** 23.08.26
 
-- Fix : Close Post And Public IP  (Deadline : 23.08.26)
+- [ ] **Fix:** Close ports and the public IP — **Deadline:** 23.08.26
