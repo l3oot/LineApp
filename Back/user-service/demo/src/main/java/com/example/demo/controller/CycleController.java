@@ -30,11 +30,11 @@ public class CycleController {
         this.cycleService = cycleService;
     }
 
-    @GetMapping("")
-    public ResponseEntity<ApiRes<List<CycleRes>>> getCycles(@RequestParam UUID userId) {
-        List<CycleRes> data = cycleService.getCyclesByUserId(userId);
-        return ResponseEntity.ok(ApiRes.success(data, "OK"));
-    }
+    // @GetMapping("")
+    // public ResponseEntity<ApiRes<List<CycleRes>>> getCycles(@RequestParam UUID userId) {
+    //     List<CycleRes> data = cycleService.getCyclesByUserId(userId);
+    //     return ResponseEntity.ok(ApiRes.success(data, "OK"));
+    // } TODO: Delete after check
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<ApiRes<List<CycleRes>>> getCyclesByUser(@PathVariable UUID userId) {

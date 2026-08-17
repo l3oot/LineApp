@@ -99,7 +99,7 @@ export type CycleCreatePayload = {
 export type CycleUpdatePayload = CycleCreatePayload & { cycleId: string };
 
 export const cycleApi = {
-    list: () => api.get<Cycle[]>("/api/cycle", { userId: requireUserId() }),
+    list: () => api.get<Cycle[]>(`/api/cycle/user/${requireUserId()}`),
 
     create: (payload: CycleCreatePayload) =>
         api.post<Cycle>("/api/cycle", { ...payload, userId: requireUserId() }),
