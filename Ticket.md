@@ -2,7 +2,7 @@
 
 FrontEnd
 
-- Fix : Add Date Income
+- Feat : Add Date Income
 
 BackEnd
 
