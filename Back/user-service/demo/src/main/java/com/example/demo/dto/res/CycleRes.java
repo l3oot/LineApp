@@ -15,5 +15,7 @@ public record CycleRes(
         String status,
         String icon,
         LocalDateTime createdAt,
-        BigDecimal budgetAmount) {
+        BigDecimal budgetAmount,
+        Long dateComeIn) {
+
 }

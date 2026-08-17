@@ -1,6 +1,8 @@
 package com.example.demo.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -126,6 +128,7 @@ public class CycleService {
         BigDecimal budget = budgetCycleRepository.findFirstByCycleIdOrderByCreatedAtDesc(e.getCycleId())
                 .map(BudgetCycleEntity::getAmount)
                 .orElse(null);
+        Long datecomein = ChronoUnit.DAYS.between(LocalDate.now(), e.getEndDate()) + 1;
         return new CycleRes(
                 e.getCycleId(),
                 e.getUserId(),
@@ -136,6 +139,7 @@ public class CycleService {
                 e.getStatus(),
                 e.getIcon(),
                 e.getCreatedAt(),
-                budget);
+                budget,
+                datecomein);
     }
 }
