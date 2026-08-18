@@ -7,6 +7,7 @@ import java.util.UUID;
 public record CycleCreateReq(
         UUID userId,
         String name,
+        String note,
         String farmType,
         LocalDate startDate,
         LocalDate endDate,
