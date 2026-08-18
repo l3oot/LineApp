@@ -9,6 +9,7 @@ public record CycleRes(
         UUID cycleId,
         UUID userId,
         String name,
+        String note,
         String farmType,
         LocalDate startDate,
         LocalDate endDate,
