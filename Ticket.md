@@ -2,7 +2,7 @@
 
 ## Frontend
 
-- [ ] **Feature:** Add date income — **Deadline:** 17.08.26
+- [/] **Feature:** Add date income — **Deadline:** 17.08.26 [Wait Check]
 
 - [ ] **Feature:** Export transactions to Excel/PDF — **Deadline:** 22.08.26
 
@@ -10,7 +10,7 @@
 
 ## Backend
 
-- [ ] **Feature:** Add field `note` to the cycle entity and check the server controller — **Deadline:** 22.08.26
+- [/] **Feature:** Add field `note` to the cycle entity and check the server controller — **Deadline:** 22.08.26 [Wait Check]
 
 ## DevOps
 
@@ -18,7 +18,7 @@
 
 ## Database
 
-- [ ] **Feature:** Add column `note` to the cycle table — **Deadline:** 22.08.26
+- [/] **Feature:** Add column `note` to the cycle table — **Deadline:** 22.08.26 [Wait Check]
 
 ## Security
 

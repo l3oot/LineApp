@@ -60,6 +60,9 @@ public class CycleService {
         if (req.cycleId() == null) {
             throw new ApiException(ErrorCode.CYCLE_ID_REQUIRED, "cycleId is required");
         }
+        if (req.note().length() > 50) {
+            throw new ApiException(ErrorCode.CYCLE_NOTE_TOO_LONG, "Note cannot exceed 50 characters");
+        }
         if (req.name() == null || req.farmType() == null || req.startDate() == null
                 || req.endDate() == null || req.status() == null || req.icon() == null) {
             throw new ApiException(ErrorCode.CYCLE_UPDATE_FIELDS_REQUIRED, "All fields are required for update");
@@ -71,6 +74,7 @@ public class CycleService {
         }
 
         entity.setName(req.name());
+        entity.setNote(req.note());
         entity.setFarmType(req.farmType());
         entity.setStartDate(req.startDate());
         entity.setEndDate(req.endDate());
@@ -103,6 +107,9 @@ public class CycleService {
         if (cycleRepository.existsByName(req.name())) {
             throw new ApiException(ErrorCode.CYCLE_NAME_EXISTS, "Name already exists");
         }
+        if (req.note().length() > 50) {
+            throw new ApiException(ErrorCode.CYCLE_NOTE_TOO_LONG, "Note cannot exceed 50 characters");
+        }
 
         userPlanService.assertCanCreateCycle(req.userId());
 
@@ -112,6 +119,7 @@ public class CycleService {
                 req.endDate(),
                 req.icon(),
                 req.name(),
+                req.note(),
                 req.farmType(),
                 req.status());
 
@@ -133,6 +141,7 @@ public class CycleService {
                 e.getCycleId(),
                 e.getUserId(),
                 e.getName(),
+                e.getNote(),
                 e.getFarmType(),
                 e.getStartDate(),
                 e.getEndDate(),

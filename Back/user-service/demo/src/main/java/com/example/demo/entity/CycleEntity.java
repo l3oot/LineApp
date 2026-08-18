@@ -41,6 +41,9 @@ public class CycleEntity {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "note")
+    private String note;
+
     @Column(name = "farm_type")
     private String farmType;
 
@@ -56,6 +59,7 @@ public class CycleEntity {
             LocalDate endDate,
             String icon,
             String name,
+            String note,
             String farmType,
             String status) {
         this.userId = userId;
@@ -63,6 +67,7 @@ public class CycleEntity {
         this.endDate = endDate;
         this.icon = icon;
         this.name = name;
+        this.note = note;
         this.farmType = farmType;
         this.status = status;
     }
@@ -94,6 +99,10 @@ public class CycleEntity {
 
     public String getName() {
         return name;
+    }
+
+    public String getNote() {
+        return note;
     }
 
     public String getFarmType() {
@@ -131,6 +140,10 @@ public class CycleEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
     public void setFarmType(String farmType) {
