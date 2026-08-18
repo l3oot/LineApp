@@ -2,7 +2,7 @@
 
 ## Frontend
 
-- [ ] **Feature:** Add date income — **Deadline:** 17.08.26
+- [/] **Feature:** Add date income — **Deadline:** 17.08.26
 
 - [ ] **Feature:** Export transactions to Excel/PDF — **Deadline:** 22.08.26
 
