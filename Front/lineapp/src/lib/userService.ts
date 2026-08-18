@@ -77,6 +77,7 @@ export type Cycle = {
     cycleId: string;
     userId: string;
     name: string;
+    note: string | null;
     farmType: string | null;
     startDate: string;       // ISO yyyy-mm-dd
     endDate: string;
@@ -89,6 +90,7 @@ export type Cycle = {
 
 export type CycleCreatePayload = {
     name: string;
+    note?: string | null;
     farmType: string;
     startDate: string;
     endDate: string;

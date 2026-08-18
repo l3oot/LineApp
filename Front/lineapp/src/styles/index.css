@@ -532,24 +532,24 @@ body {
   gap: 0.625rem;
   width: 100%;
   min-height: 4rem;
-  border-radius: 0.75rem;
-  border: none;
-  background: #ffffff;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, #d8cfc4);
+  border-radius: var(--radius-card);
+  background: var(--surface);
   padding: 0.625rem 0.625rem 0.625rem 0.75rem;
-  box-shadow: none;
+  box-shadow: var(--shadow-soft);
   transition:
     background-color 160ms ease,
     border-color 160ms ease;
 }
 
 .home-date-range:hover {
-  background: #ffffff;
-  box-shadow: none;
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
 }
 
 .home-date-range:active {
   transform: none;
-  background: #ffffff;
+  background: var(--surface);
 }
 
 .home-date-range-leading {

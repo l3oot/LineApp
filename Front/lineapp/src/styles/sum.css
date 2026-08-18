@@ -399,10 +399,6 @@
   font-weight: 700;
   line-height: 1.35;
   color: var(--text);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
   white-space: normal;
   overflow-wrap: anywhere;
 }
