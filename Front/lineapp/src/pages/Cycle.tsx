@@ -94,6 +94,7 @@ export default function CyclePage() {
     const [startDate, setStartDate] = useState<CalendarDate>(() => defaultCycleStartDate());
     const [endDate, setEndDate] = useState<CalendarDate>(() => defaultCycleEndDate());
     const [budget, setBudget] = useState("");
+    const [note, setNote] = useState("");
     const [isStartPickerOpen, setIsStartPickerOpen] = useState(false);
     const [isEndPickerOpen, setIsEndPickerOpen] = useState(false);
 
@@ -148,6 +149,7 @@ export default function CyclePage() {
         setStartDate(today);
         setEndDate(defaultCycleEndDate(i18n.language));
         setBudget("");
+        setNote("");
         setIsStartPickerOpen(false);
         setIsEndPickerOpen(false);
     };
@@ -170,6 +172,7 @@ export default function CyclePage() {
         setStartDate(apiDateToCalendarDate(cycle.startDate));
         setEndDate(apiDateToCalendarDate(cycle.endDate));
         setBudget("");
+        setNote(cycle.note ?? "");
         setIconQuery("");
         setIsIconPickerOpen(false);
         setIsStartPickerOpen(false);
@@ -211,6 +214,7 @@ export default function CyclePage() {
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const nextTitle = title.trim();
+        const nextNote = note.trim();
         if (!nextTitle) return;
 
         setSubmitting(true);
@@ -220,6 +224,7 @@ export default function CyclePage() {
                 const updated = await cycleApi.update({
                     cycleId: editingCycle.cycleId,
                     name: nextTitle,
+                    note: nextNote.slice(0, 50),
                     farmType: editingCycle.farmType ?? "ทั่วไป",
                     startDate: calendarDateToApiDate(startDate),
                     endDate: calendarDateToApiDate(endDate),
@@ -236,6 +241,7 @@ export default function CyclePage() {
                 }
                 const created = await cycleApi.create({
                     name: nextTitle,
+                    note: nextNote.slice(0, 50),
                     farmType: farmType.trim() || "ทั่วไป",
                     startDate: calendarDateToApiDate(startDate),
                     endDate: calendarDateToApiDate(endDate),
@@ -414,6 +420,18 @@ export default function CyclePage() {
                                     />
                                 </label>
                             </div>
+
+                            <label className="text-sm font-semibold text-[var(--text)]">
+                                หมายเหตุ
+                                <textarea
+                                    value={note}
+                                    onChange={(event) => setNote(event.target.value.slice(0, 50))}
+                                    maxLength={50}
+                                    rows={3}
+                                    placeholder="เพิ่มหมายเหตุ (สูงสุด 50 ตัวอักษร)"
+                                    className="mt-1.5 w-full resize-none rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
+                                />
+                            </label>
 
                             <div className="mt-auto grid grid-cols-2 gap-2 pt-2">
                                 <button
