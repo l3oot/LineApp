@@ -6,11 +6,13 @@
 
 - [ ] **Feature:** Export transactions to Excel/PDF — **Deadline:** 22.08.26
 
-- [ ] **Feature:** Add field `note` to the component — **Deadline:** 22.08.26
+- [/] **Feature:** Add field `note` to the component — **Deadline:** 22.08.26 [Wait Check]
 
 ## Backend
 
 - [/] **Feature:** Add field `note` to the cycle entity and check the server controller — **Deadline:** 22.08.26 [Wait Check]
+
+- [ ] **Fix:** Check Ai Service Time Res Slow Debug Step {1.Ai Service -> 2.User Service -> 3.Line Hook -> 4.Network}
 
 ## DevOps
 
