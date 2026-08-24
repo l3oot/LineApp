@@ -12,4 +12,4 @@
 
 - ตรวจราคาปัจจัยการผลิต API 3 Party (Line / Web)
 
-- ดูการวิเคราะห์แต่ละรายการ API {GET : /api/transaction}
+- ดูการวิเคราะห์แต่ละรอบการผลิต API {GET : /api/transaction}
