@@ -4,7 +4,7 @@
 
 - [/] **Feature:** Add date income — **Deadline:** 17.08.26 [Wait Check]
 
-- [ ] **Feature:** Export transactions to Excel/PDF — **Deadline:** 22.08.26
+- [/] **Feature:** Export transactions to Excel/PDF — **Deadline:** 22.08.26 [Wait Check]
 
 - [/] **Feature:** Add field `note` to the component — **Deadline:** 22.08.26 [Wait Check]
 
