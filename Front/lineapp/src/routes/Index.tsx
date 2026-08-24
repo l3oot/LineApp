@@ -4,6 +4,8 @@ import Cycle from "../pages/Cycle";
 import Analytic from "../pages/Analytic";
 import List from "../pages/List";
 import Setting from "../pages/Setting";
+import Government from "../pages/Government";
+import Prices from "../pages/Prices";
 import LineCallback from "../pages/LineCallback";
 import RequireAuth from "../components/RequireAuth";
 
@@ -26,6 +28,8 @@ export const router = createBrowserRouter([
             { path: "/analytics", element: <Analytic /> },
             { path: "/list", element: <List /> },
             { path: "/settings", element: <Setting /> },
+            { path: "/government", element: <Government /> },
+            { path: "/prices", element: <Prices /> },
         ],
     },
 ]);

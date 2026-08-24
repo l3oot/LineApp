@@ -31,8 +31,8 @@ function NavIcon({ src }: { src: string }) {
 
 function resolvePageTone(pathname: string): string {
     if (pathname.startsWith("/list")) return "green";
-    if (pathname === "/cycle") return "pink";
-    if (pathname.startsWith("/analytics")) return "blue";
+    if (pathname === "/cycle" || pathname.startsWith("/government")) return "pink";
+    if (pathname.startsWith("/analytics") || pathname.startsWith("/prices")) return "blue";
     if (pathname.startsWith("/settings")) return "purple";
     return "neutral";
 }
