@@ -12,7 +12,7 @@
 
 - [/] **Feature:** Add field `note` to the cycle entity and check the server controller — **Deadline:** 22.08.26 [Wait Check]
 
-- [ ] **Fix:** Check Ai Service Time Res Slow Debug Step {0.Ai Provider -> 1.Ai Service -> 2.User Service -> 3.Line Hook -> 4.Network}
+- [/] **Fix:** Check Ai Service Time Res Slow Debug Step {0.Ai Provider -> 1.Ai Service -> 2.User Service -> 3.Line Hook -> 4.Network} [Wait Check]
 
 ## DevOps
 

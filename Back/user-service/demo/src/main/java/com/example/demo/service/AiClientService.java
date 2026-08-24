@@ -44,6 +44,7 @@ public class AiClientService {
      * เรียก ai-service /parse — return null ถ้า ai-service พังหรือ timeout (เพื่อให้ caller fallback ได้)
      */
     public AiParseRes parse(String text, UUID userId) {
+        long t0 = System.currentTimeMillis();
         try {
             URI uri = UriComponentsBuilder
                     .fromUriString(props.getBaseUrl())
@@ -55,9 +56,11 @@ public class AiClientService {
                     .toUri();
 
             ResponseEntity<AiParseRes> resp = restTemplate.exchange(uri, HttpMethod.GET, null, AiParseRes.class);
+            log.info("[step1:ai-service] call ai-service ok elapsedMs={}", System.currentTimeMillis() - t0);
             return resp.getBody();
         } catch (Exception e) {
-            log.error("call ai-service failed: {}", e.getMessage(), e);
+            log.error("[step1:ai-service] call ai-service failed elapsedMs={}: {}",
+                    System.currentTimeMillis() - t0, e.getMessage(), e);
             return null;
         }
     }

@@ -118,16 +118,31 @@ public class LineWebhookService {
             return;
         }
 
+        long t0 = System.currentTimeMillis();
         try {
+            // [Debug Step 3.Line Hook] upsertUserBySub เรียก LINE profile API ก่อนเรียก
+            // ai-service — ถ้าช้าจะดูเหมือน "ai-service ช้า" ทั้งที่คอขวดอยู่ก่อนหน้านั้น
+            long tUser0 = System.currentTimeMillis();
             UserEntity user = upsertUserBySub(userSub);
+            long tUser = System.currentTimeMillis() - tUser0;
 
+            long tAi0 = System.currentTimeMillis();
             AiParseRes parsed = aiClientService.parse(userText, user.getUserId());
+            long tAi = System.currentTimeMillis() - tAi0;
+
             LineReply reply = decideReply(user, parsed, timestampMs);
 
+            long tReply0 = System.currentTimeMillis();
             lineMessagingService.send(reply, replyToken);
+            long tReply = System.currentTimeMillis() - tReply0;
+
+            log.info(
+                    "[step3:line-hook] handleEvent done user={} upsertUserMs={} aiParseMs={} lineReplyMs={} totalMs={}",
+                    userSub, tUser, tAi, tReply, System.currentTimeMillis() - t0);
 
         } catch (Exception e) {
-            log.error("LINE webhook handle failed for user={}: {}", userSub, e.getMessage(), e);
+            log.error("[step3:line-hook] LINE webhook handle failed for user={} elapsedMs={}: {}",
+                    userSub, System.currentTimeMillis() - t0, e.getMessage(), e);
             lineMessagingService.reply(replyToken, "ยายขอโทษน้า ระบบขัดข้องชั่วคราว ลองใหม่อีกครั้งนะจ๊ะ");
         }
     }
