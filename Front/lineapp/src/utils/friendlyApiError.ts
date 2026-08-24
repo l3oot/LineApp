@@ -54,6 +54,7 @@ function mapTypeErrorToFriendlyMessage(typeError: string | undefined, t: TFuncti
             return t("errors.rateLimit");
         case "INTERNAL_ERROR":
         case "SERVER_ERROR":
+        case "AGRI_PRICE_API_ERROR":
             return t("errors.server");
         default:
             return null;

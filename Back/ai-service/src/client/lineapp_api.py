@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from typing import Any
 
 import requests
@@ -37,20 +38,34 @@ def _get_api_data(
     candidates = candidate_urls(base_url, path)
     last_error: requests.RequestException | None = None
     response: requests.Response | None = None
+    t0 = time.monotonic()
     for url in candidates:
         try:
             response = requests.get(url, params=params, timeout=timeout)
-            logger.info("GET %s API status=%s url=%s", log_label, response.status_code, response.url)
+            logger.info(
+                "[step2/4:user-service+network] GET %s API status=%s url=%s elapsed_ms=%d",
+                log_label,
+                response.status_code,
+                response.url,
+                (time.monotonic() - t0) * 1000,
+            )
             response.raise_for_status()
             break
         except requests.RequestException as exc:
             last_error = exc
-            logger.warning("%s attempt failed url=%s error=%s", log_label, url, exc)
+            logger.warning(
+                "[step2/4:user-service+network] %s attempt failed url=%s elapsed_ms=%d error=%s",
+                log_label,
+                url,
+                (time.monotonic() - t0) * 1000,
+                exc,
+            )
             response = None
     if response is None:
         logger.warning(
-            "%s all attempts failed params=%s bases=%s last=%s",
+            "%s all attempts failed elapsed_ms=%d params=%s bases=%s last=%s",
             log_label,
+            (time.monotonic() - t0) * 1000,
             params,
             candidates,
             last_error,

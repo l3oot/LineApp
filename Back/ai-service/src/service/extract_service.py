@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
+import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from src.client.lineapp_api import (
@@ -54,19 +56,27 @@ def _build_response(
 
 def extract_transaction(text: str, user_id: str | None = None) -> AiParseResponse:
     """หลัก entrypoint ของ business logic — controller ควรเรียกตัวนี้ตัวเดียว"""
+    t_start = time.monotonic()
     base = get_lineapp_api_base()
     uid = (user_id or "").strip() or settings.lineapp_default_user_id
     cycles: list[dict[str, Any]] = []
     categories: list[dict[str, Any]] = []
     if uid:
-        cycles = fetch_cycles_for_user(base, uid)
-        categories = fetch_categories_for_user(base, uid)
+        # [Debug Step 2.User Service] เดิมยิง 2 request ไป user-service ตามลำดับ
+        # (สูงสุดรวมกัน ~30s) — ยิงพร้อมกันแทนเพื่อลดเวลาที่รอ
+        t_ctx = time.monotonic()
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            cycles_future = pool.submit(fetch_cycles_for_user, base, uid)
+            categories_future = pool.submit(fetch_categories_for_user, base, uid)
+            cycles = cycles_future.result()
+            categories = categories_future.result()
         logger.info(
-            "Loaded %d cycles, %d categories for userId=%s from %s",
+            "[step2:user-service] loaded %d cycles, %d categories for userId=%s from %s elapsed_ms=%d",
             len(cycles),
             len(categories),
             uid,
             base,
+            (time.monotonic() - t_ctx) * 1000,
         )
 
     cycles_json = json.dumps(cycles_for_prompt(cycles), ensure_ascii=False)
@@ -78,12 +88,20 @@ def extract_transaction(text: str, user_id: str | None = None) -> AiParseRespons
     last_response = _build_response("", None, None)
     for attempt in range(1, max_attempts + 1):
         prompt = base_prompt if attempt == 1 else base_prompt + _RETRY_HINT
+        t_attempt = time.monotonic()
         try:
             llm_out = run_llm(prompt)
             structured, message = parse_llm_payload(llm_out["result"], cycles, categories)
             structured = sanitize_ids(structured, cycles, categories)
             structured = sanitize_icon(structured)
             last_response = _build_response(llm_out["source_model"], structured, message)
+            logger.info(
+                "[step1:ai-service] attempt=%d/%d model=%s elapsed_ms=%d",
+                attempt,
+                max_attempts,
+                llm_out["source_model"],
+                (time.monotonic() - t_attempt) * 1000,
+            )
         except Exception as exc:
             if "all LLM providers failed" in str(exc):
                 logger.warning(
@@ -107,10 +125,11 @@ def extract_transaction(text: str, user_id: str | None = None) -> AiParseRespons
 
         if is_valid_response(last_response, text):
             logger.info(
-                "extract_transaction attempt=%d/%d status=%s",
+                "extract_transaction attempt=%d/%d status=%s total_elapsed_ms=%d",
                 attempt,
                 max_attempts,
                 "structured" if structured else "grandma",
+                (time.monotonic() - t_start) * 1000,
             )
             return last_response
 
@@ -135,7 +154,8 @@ def extract_transaction(text: str, user_id: str | None = None) -> AiParseRespons
             return _build_response("regex-fallback", fallback, None)
 
     logger.warning(
-        "extract_transaction: gave up after %d attempts — returning last response",
+        "extract_transaction: gave up after %d attempts total_elapsed_ms=%d — returning last response",
         max_attempts,
+        (time.monotonic() - t_start) * 1000,
     )
     return last_response

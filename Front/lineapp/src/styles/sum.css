@@ -316,6 +316,26 @@
   object-fit: contain;
 }
 
+.quick-menu-icon-react {
+  flex-shrink: 0;
+}
+
+.quick-menu-icon-react--pink {
+  color: #ec407a;
+}
+
+.quick-menu-icon-react--green {
+  color: #4caf50;
+}
+
+.quick-menu-icon-react--blue {
+  color: #2196f3;
+}
+
+.quick-menu-icon-react--purple {
+  color: #7e57c2;
+}
+
 .quick-menu-icon-slot--filled {
   border-color: transparent;
   background: transparent;

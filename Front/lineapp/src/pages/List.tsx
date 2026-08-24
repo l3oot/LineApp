@@ -10,12 +10,13 @@ import FilterChipButton from "../components/FilterChipButton";
 import BottomSheet from "../components/BottomSheet";
 import IconPickerSheet, { type IconName } from "../components/IconPickerSheet";
 import { icons } from "../assets/Iconlist";
-import { FiCheck, FiChevronDown, FiX } from "react-icons/fi";
+import { FiCheck, FiChevronDown, FiDownload, FiX } from "react-icons/fi";
 import { FaPlus } from "react-icons/fa";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { useTranslation } from "react-i18next";
 import "../styles/list.css";
 import type { GroupedTransaction } from "../data/listMockData";
+import { buildExportRows, exportTransactionsToExcel, exportTransactionsToPdf } from "../utils/exportTransactions";
 import {
     categoryApi,
     cycleApi,
@@ -127,6 +128,7 @@ export default function List() {
     const [isBulkSelectMode, setIsBulkSelectMode] = useState(false);
     const [selectedTxIds, setSelectedTxIds] = useState<string[]>([]);
     const [bulkDeleting, setBulkDeleting] = useState(false);
+    const [exportingFormat, setExportingFormat] = useState<"excel" | "pdf" | null>(null);
     const [collapsedCards, setCollapsedCards] = useState<Record<string, boolean>>({});
     const selectAllRef = useRef<HTMLInputElement>(null);
     const fallbackCategory = t("list.quickAddCategory");
@@ -297,6 +299,14 @@ export default function List() {
         [visibleTransactions],
     );
 
+    const exportTransactions = useMemo(() => {
+        if (isBulkSelectMode && selectedTxIds.length > 0) {
+            const selectedSet = new Set(selectedTxIds);
+            return visibleTransactions.filter((tx) => selectedSet.has(tx.txId));
+        }
+        return visibleTransactions;
+    }, [isBulkSelectMode, selectedTxIds, visibleTransactions]);
+
     const allVisibleSelected =
         visibleTransactions.length > 0 &&
         visibleTransactions.every((tx) => selectedTxIds.includes(tx.txId));
@@ -352,6 +362,42 @@ export default function List() {
             setListError(getFriendlyApiErrorMessage(err, t));
         } finally {
             setBulkDeleting(false);
+        }
+    };
+
+    const exportColumns = {
+        date: t("list.exportColumnDate"),
+        type: t("list.exportColumnType"),
+        category: t("list.exportColumnCategory"),
+        note: t("list.exportColumnNote"),
+        amount: t("list.exportColumnAmount"),
+    };
+
+    const handleExportExcel = async () => {
+        if (exportTransactions.length === 0 || exportingFormat) return;
+        setExportingFormat("excel");
+        setListError(null);
+        try {
+            const rows = buildExportRows(exportTransactions, categoryById, fallbackCategory, i18n.language, t);
+            await exportTransactionsToExcel(rows, t("list.exportFileTitle"), exportColumns);
+        } catch (err) {
+            setListError(getFriendlyApiErrorMessage(err, t));
+        } finally {
+            setExportingFormat(null);
+        }
+    };
+
+    const handleExportPdf = async () => {
+        if (exportTransactions.length === 0 || exportingFormat) return;
+        setExportingFormat("pdf");
+        setListError(null);
+        try {
+            const rows = buildExportRows(exportTransactions, categoryById, fallbackCategory, i18n.language, t);
+            await exportTransactionsToPdf(rows, t("list.exportFileTitle"), t("list.exportFileTitle"), exportColumns);
+        } catch (err) {
+            setListError(getFriendlyApiErrorMessage(err, t));
+        } finally {
+            setExportingFormat(null);
         }
     };
 
@@ -596,6 +642,7 @@ export default function List() {
 
                 {!listLoading && visibleTransactions.length > 0 && (
                     <div className="list-bulk-bar">
+                        <div className="flex flex-1 flex-wrap items-center gap-2">
                         {!isBulkSelectMode ? (
                             <button
                                 type="button"
@@ -638,6 +685,39 @@ export default function List() {
                                 </div>
                             </>
                         )}
+                        </div>
+                        <div className="list-export-actions flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                disabled={exportTransactions.length === 0 || exportingFormat !== null}
+                                onClick={handleExportExcel}
+                                aria-label={t(
+                                    isBulkSelectMode && selectedTxIds.length > 0
+                                        ? "list.exportSelectedAria"
+                                        : "list.exportAllAria",
+                                    { format: "Excel" },
+                                )}
+                                className="inline-flex items-center gap-1.5 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm font-semibold text-[var(--text)] transition-all hover:bg-[var(--surface-soft)] disabled:opacity-50"
+                            >
+                                <FiDownload size={14} aria-hidden />
+                                {exportingFormat === "excel" ? t("list.exporting") : t("list.exportExcel")}
+                            </button>
+                            <button
+                                type="button"
+                                disabled={exportTransactions.length === 0 || exportingFormat !== null}
+                                onClick={handleExportPdf}
+                                aria-label={t(
+                                    isBulkSelectMode && selectedTxIds.length > 0
+                                        ? "list.exportSelectedAria"
+                                        : "list.exportAllAria",
+                                    { format: "PDF" },
+                                )}
+                                className="inline-flex items-center gap-1.5 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm font-semibold text-[var(--text)] transition-all hover:bg-[var(--surface-soft)] disabled:opacity-50"
+                            >
+                                <FiDownload size={14} aria-hidden />
+                                {exportingFormat === "pdf" ? t("list.exporting") : t("list.exportPdf")}
+                            </button>
+                        </div>
                     </div>
                 )}
 

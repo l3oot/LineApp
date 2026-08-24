@@ -135,7 +135,8 @@ async function request<T>(
 }
 
 export const api = {
-    get: <T>(path: string, query?: Query) => request<T>(path, { method: "GET", query }),
+    get: <T>(path: string, query?: Query, timeoutMs?: number) =>
+        request<T>(path, { method: "GET", query, timeoutMs }),
     post: <T>(path: string, payload?: unknown, query?: Query) =>
         request<T>(path, {
             method: "POST",
