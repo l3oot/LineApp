@@ -14,6 +14,8 @@
 
 - [/] **Fix:** Check Ai Service Time Res Slow Debug Step {0.Ai Provider -> 1.Ai Service -> 2.User Service -> 3.Line Hook -> 4.Network} [Wait Check]
 
+- [ ] **Feature:** ส่งข้อความ Line ถามสภาพอากาศโดยใช้สถานที่จากโปรไฟล์
+
 ## DevOps
 
 - No tasks.
