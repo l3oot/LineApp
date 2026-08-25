@@ -1,12 +1,24 @@
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import type { IconType } from "react-icons";
+import { FaLandmark } from "react-icons/fa";
 import { navIcons } from "../assets/icon/navIcons";
 
-const quickMenuItems = [
-    { to: "/list", labelKey: "sum.quickMenu.list", tone: "green" as const, icon: navIcons.list },
-    { to: "/cycle", labelKey: "sum.quickMenu.cycle", tone: "pink" as const, icon: navIcons.cycle },
-    { to: "/analytics", labelKey: "sum.quickMenu.analytics", tone: "blue" as const, icon: navIcons.ana },
-    { to: "/settings", labelKey: "sum.quickMenu.settings", tone: "purple" as const, icon: navIcons.setting },
+type QuickMenuTone = "green" | "pink" | "blue" | "purple";
+
+type QuickMenuItem = {
+    to: string;
+    labelKey: string;
+    tone: QuickMenuTone;
+    icon?: string;
+    Icon?: IconType;
+};
+
+const quickMenuItems: QuickMenuItem[] = [
+    { to: "/list", labelKey: "sum.quickMenu.list", tone: "green", icon: navIcons.list },
+    { to: "/government", labelKey: "sum.quickMenu.government", tone: "pink", Icon: FaLandmark },
+    { to: "/prices", labelKey: "sum.quickMenu.prices", tone: "blue", icon: navIcons.ana },
+    { to: "/settings", labelKey: "sum.quickMenu.settings", tone: "purple", icon: navIcons.setting },
 ];
 
 export default function QuickMenu() {
@@ -27,7 +39,14 @@ export default function QuickMenu() {
                         className={`quick-menu-item quick-menu-item--${item.tone}`}
                     >
                         <span className="quick-menu-icon-slot quick-menu-icon-slot--filled" aria-hidden>
-                            <img src={item.icon} alt="" className="quick-menu-icon-img" />
+                            {item.icon ? (
+                                <img src={item.icon} alt="" className="quick-menu-icon-img" />
+                            ) : item.Icon ? (
+                                <item.Icon
+                                    className={`quick-menu-icon-react quick-menu-icon-react--${item.tone}`}
+                                    size={26}
+                                />
+                            ) : null}
                         </span>
                         <span className="quick-menu-label">{t(item.labelKey)}</span>
                     </NavLink>

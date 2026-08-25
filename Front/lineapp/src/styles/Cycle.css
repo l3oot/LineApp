@@ -87,7 +87,7 @@
     display: flex;
     align-items: center;
     gap: 0.3rem;
-    width: 100%;
+    width: auto;
     margin: 0.125rem 0 0;
     font-size: 0.75rem;
     font-weight: 500;
@@ -96,6 +96,19 @@
 
 .cycle-card-date span {
     white-space: nowrap;
+}
+
+.cycle-card-datecomein {
+    width: auto;
+    margin: 0.125rem 0 0 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--text-soft);
+}
+
+.cycle-card-datecomein--overdue {
+    color: #e53935;
 }
 
 .cycle-card-actions {

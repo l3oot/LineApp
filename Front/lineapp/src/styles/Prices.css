@@ -1,0 +1,284 @@
+/* Agricultural product prices page */
+
+.prices-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.prices-hero {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 1.125rem 1.25rem;
+    border-radius: var(--radius-card);
+    background: linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%);
+    box-shadow: 0 8px 20px rgba(66, 165, 245, 0.28);
+    color: #fff;
+}
+
+.prices-hero-icon-ring {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.24);
+    color: #fff;
+}
+
+.prices-hero-text {
+    min-width: 0;
+}
+
+.prices-hero-title {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.prices-hero-subtitle {
+    margin: 0.1875rem 0 0;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.92);
+    white-space: pre-line;
+}
+
+.prices-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    padding: 1rem 1.0625rem 1.0625rem;
+    border: 1.5px solid color-mix(in srgb, var(--border) 85%, #d8cfc4);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.prices-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.prices-card-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.prices-search {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.prices-search-label {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.prices-search-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.prices-search-input {
+    flex: 1;
+    min-width: 0;
+    height: 2.75rem;
+    padding: 0 0.875rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface-soft);
+    color: var(--text);
+    font: inherit;
+}
+
+.prices-search-input:focus {
+    outline: 2px solid color-mix(in srgb, #64b5f6 45%, white);
+    border-color: #64b5f6;
+}
+
+.prices-search-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    flex-shrink: 0;
+    height: 2.75rem;
+    padding: 0 0.95rem;
+    border: none;
+    border-radius: var(--radius-control);
+    background: #42a5f5;
+    color: #fff;
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.prices-search-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.prices-suggest {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+}
+
+.prices-chip {
+    max-width: 100%;
+    padding: 0.375rem 0.75rem;
+    border: 1.5px solid var(--border);
+    border-radius: 9999px;
+    background: var(--surface-soft);
+    color: var(--text-soft);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.prices-chip.is-active {
+    border-color: #42a5f5;
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.prices-period {
+    margin-top: 0.25rem;
+}
+
+.prices-market-select {
+    max-width: 10.5rem;
+    height: 2.125rem;
+    padding: 0 0.5rem;
+    border: 1.5px solid var(--border);
+    border-radius: 9999px;
+    background: var(--surface-soft);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.prices-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.prices-stat {
+    padding: 0.75rem 0.7rem;
+    border-radius: var(--radius-card);
+    background: #e3f2fd;
+}
+
+.prices-stat-label,
+.prices-stat-meta {
+    margin: 0;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--text-soft);
+}
+
+.prices-stat-value {
+    margin: 0.2rem 0 0.15rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.prices-chart-wrap {
+    width: 100%;
+    height: 250px;
+}
+
+.prices-loading,
+.prices-empty,
+.prices-error {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.prices-loading,
+.prices-empty {
+    color: var(--text-soft);
+}
+
+.prices-error {
+    color: var(--danger);
+}
+
+.prices-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.prices-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.prices-list-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-bottom: 0.625rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, white);
+}
+
+.prices-list-item:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.prices-list-main {
+    min-width: 0;
+}
+
+.prices-list-name,
+.prices-list-price {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.prices-list-meta {
+    margin: 0.15rem 0 0;
+    font-size: 0.75rem;
+    color: var(--text-soft);
+}
+
+.prices-list-price {
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.prices-list-price span {
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--text-soft);
+}
