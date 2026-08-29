@@ -26,7 +26,7 @@ export default function SettingActionRow({
             type="button"
             onClick={onClick}
             disabled={disabled}
-            className="flex min-h-[40px] w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left transition-all hover:bg-[var(--surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex min-h-[48px] w-full items-center justify-between rounded-[var(--radius-card)] border-0 bg-[var(--surface)] px-4 py-3 text-left shadow-[var(--shadow-soft)] transition-all hover:bg-[var(--surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
         >
             <p className={`text-[14px] font-medium md:text-[15px] ${textColor}`}>{label}</p>
             <div className="flex items-center gap-1.5">

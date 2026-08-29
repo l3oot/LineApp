@@ -14,6 +14,7 @@ export default defineConfig({
     host: true,            // ฟัง 0.0.0.0 → เปิดให้เข้าถึงจากนอก container ได้
     port: 5173,
     strictPort: true,
+    allowedHosts: true,
     watch: {
       // bind mount บน Windows/macOS host ไม่ส่ง inotify event ตามจริง — ต้อง poll
       usePolling: true,

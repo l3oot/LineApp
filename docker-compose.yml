@@ -1,13 +1,10 @@
-# รันทั้ง stack แบบ DEV (hot reload ทุก service) — bind mount source code + watcher
-#   docker compose up -d --build
+# Frontend รัน Vite watch/HMR (bind mount + polling)
+#   docker compose up -d --build frontend
 #
-# ทุก service ใช้ multi-stage Dockerfile โดย select `target: dev`
-#   - frontend     → Vite dev server + HMR (polling)
-#   - user-service → ./mvnw spring-boot:run + spring-boot-devtools restart
-#   - ai-service   → uvicorn --reload + WATCHFILES_FORCE_POLLING
+# user-service / ai-service ในไฟล์นี้เป็น runtime (production-like)
+# ถ้าต้องการ hot reload ทั้ง stack ใช้ docker-compose-dev.yml
 #
-# เปลี่ยนเป็น production: ลบ `target: dev` ออก (ใช้ default stage = runtime/runner)
-#   แล้วลบ volumes ที่ bind source code ออกด้วย
+# เปลี่ยน frontend เป็น production: ตั้ง target: runtime แล้วลบ volumes ที่ bind source
 #
 # Postgres รันบนเครื่อง host (ไม่ได้อยู่ใน compose) — container เชื่อมผ่าน host.docker.internal
 
@@ -16,7 +13,7 @@ services:
     build:
       context: ./Front/lineapp
       dockerfile: Dockerfile
-      target: runtime
+      target: dev
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_LINE_CHANNEL_ID: ${VITE_LINE_CHANNEL_ID}
@@ -31,13 +28,25 @@ services:
       VITE_LINE_CHANNEL_ID: ${VITE_LINE_CHANNEL_ID}
       VITE_LINE_REDIRECT_URI: ${VITE_LINE_REDIRECT_URI}
       VITE_LIFF_ID: ${VITE_LIFF_ID}
-      CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING}
-      WATCHPACK_POLLING: ${WATCHPACK_POLLING}
-    # volumes:
-    #   # source code จาก host → container (HMR จะ pick up การแก้ไฟล์)
-    #   - ./Front/lineapp:/app
-    #   # named volume ทับ /app/node_modules — กันไม่ให้ host เอา node_modules มาทับ
-    #   - frontend-node-modules:/app/node_modules
+      CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING:-true}
+      WATCHPACK_POLLING: ${WATCHPACK_POLLING:-true}
+    volumes:
+      # source code จาก host → container (Vite HMR จะ pick up การแก้ไฟล์)
+      - ./Front/lineapp:/app
+      # named volume ทับ /app/node_modules — กันไม่ให้ host เอา node_modules มาทับ
+      - frontend-node-modules:/app/node_modules
+    develop:
+      watch:
+        - action: sync
+          path: ./Front/lineapp
+          target: /app
+          ignore:
+            - node_modules/
+            - dist/
+        - action: rebuild
+          path: ./Front/lineapp/package.json
+        - action: rebuild
+          path: ./Front/lineapp/package-lock.json
     depends_on:
       - user-service
     restart: unless-stopped
@@ -71,6 +80,10 @@ services:
       AGRI_PRICE_BASE_URL: "${AGRI_PRICE_BASE_URL:-https://agriapi.nabc.go.th}"
       AGRI_PRICE_TIMEOUT_SECONDS: "${AGRI_PRICE_TIMEOUT_SECONDS:-20}"
       AGRI_PRICE_MAX_PAGES: "${AGRI_PRICE_MAX_PAGES:-3}"
+      WEATHER_API_BASE_URL: "${WEATHER_API_BASE_URL:-https://data.tmd.go.th/nwpapi}"
+      WEATHER_API_TOKEN: "${WEATHER_API_TOKEN:-}"
+      WEATHER_API_TIMEOUT_SECONDS: "${WEATHER_API_TIMEOUT_SECONDS:-20}"
+      WEATHER_API_DURATION_HOURS: "${WEATHER_API_DURATION_HOURS:-24}"
       APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL}
       LINE_CLIENT_ID: ${LINE_CLIENT_ID}
       LINE_CLIENT_SECRET: ${LINE_CLIENT_SECRET}
@@ -147,9 +160,8 @@ services:
     networks:
       - lineapp-net
 
-# volumes:
-#   frontend-node-modules:
-#   user-service-m2:
+volumes:
+  frontend-node-modules:
 
 networks:
   lineapp-net:

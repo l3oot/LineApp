@@ -49,22 +49,26 @@ function SingleDatePickerField({ label, ariaLabel, value, onChange }: SingleDate
           <FiCalendar className="home-date-range-field-icon" aria-hidden />
         </div>
       </Group>
-      <Popover className="z-30 mt-2 w-[var(--trigger-width)] min-w-[280px] rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[var(--shadow-soft)]">
+      <Popover
+        placement="bottom"
+        offset={8}
+        className="date-picker-popover"
+      >
         <Dialog className="outline-none">
           <Calendar className="w-full">
-            <header className="mb-2 flex items-center justify-between">
-              <Button slot="previous" className="rounded-full px-2 py-1 text-sm text-[var(--text-soft)] hover:bg-[var(--surface-soft)]">
+            <header className="date-picker-calendar-header">
+              <Button slot="previous" className="date-picker-calendar-nav">
                 ‹
               </Button>
-              <Heading className="text-sm font-bold text-[var(--text)]" />
-              <Button slot="next" className="rounded-full px-2 py-1 text-sm text-[var(--text-soft)] hover:bg-[var(--surface-soft)]">
+              <Heading className="date-picker-calendar-title" />
+              <Button slot="next" className="date-picker-calendar-nav">
                 ›
               </Button>
             </header>
-            <CalendarGrid className="w-full table-fixed border-separate border-spacing-1">
+            <CalendarGrid className="date-picker-calendar-grid">
               <CalendarGridHeader>
                 {(day) => (
-                  <CalendarHeaderCell className="pb-1 text-center text-xs font-semibold text-[var(--text-soft)]">
+                  <CalendarHeaderCell className="date-picker-calendar-weekday">
                     {day}
                   </CalendarHeaderCell>
                 )}
@@ -73,7 +77,7 @@ function SingleDatePickerField({ label, ariaLabel, value, onChange }: SingleDate
                 {(cellDate) => (
                   <CalendarCell
                     date={cellDate}
-                    className="flex h-8 w-full items-center justify-center rounded-full text-sm text-[var(--text)] outline-none hover:bg-[var(--surface-soft)] data-[disabled]:text-gray-300 data-[outside-month]:text-gray-300 data-[selected]:bg-[var(--primary-soft)] data-[selected]:text-[var(--primary)] data-[selected]:font-semibold"
+                    className="date-picker-calendar-cell"
                   />
                 )}
               </CalendarGridBody>
@@ -124,9 +128,6 @@ export default function DateFilterBar({
 
   return (
     <div className={`home-date-range w-full ${className}`.trim()}>
-      <div className="home-date-range-leading" aria-hidden>
-        <FiCalendar className="home-date-range-leading-icon" />
-      </div>
       <div className="home-date-range-fields">
         <div className="flex min-w-0 flex-1 items-end gap-1.5 sm:gap-2">
           <SingleDatePickerField

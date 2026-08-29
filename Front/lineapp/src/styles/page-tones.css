@@ -6,23 +6,23 @@
 }
 
 .page-tone--green {
-    --page-tone-soft: #e8f5e9;
-    --page-tone-accent: #81c784;
+    --page-tone-soft: #E8F8EE;
+    --page-tone-accent: #3BB273;
 }
 
 .page-tone--pink {
-    --page-tone-soft: #fce4ec;
-    --page-tone-accent: #f48fb1;
+    --page-tone-soft: #FDECF2;
+    --page-tone-accent: #E07A9A;
 }
 
 .page-tone--blue {
-    --page-tone-soft: #e3f2fd;
-    --page-tone-accent: #64b5f6;
+    --page-tone-soft: #E8F2FF;
+    --page-tone-accent: #4D9EFF;
 }
 
 .page-tone--purple {
-    --page-tone-soft: #ede7f6;
-    --page-tone-accent: #b39ddb;
+    --page-tone-soft: #F1ECFB;
+    --page-tone-accent: #8B7BC8;
 }
 
 /* Subpage header accent */
@@ -38,14 +38,4 @@
 
 .page-tone:not(.page-tone--neutral) .subpage-noti-btn {
     color: color-mix(in srgb, var(--page-tone-accent) 80%, #4a4a4a);
-}
-
-/* Greeting header on settings — light tone on icon buttons */
-.page-tone--purple .greeting-icon-btn:not(.greeting-noti-btn) {
-    background: color-mix(in srgb, var(--page-tone-soft) 45%, white);
-}
-
-.page-tone--purple .greeting-noti-btn {
-    color: #8b6b47;
-    background: rgba(255, 255, 255, 0.88);
 }

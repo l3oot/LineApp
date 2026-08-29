@@ -9,8 +9,8 @@
 /* ── Cycle cards ── */
 .cycle-card {
     width: 100%;
-    padding: 1rem 1rem 1.125rem;
-    border: 1px solid var(--border);
+    padding: 1.05rem 1.05rem 1.125rem;
+    border: none;
     border-radius: var(--radius-card);
     background: #ffffff;
     box-shadow: var(--shadow-soft);
@@ -34,7 +34,7 @@
     grid-column: 1;
     grid-row: 1;
     border-radius: 9999px;
-    background: #e4edc6;
+    background: var(--primary-soft);
     border: none;
 }
 
@@ -128,9 +128,10 @@
     gap: 0.3125rem;
     min-height: 2rem;
     padding: 0.375rem 0.625rem;
-    border-radius: 0.625rem;
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.85);
+    border-radius: 9999px;
+    border: none;
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
     font-size: 0.75rem;
     font-weight: 700;
     cursor: pointer;
@@ -179,10 +180,10 @@
     grid-template-columns: 0.9fr 1.5fr 0.9fr 0.9fr;
     gap: 0;
     margin-top: 0.875rem;
-    border: 1px solid var(--border);
-    border-radius: 1rem;
+    border: none;
+    border-radius: 1.15rem;
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.65);
+    background: var(--surface-soft);
 }
 
 .cycle-stat {
@@ -192,7 +193,7 @@
     gap: 0.1875rem;
     padding: 0.5625rem 0.25rem 0.6875rem;
     text-align: center;
-    border-right: 1px solid var(--border);
+    border-right: 1px solid color-mix(in srgb, var(--border) 70%, white);
 }
 
 .cycle-stat:last-child {
@@ -291,7 +292,7 @@
 .cycle-stat-progress-track {
     height: 0.5375rem;
     border-radius: 9999px;
-    background: #d6ddd2;
+    background: #E4EAF3;
     overflow: hidden;
 }
 

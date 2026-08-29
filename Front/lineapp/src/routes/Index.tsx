@@ -6,6 +6,7 @@ import List from "../pages/List";
 import Setting from "../pages/Setting";
 import Government from "../pages/Government";
 import Prices from "../pages/Prices";
+import Weather from "../pages/Weather";
 import LineCallback from "../pages/LineCallback";
 import RequireAuth from "../components/RequireAuth";
 
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
             { path: "/settings", element: <Setting /> },
             { path: "/government", element: <Government /> },
             { path: "/prices", element: <Prices /> },
+            { path: "/weather", element: <Weather /> },
         ],
     },
 ]);

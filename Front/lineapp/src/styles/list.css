@@ -7,7 +7,7 @@
 }
 
 .list-filter-card {
-    border: 1px solid color-mix(in srgb, var(--border) 85%, #d8cfc4);
+    border: none;
     border-radius: var(--radius-card);
     background: var(--surface);
     padding: 1rem 1.125rem;
@@ -31,7 +31,7 @@
 
 .list-filter-chip {
     padding: 0.4375rem 1rem;
-    border: 1.5px solid var(--border);
+    border: none;
     border-radius: 9999px;
     background: var(--surface-soft);
     font-size: 0.8125rem;
@@ -51,19 +51,19 @@
 }
 
 .list-filter-chip--active.list-filter-chip--all {
-    border-color: #42a5f5;
-    background: #64b5f6;
+    border-color: var(--primary);
+    background: var(--primary);
     color: #fff;
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
-    text-shadow: 0 1px 2px rgba(21, 101, 192, 0.28);
+    box-shadow: 0 6px 14px rgba(59, 178, 115, 0.24);
+    text-shadow: none;
 }
 
 .list-filter-chip--active.list-filter-chip--income {
-    border-color: #6f9454;
-    background: #9ab870;
+    border-color: var(--income);
+    background: var(--income);
     color: #fff;
-    box-shadow: 0 2px 8px rgba(79, 104, 58, 0.18);
-    text-shadow: 0 1px 2px rgba(52, 72, 38, 0.28);
+    box-shadow: 0 6px 14px rgba(59, 178, 115, 0.22);
+    text-shadow: none;
 }
 
 .list-filter-chip--active.list-filter-chip--expense {
@@ -138,13 +138,13 @@
 .list-empty,
 .list-loading {
     padding: 1.25rem 1rem;
-    border: 1px solid var(--border);
+    border: none;
     border-radius: var(--radius-card);
     background: var(--surface);
+    box-shadow: var(--shadow-soft);
     text-align: center;
     font-size: 0.875rem;
     color: var(--text-soft);
-    box-shadow: var(--shadow-soft);
 }
 
 .list-load-more-btn {
@@ -169,8 +169,8 @@
 }
 
 .list-add-fab {
-    --pill-action-bg: #9ab870;
-    --pill-action-border: #6f9454;
+    --pill-action-bg: var(--primary);
+    --pill-action-border: #2f9a5f;
 
     position: fixed;
     right: 1.25rem;
@@ -181,11 +181,11 @@
     justify-content: center;
     width: 3.5rem;
     height: 3.5rem;
-    border: 1.5px solid var(--pill-action-border);
+    border: none;
     border-radius: 9999px;
     background: var(--pill-action-bg);
     color: #fff;
-    box-shadow: 0 2px 8px rgba(79, 104, 58, 0.18);
+    box-shadow: 0 10px 22px rgba(59, 178, 115, 0.32);
     cursor: pointer;
     transition:
         transform 180ms ease,
@@ -195,7 +195,7 @@
 
 .list-add-fab:hover {
     filter: brightness(1.03);
-    box-shadow: 0 3px 10px rgba(79, 104, 58, 0.22);
+    box-shadow: 0 12px 24px rgba(59, 178, 115, 0.38);
 }
 
 .list-add-fab:active {
@@ -208,8 +208,9 @@
 .list-day-card {
     overflow: hidden;
     border-radius: var(--radius-card);
-    border: 1px solid transparent;
+    border: none;
     background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 .list-day-card--income {
@@ -487,15 +488,15 @@
     margin-top: 0;
 }
 
-/* Category filter — round checkbox with purple accent (settings quick-menu tone) */
+/* Category filter — round checkbox matching the green theme */
 .list-category-checkbox {
     appearance: none;
     -webkit-appearance: none;
     width: 1.125rem;
     height: 1.125rem;
     border-radius: 9999px;
-    border: 1.5px solid color-mix(in srgb, #b39ddb 45%, var(--border));
-    background: color-mix(in srgb, #ede7f6 55%, var(--surface));
+    border: 1.5px solid color-mix(in srgb, var(--primary) 45%, var(--border));
+    background: color-mix(in srgb, var(--primary-soft) 55%, var(--surface));
     cursor: pointer;
     display: grid;
     place-content: center;
@@ -517,8 +518,8 @@
 }
 
 .list-category-checkbox:checked {
-    background: #b39ddb;
-    border-color: #9575cd;
+    background: var(--primary);
+    border-color: #2f9a5f;
 }
 
 .list-category-checkbox:checked::before {

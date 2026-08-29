@@ -1,0 +1,46 @@
+.app-loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.app-loading-mark {
+  display: block;
+  width: min(8.5rem, 42vw);
+  height: auto;
+  animation: app-loading-float 2.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes app-loading-float {
+  0%,
+  100% {
+    transform: translateY(8px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.app-loading-screen--inline {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  height: 100%;
+  min-height: 0;
+  background: transparent;
+}
+
+.app-loading-screen--inline .app-loading-mark {
+  width: min(4.75rem, 30vw);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-loading-mark {
+    animation: none;
+  }
+}
