@@ -62,6 +62,7 @@ public class LineWebhookService {
     private final TransactionService transactionService;
     private final LineProperties lineProperties;
     private final LineWeatherBriefService lineWeatherBriefService;
+    private final LineAgriPriceService lineAgriPriceService;
 
     public LineWebhookService(
             UserRepository userRepository,
@@ -70,7 +71,8 @@ public class LineWebhookService {
             LineFlexMessageBuilder lineFlexMessageBuilder,
             TransactionService transactionService,
             LineProperties lineProperties,
-            LineWeatherBriefService lineWeatherBriefService) {
+            LineWeatherBriefService lineWeatherBriefService,
+            LineAgriPriceService lineAgriPriceService) {
         this.userRepository = userRepository;
         this.aiClientService = aiClientService;
         this.lineMessagingService = lineMessagingService;
@@ -78,6 +80,7 @@ public class LineWebhookService {
         this.transactionService = transactionService;
         this.lineProperties = lineProperties;
         this.lineWeatherBriefService = lineWeatherBriefService;
+        this.lineAgriPriceService = lineAgriPriceService;
     }
 
     @Async("lineWebhookExecutor")
@@ -131,6 +134,20 @@ public class LineWebhookService {
                 lineMessagingService.reply(replyToken, "🌦️ ยายยังดึงอากาศไม่ได้ตอนนี้ ลองพิมพ์ สภาพอากาศ อีกครั้งนะจ๊ะ");
             }
             return;
+        }
+
+        if (userText.contains("ราคา")) {
+            try {
+                String priceReply = lineAgriPriceService.tryBuildReply(userText);
+                if (priceReply != null) {
+                    lineMessagingService.reply(replyToken, priceReply);
+                    return;
+                }
+            } catch (Exception e) {
+                log.error("[line-price] reply failed for user={}: {}", userSub, e.getMessage(), e);
+                lineMessagingService.reply(replyToken, "🥬 ยายยังดึงราคาไม่ได้ตอนนี้ ลองพิมพ์ ราคามะนาว อีกครั้งนะจ๊ะ");
+                return;
+            }
         }
 
         long t0 = System.currentTimeMillis();

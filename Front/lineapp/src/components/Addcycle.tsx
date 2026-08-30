@@ -3,10 +3,6 @@ import { FiCalendar, FiChevronRight, FiEdit2, FiTrash2 } from "react-icons/fi";
 import { calpercentused, calbgcolor, calPnL } from "../utils/Sumfun";
 import { useTranslation } from "react-i18next";
 import { icons } from "../assets/Iconlist";
-import moneybagIcon from "../assets/icon/moneybag.png";
-import calIcon from "../assets/icon/cal2.png";
-import coinIcon from "../assets/icon/coin.png";
-import budgetIcon from "../assets/icon/butget.png";
 
 type IconName = keyof typeof icons;
 
@@ -104,7 +100,7 @@ export default function Addcycle({
             <div className="cycle-card-stats">
                 <div className="cycle-stat">
                     <span className="cycle-stat-icon cycle-stat-icon--capital cycle-stat-icon--filled" aria-hidden>
-                        <img src={moneybagIcon} alt="" className="cycle-stat-icon-img" />
+                        💵
                     </span>
                     <span className="cycle-stat-label">{t("addcycle.capital")}</span>
                     <span className="cycle-stat-value cycle-stat-value--capital">
@@ -114,7 +110,7 @@ export default function Addcycle({
 
                 <div className="cycle-stat cycle-stat--income-expense">
                     <span className="cycle-stat-icon cycle-stat-icon--income-expense cycle-stat-icon--filled" aria-hidden>
-                        <img src={calIcon} alt="" className="cycle-stat-icon-img" />
+                        🧮
                     </span>
                     <span className="cycle-stat-label">{t("addcycle.incomeExpense")}</span>
                     <span className="cycle-stat-value cycle-stat-value--flow">
@@ -124,7 +120,7 @@ export default function Addcycle({
 
                 <div className="cycle-stat">
                     <span className="cycle-stat-icon cycle-stat-icon--remaining cycle-stat-icon--filled" aria-hidden>
-                        <img src={coinIcon} alt="" className="cycle-stat-icon-img" />
+                        👝
                     </span>
                     <span className="cycle-stat-label">{t("addcycle.remaining")}</span>
                     <span className="cycle-stat-value cycle-stat-value--remaining">
@@ -137,7 +133,7 @@ export default function Addcycle({
                         className={`cycle-stat-icon cycle-stat-icon--budget cycle-stat-icon--filled${isEmptyBudget ? " is-muted" : ""}`}
                         aria-hidden
                     >
-                        <img src={budgetIcon} alt="" className="cycle-stat-icon-img" />
+                        📊
                     </span>
                     <span className="cycle-stat-label">{t("addcycle.usedBudget")}</span>
                     <div
