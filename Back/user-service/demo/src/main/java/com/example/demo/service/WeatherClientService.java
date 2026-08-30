@@ -41,6 +41,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class WeatherClientService {
 
     private static final Logger log = LoggerFactory.getLogger(WeatherClientService.class);
+    private static final String DATE_UNAVAILABLE = "Weather forecast not available for this date";
 
     private final WeatherProperties props;
     private final RestTemplate restTemplate;
@@ -147,7 +148,9 @@ public class WeatherClientService {
                 return envelope;
             }
         } catch (ApiException ex) {
-            if (query.tambon() == null && query.amphoe() == null) {
+            boolean dropPlace = ex.getErrorCode() == ErrorCode.NOT_FOUND
+                    && !DATE_UNAVAILABLE.equals(ex.getMessage());
+            if (!dropPlace || (query.tambon() == null && query.amphoe() == null)) {
                 throw ex;
             }
             log.warn("Weather API retry after: {}", ex.getMessage());
@@ -193,7 +196,7 @@ public class WeatherClientService {
             int status = response.getStatusCode().value();
             if (status < 200 || status >= 300) {
                 log.warn("Weather API HTTP {} body={} uri={}", status, truncate(response.getBody()), uri);
-                throw new ApiException(ErrorCode.WEATHER_API_ERROR, "Weather API request failed");
+                throw tmdHttpError(status);
             }
             String body = response.getBody();
             if (body == null || body.isBlank()) {
@@ -206,6 +209,16 @@ public class WeatherClientService {
             log.warn("Weather API request failed: {} {}", uri, ex.getMessage());
             throw new ApiException(ErrorCode.WEATHER_API_ERROR, "Weather API request failed");
         }
+    }
+
+    private static ApiException tmdHttpError(int status) {
+        if (status == 400 || status == 422) {
+            return new ApiException(ErrorCode.NOT_FOUND, DATE_UNAVAILABLE);
+        }
+        if (status == 404) {
+            return new ApiException(ErrorCode.NOT_FOUND, "Weather forecast not found for this place");
+        }
+        return new ApiException(ErrorCode.WEATHER_API_ERROR, "Weather API request failed");
     }
 
     private List<WeatherHourRes> mapHours(List<TmdForecast> forecasts) {

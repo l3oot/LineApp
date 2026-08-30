@@ -1,6 +1,7 @@
 import { Outlet, createBrowserRouter } from "react-router-dom";
 import Sum from "../pages/Sum";
 import Cycle from "../pages/Cycle";
+import CycleDetail from "../pages/CycleDetail";
 import Analytic from "../pages/Analytic";
 import List from "../pages/List";
 import Setting from "../pages/Setting";
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
         children: [
             { path: "/", element: <Sum /> },
             { path: "/cycle", element: <Cycle /> },
+            { path: "/cycle/:cycleId", element: <CycleDetail /> },
             { path: "/analytics", element: <Analytic /> },
             { path: "/list", element: <List /> },
             { path: "/settings", element: <Setting /> },

@@ -9,16 +9,20 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.dto.ApiRes;
 import com.example.demo.dto.req.WeatherForecastQuery;
 import com.example.demo.dto.res.WeatherForecastRes;
+import com.example.demo.dto.res.WeatherWarningRes;
 import com.example.demo.service.WeatherClientService;
+import com.example.demo.service.WeatherWarningService;
 
 @RestController
 @RequestMapping("/api/weather")
 public class WeatherController {
 
     private final WeatherClientService weatherClientService;
+    private final WeatherWarningService weatherWarningService;
 
-    public WeatherController(WeatherClientService weatherClientService) {
+    public WeatherController(WeatherClientService weatherClientService, WeatherWarningService weatherWarningService) {
         this.weatherClientService = weatherClientService;
+        this.weatherWarningService = weatherWarningService;
     }
 
     @GetMapping("/forecast")
@@ -43,6 +47,12 @@ public class WeatherController {
             @RequestParam(required = false) Integer duration) {
         WeatherForecastRes data = weatherClientService.forecastDaily(
                 new WeatherForecastQuery(province, amphoe, tambon, date, null, duration));
+        return ResponseEntity.ok(ApiRes.success(data, "OK"));
+    }
+
+    @GetMapping("/warning")
+    public ResponseEntity<ApiRes<WeatherWarningRes>> warning() {
+        WeatherWarningRes data = weatherWarningService.latest();
         return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 }

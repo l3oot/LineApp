@@ -270,6 +270,10 @@ const resources = {
                 deleteConfirmMessage:
                     "ลบรอบ \"{{name}}\" ใช่หรือไม่? งบประมาณจะถูกลบด้วย และรายการธุรกรรมจะไม่ผูกรอบนี้แล้ว",
                 deleteConfirmButton: "ลบรอบ",
+                detailBack: "กลับ",
+                detailNotFound: "ไม่พบรอบการผลิตนี้",
+                detailLoading: "กำลังโหลด...",
+                detailTransactions: "รายการ",
             },
             weather: {
                 pageTitle: "ตรวจสภาพอากาศ",
@@ -320,6 +324,12 @@ const resources = {
                     11: "อากาศเย็น",
                     12: "อากาศร้อนจัด",
                 },
+                warningTitle: "ประกาศเตือนภัย",
+                warningLoading: "กำลังสรุปประกาศเตือนภัย...",
+                warningNone: "ขณะนี้ไม่มีประกาศเตือนภัยจากกรมอุตุนิยมวิทยา",
+                warningIssue: "ฉบับที่ {{issue}}",
+                warningEffect: "มีผล {{start}} – {{end}}",
+                warningReadFull: "อ่านประกาศเต็ม",
             },
             government: {
                 sectionTitle: "หน่วยงานที่เกี่ยวข้อง",
@@ -354,6 +364,8 @@ const resources = {
                 dateComeIn: "จะถึงใน {{days}} วัน",
                 edit: "แก้ไข",
                 delete: "ลบ",
+                more: "เพิ่มเติม",
+                moreAria: "ดูกราฟและรายการของรอบ {{name}}",
             },
             pnl: {
                 profit: "กำไร",
@@ -383,6 +395,7 @@ const resources = {
                 year: "ปี",
                 other: "อื่นๆ",
                 uncategorized: "ไม่ระบุหมวด",
+                loading: "กำลังโหลด...",
                 filter: {
                     "1M": "1 เดือน",
                     "6M": "6 เดือน",
@@ -661,6 +674,10 @@ const resources = {
                 deleteConfirmMessage:
                     'Delete cycle "{{name}}"? Its budget will be removed and linked transactions will be unassigned from this cycle.',
                 deleteConfirmButton: "Delete cycle",
+                detailBack: "Back",
+                detailNotFound: "This production cycle was not found",
+                detailLoading: "Loading...",
+                detailTransactions: "Transactions",
             },
             weather: {
                 pageTitle: "Weather check",
@@ -711,6 +728,12 @@ const resources = {
                     11: "Cool",
                     12: "Very hot",
                 },
+                warningTitle: "Weather warning",
+                warningLoading: "Summarizing weather warning...",
+                warningNone: "There is no TMD weather warning right now",
+                warningIssue: "Issue {{issue}}",
+                warningEffect: "In effect {{start}} – {{end}}",
+                warningReadFull: "Read full advisory",
             },
             government: {
                 sectionTitle: "Related agencies",
@@ -745,6 +768,8 @@ const resources = {
                 dateComeIn: "Due in {{days}} days",
                 edit: "Edit",
                 delete: "Delete",
+                more: "More",
+                moreAria: "View charts and transactions for {{name}}",
             },
             pnl: {
                 profit: "Profit",
@@ -774,6 +799,7 @@ const resources = {
                 year: "Year",
                 other: "Other",
                 uncategorized: "Uncategorized",
+                loading: "Loading...",
                 filter: {
                     "1M": "1M",
                     "6M": "6M",
@@ -1052,6 +1078,10 @@ const resources = {
                 deleteConfirmMessage:
                     "サイクル「{{name}}」を削除しますか？予算も削除され、関連する取引はこのサイクルから外れます。",
                 deleteConfirmButton: "サイクルを削除",
+                detailBack: "戻る",
+                detailNotFound: "この生産サイクルは見つかりません",
+                detailLoading: "読み込み中...",
+                detailTransactions: "取引",
             },
             weather: {
                 pageTitle: "天気を確認",
@@ -1102,6 +1132,12 @@ const resources = {
                     11: "涼しい",
                     12: "非常に暑い",
                 },
+                warningTitle: "気象警報",
+                warningLoading: "気象警報を要約しています...",
+                warningNone: "現在、気象庁からの警報はありません",
+                warningIssue: "第{{issue}}号",
+                warningEffect: "有効期間 {{start}} – {{end}}",
+                warningReadFull: "全文を読む",
             },
             government: {
                 sectionTitle: "関連機関",
@@ -1136,6 +1172,8 @@ const resources = {
                 dateComeIn: "あと{{days}}日",
                 edit: "編集",
                 delete: "削除",
+                more: "詳細",
+                moreAria: "{{name}}のグラフと取引を見る",
             },
             pnl: {
                 profit: "利益",
@@ -1165,6 +1203,7 @@ const resources = {
                 year: "年",
                 other: "その他",
                 uncategorized: "未分類",
+                loading: "読み込み中...",
                 filter: {
                     "1M": "1ヶ月",
                     "6M": "6ヶ月",

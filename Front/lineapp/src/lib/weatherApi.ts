@@ -28,6 +28,18 @@ export type WeatherQuery = {
     duration?: number | string | null;
 };
 
+export type WeatherWarning = {
+    hasWarning: boolean;
+    issueNo: string | null;
+    titleThai: string | null;
+    announceDate: string | null;
+    effectStartDate: string | null;
+    effectEndDate: string | null;
+    summary: string | null;
+    webUrlThai: string | null;
+    contactThai: string | null;
+};
+
 export function weatherConditionKey(condition: number): string | null {
     if (condition < 1 || condition > 12) {
         return null;
@@ -50,7 +62,9 @@ export function weatherSceneFromCondition(condition: number): WeatherScene | nul
 const CACHE_KEY = "weather_forecast_cache";
 const DAILY_CACHE_KEY = "weather_daily_forecast_cache";
 const HOURLY_CACHE_MAP_KEY = "weather_hourly_forecast_cache_map";
+const WARNING_CACHE_KEY = "weather_warning_cache";
 const CACHE_TTL_MS = 60 * 60 * 1000;
+const WARNING_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 export function weatherDayKey(time: string): string | null {
     const date = new Date(time);
@@ -70,6 +84,26 @@ export function weatherDayKey(time: string): string | null {
 
 export function todayWeatherDayKey(): string {
     return weatherDayKey(new Date().toISOString()) ?? "";
+}
+
+/** TMD Domain 2 hourly is ~72 hours, i.e. today plus two calendar days. */
+const HOURLY_MAX_DAYS_AHEAD = 2;
+
+export function shiftWeatherDayKey(dayKey: string, days: number): string | null {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dayKey)) return null;
+    const [year, month, day] = dayKey.split("-").map(Number);
+    const utc = new Date(Date.UTC(year, month - 1, day + days));
+    return [
+        utc.getUTCFullYear(),
+        String(utc.getUTCMonth() + 1).padStart(2, "0"),
+        String(utc.getUTCDate()).padStart(2, "0"),
+    ].join("-");
+}
+
+export function isHourlyForecastDate(date: string): boolean {
+    const today = todayWeatherDayKey();
+    const max = shiftWeatherDayKey(today, HOURLY_MAX_DAYS_AHEAD);
+    return Boolean(today && date && max && date >= today && date <= max);
 }
 
 type WeatherCacheEntry = {
@@ -215,8 +249,59 @@ function requestForecast(query: WeatherQuery, period: "hourly" | "daily"): Promi
     return request;
 }
 
+type WarningCacheEntry = {
+    savedAt: number;
+    data: WeatherWarning;
+};
+
+let warningInflight: Promise<WeatherWarning> | null = null;
+
+function readWarningCache(): WeatherWarning | null {
+    try {
+        const raw = localStorage.getItem(WARNING_CACHE_KEY);
+        if (!raw) return null;
+        const entry = JSON.parse(raw) as WarningCacheEntry;
+        if (!entry?.data || !Number.isFinite(entry.savedAt) || Date.now() - entry.savedAt > WARNING_CACHE_TTL_MS) {
+            return null;
+        }
+        return entry.data;
+    } catch {
+        return null;
+    }
+}
+
+function writeWarningCache(data: WeatherWarning): void {
+    try {
+        const entry: WarningCacheEntry = { savedAt: Date.now(), data };
+        localStorage.setItem(WARNING_CACHE_KEY, JSON.stringify(entry));
+    } catch {
+        // ignore quota / private-mode failures
+    }
+}
+
+function requestWarning(): Promise<WeatherWarning> {
+    const cached = readWarningCache();
+    if (cached) {
+        return Promise.resolve(cached);
+    }
+    if (warningInflight) {
+        return warningInflight;
+    }
+    warningInflight = api
+        .get<WeatherWarning>("/api/weather/warning", undefined, 90_000)
+        .then((data) => {
+            writeWarningCache(data);
+            return data;
+        })
+        .finally(() => {
+            warningInflight = null;
+        });
+    return warningInflight;
+}
+
 export const weatherApi = {
     readCached: (query: WeatherQuery) => readCache(query, "hourly"),
     forecast: (query: WeatherQuery) => requestForecast(query, "hourly"),
     dailyForecast: (query: WeatherQuery) => requestForecast(query, "daily"),
+    warning: () => requestWarning(),
 };

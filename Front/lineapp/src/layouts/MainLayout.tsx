@@ -34,7 +34,7 @@ const navItems: NavItem[] = [
 
 function resolvePageTone(pathname: string): string {
     if (pathname.startsWith("/list") || pathname.startsWith("/analytics") || pathname.startsWith("/prices")) return "green";
-    if (pathname === "/cycle" || pathname.startsWith("/government")) return "pink";
+    if (pathname.startsWith("/cycle") || pathname.startsWith("/government")) return "pink";
     if (pathname.startsWith("/weather")) return "blue";
     if (pathname.startsWith("/settings")) return "purple";
     return "neutral";

@@ -11,6 +11,9 @@ public class WeatherProperties {
     private String token = "";
     private int timeoutSeconds = 20;
     private int durationHours = 24;
+    private String warningUrl = "https://data.tmd.go.th/api/WeatherWarningNews/v2/";
+    private String warningUid = "demo";
+    private String warningUkey = "demokey";
 
     public String getBaseUrl() {
         return baseUrl;
@@ -42,5 +45,29 @@ public class WeatherProperties {
 
     public void setDurationHours(int durationHours) {
         this.durationHours = durationHours;
+    }
+
+    public String getWarningUrl() {
+        return warningUrl;
+    }
+
+    public void setWarningUrl(String warningUrl) {
+        this.warningUrl = warningUrl;
+    }
+
+    public String getWarningUid() {
+        return warningUid;
+    }
+
+    public void setWarningUid(String warningUid) {
+        this.warningUid = warningUid;
+    }
+
+    public String getWarningUkey() {
+        return warningUkey;
+    }
+
+    public void setWarningUkey(String warningUkey) {
+        this.warningUkey = warningUkey;
     }
 }

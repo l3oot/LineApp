@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+    isHourlyForecastDate,
     todayWeatherDayKey,
     weatherApi,
     weatherDayKey,
@@ -149,6 +150,11 @@ export function useWeatherPageData() {
         if (!place || !date || date in hourlyByDateRef.current || hourlyInflight.current.has(date)) {
             return;
         }
+        if (!isHourlyForecastDate(date)) {
+            hourlyByDateRef.current = { ...hourlyByDateRef.current, [date]: [] };
+            setHourlyByDate(hourlyByDateRef.current);
+            return;
+        }
         hourlyInflight.current.add(date);
         setHourlyLoadingDate(date);
         try {
@@ -233,7 +239,7 @@ export function useWeatherPageData() {
                 setStatus("ready");
                 const extraDays = mergeSeries(nextDaily)
                     .map((row) => weatherDayKey(row.time))
-                    .filter((day): day is string => Boolean(day) && day !== today);
+                    .filter((day): day is string => Boolean(day) && day !== today && isHourlyForecastDate(day));
                 extraDays.forEach((day) => {
                     void loadHourlyDay(day);
                 });
