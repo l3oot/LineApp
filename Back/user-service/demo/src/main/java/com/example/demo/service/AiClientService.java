@@ -19,8 +19,13 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.demo.config.AiServiceProperties;
+import com.example.demo.dto.req.AiAgriPriceBriefReq;
+import com.example.demo.dto.req.AiAgriPriceExtractReq;
 import com.example.demo.dto.req.AiWeatherBriefReq;
 import com.example.demo.dto.req.AiWeatherWarningReq;
+import com.example.demo.dto.res.AgriPriceLatestQuoteRes;
+import com.example.demo.dto.res.AiAgriPriceBriefRes;
+import com.example.demo.dto.res.AiAgriPriceExtractRes;
 import com.example.demo.dto.res.AiParseRes;
 import com.example.demo.dto.res.AiWeatherBriefRes;
 import com.example.demo.dto.res.AiWeatherWarningRes;
@@ -128,6 +133,66 @@ public class AiClientService {
             return resp.getBody();
         } catch (Exception e) {
             log.error("[weather-brief:ai-service] call failed elapsedMs={}: {}",
+                    System.currentTimeMillis() - t0, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * เรียก ai-service POST /agri-price/extract — return null ถ้าพังหรือ timeout
+     */
+    public AiAgriPriceExtractRes extractAgriPriceQuery(String text) {
+        long t0 = System.currentTimeMillis();
+        try {
+            URI uri = UriComponentsBuilder
+                    .fromUriString(props.getBaseUrl())
+                    .path(props.getAgriPriceExtractPath())
+                    .encode(StandardCharsets.UTF_8)
+                    .build()
+                    .toUri();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+            HttpEntity<AiAgriPriceExtractReq> entity =
+                    new HttpEntity<>(new AiAgriPriceExtractReq(text), headers);
+
+            ResponseEntity<AiAgriPriceExtractRes> resp =
+                    restTemplate.exchange(uri, HttpMethod.POST, entity, AiAgriPriceExtractRes.class);
+            log.info("[agri-price-extract:ai-service] call ok elapsedMs={}", System.currentTimeMillis() - t0);
+            return resp.getBody();
+        } catch (Exception e) {
+            log.error("[agri-price-extract:ai-service] call failed elapsedMs={}: {}",
+                    System.currentTimeMillis() - t0, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * เรียก ai-service POST /agri-price/summarize — return null ถ้าพังหรือ timeout
+     */
+    public AiAgriPriceBriefRes summarizeAgriPrice(String productQuery, List<AgriPriceLatestQuoteRes> quotes) {
+        long t0 = System.currentTimeMillis();
+        try {
+            URI uri = UriComponentsBuilder
+                    .fromUriString(props.getBaseUrl())
+                    .path(props.getAgriPriceBriefPath())
+                    .encode(StandardCharsets.UTF_8)
+                    .build()
+                    .toUri();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+            HttpEntity<AiAgriPriceBriefReq> entity =
+                    new HttpEntity<>(new AiAgriPriceBriefReq(productQuery, quotes), headers);
+
+            ResponseEntity<AiAgriPriceBriefRes> resp =
+                    restTemplate.exchange(uri, HttpMethod.POST, entity, AiAgriPriceBriefRes.class);
+            log.info("[agri-price-brief:ai-service] call ok elapsedMs={}", System.currentTimeMillis() - t0);
+            return resp.getBody();
+        } catch (Exception e) {
+            log.error("[agri-price-brief:ai-service] call failed elapsedMs={}: {}",
                     System.currentTimeMillis() - t0, e.getMessage(), e);
             return null;
         }
