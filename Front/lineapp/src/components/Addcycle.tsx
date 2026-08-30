@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiCalendar, FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiCalendar, FiChevronRight, FiEdit2, FiTrash2 } from "react-icons/fi";
 import { calpercentused, calbgcolor, calPnL } from "../utils/Sumfun";
 import { useTranslation } from "react-i18next";
 import { icons } from "../assets/Iconlist";
@@ -20,6 +20,7 @@ type AddcycleProps = {
     icon: IconName;
     onEdit?: () => void;
     onDelete?: () => void;
+    onMore?: () => void;
     deleting?: boolean;
 };
 
@@ -33,6 +34,7 @@ export default function Addcycle({
     icon,
     onEdit,
     onDelete,
+    onMore,
     deleting = false,
 }: AddcycleProps) {
     const { t } = useTranslation();
@@ -171,6 +173,18 @@ export default function Addcycle({
                     </div>
                 </div>
             </div>
+
+            {onMore && (
+                <button
+                    type="button"
+                    className="cycle-card-more-btn"
+                    onClick={onMore}
+                    aria-label={t("addcycle.moreAria", { name: title })}
+                >
+                    {t("addcycle.more")}
+                    <FiChevronRight size={16} aria-hidden />
+                </button>
+            )}
         </article>
     );
 }

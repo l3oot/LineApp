@@ -308,6 +308,7 @@ export default function CyclePage() {
                                 deleting={deletingCycleId === cycle.cycleId}
                                 onEdit={() => openEditSheet(cycle)}
                                 onDelete={() => setCycleToDelete(cycle)}
+                                onMore={() => navigate(`/cycle/${cycle.cycleId}`)}
                             />
                         );
                     })}

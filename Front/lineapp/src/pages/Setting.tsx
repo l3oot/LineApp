@@ -146,8 +146,8 @@ export default function Setting() {
     return (
         <MainLayout>
             <div className="home-page">
-                <div className="home-content-card flex flex-col gap-1.5">
-                <div className="settings-panel mb-1 flex w-full items-center justify-end gap-3.5 px-2 py-2">
+                <div className="home-content-card flex flex-col gap-2.5">
+                <div className="settings-panel mb-1 flex w-full items-center justify-end gap-3.5 rounded-[var(--radius-card)] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-soft)]">
                     <div className="leading-tight text-right">
                         <p className="text-base font-semibold text-[var(--text)]">{displayName}</p>
                     </div>
@@ -155,12 +155,12 @@ export default function Setting() {
                         <img
                             src={currentUser!.pictureUrl!}
                             alt={displayName}
-                            className="h-10 w-10 shrink-0 rounded-full object-cover"
+                            className="h-12 w-12 shrink-0 rounded-full object-cover shadow-[0_4px_12px_rgba(90,130,190,0.14)]"
                             onError={() => setAvatarBroken(true)}
                             referrerPolicy="no-referrer"
                         />
                     ) : (
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
                             <LuUserRound size={20} />
                         </div>
                     )}

@@ -15,8 +15,8 @@ import { FaPlus } from "react-icons/fa";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { useTranslation } from "react-i18next";
 import "../styles/list.css";
-import type { GroupedTransaction } from "../data/listMockData";
 import { buildExportRows, exportTransactionsToExcel, exportTransactionsToPdf } from "../utils/exportTransactions";
+import { groupTransactionsByDate } from "../utils/groupTransactionsByDate";
 import {
     categoryApi,
     cycleApi,
@@ -32,14 +32,10 @@ import {
     calendarDateTimeToApi,
     calendarDateToApiEnd,
     calendarDateToApiStart,
-    formatAppDate,
-    gregorianKeyFromCalendarDate,
-    parseTxToGregorianCalendarDate,
     toAppCalendarDate,
     toGregorianCalendarDate,
 } from "../utils/formatAppDate";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
-import { parseTxDateTime } from "../utils/parseTxDateTime";
 
 const LINE_APP_ICON_URL =
     "https://upload.wikimedia.org/wikipedia/commons/2/2e/LINE_New_App_Icon_%282020-12%29.png";
@@ -55,35 +51,6 @@ function categoryNameForTx(
     fallbackCategory: string,
 ): string {
     return tx.categoryId ? (categoryById[tx.categoryId] ?? fallbackCategory) : fallbackCategory;
-}
-
-function groupTransactionsByDate(rows: Transaction[], lang: string): GroupedTransaction[] {
-    const sorted = [...rows].sort(
-        (a, b) => parseTxDateTime(b.txDate).getTime() - parseTxDateTime(a.txDate).getTime(),
-    );
-    const groups: GroupedTransaction[] = [];
-    let currentDateKey = "";
-    let currentDateLabel = "";
-    let currentItems: Transaction[] = [];
-
-    for (const tx of sorted) {
-        const dateKey = gregorianKeyFromCalendarDate(parseTxToGregorianCalendarDate(tx.txDate));
-        const dateLabel = formatAppDate(tx.txDate, lang);
-        if (dateKey !== currentDateKey) {
-            if (currentItems.length > 0) {
-                groups.push({ date: currentDateLabel, transactions: currentItems });
-            }
-            currentDateKey = dateKey;
-            currentDateLabel = dateLabel;
-            currentItems = [tx];
-        } else {
-            currentItems.push(tx);
-        }
-    }
-    if (currentItems.length > 0) {
-        groups.push({ date: currentDateLabel, transactions: currentItems });
-    }
-    return groups;
 }
 
 export default function List() {

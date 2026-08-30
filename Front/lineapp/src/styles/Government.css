@@ -6,50 +6,6 @@
     gap: 1.25rem;
 }
 
-/* Hero banner */
-.gov-hero {
-    display: flex;
-    align-items: center;
-    gap: 0.875rem;
-    padding: 1.125rem 1.25rem;
-    border-radius: var(--radius-card);
-    background: linear-gradient(135deg, #f48fb1 0%, #ce93d8 100%);
-    box-shadow: 0 8px 20px rgba(206, 147, 216, 0.28);
-    color: #fff;
-}
-
-.gov-hero-icon-ring {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 3rem;
-    height: 3rem;
-    border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.24);
-    color: #fff;
-}
-
-.gov-hero-text {
-    min-width: 0;
-}
-
-.gov-hero-title {
-    margin: 0;
-    font-size: 1.0625rem;
-    font-weight: 800;
-    line-height: 1.3;
-}
-
-.gov-hero-subtitle {
-    margin: 0.1875rem 0 0;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    line-height: 1.4;
-    color: rgba(255, 255, 255, 0.92);
-    white-space: pre-line;
-}
-
 /* Section */
 .gov-section .home-section-title {
     margin-bottom: 0.875rem;
@@ -67,7 +23,7 @@
     flex-direction: column;
     gap: 0.625rem;
     padding: 1rem 1.0625rem 1.0625rem;
-    border: 1.5px solid color-mix(in srgb, var(--border) 85%, #d8cfc4);
+    border: none;
     border-radius: var(--radius-card);
     background: var(--surface);
     box-shadow: var(--shadow-soft);
@@ -217,45 +173,4 @@
 .gov-card--purple .gov-phone-chip {
     --gov-chip-bg: #ede7f6;
     --gov-chip-color: #5e35b1;
-}
-
-.gov-card--pink .gov-card-icon-wrap {
-    background: #fce4ec;
-    color: #ec407a;
-}
-.gov-card--pink .gov-phone-chip {
-    --gov-chip-bg: #fce4ec;
-    --gov-chip-color: #d81b60;
-}
-
-/* Tip footer */
-.gov-tip {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5625rem;
-    padding: 0.875rem 1rem;
-    border-radius: var(--radius-card);
-    border: 1.5px dashed color-mix(in srgb, var(--page-tone-accent, var(--primary)) 45%, var(--border));
-    background: color-mix(in srgb, var(--page-tone-soft, var(--primary-soft)) 55%, var(--surface));
-}
-
-.gov-tip-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.7);
-    color: color-mix(in srgb, var(--page-tone-accent, var(--primary)) 80%, #4a4a4a);
-}
-
-.gov-tip-text {
-    margin: 0;
-    padding-top: 0.1875rem;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    line-height: 1.45;
-    color: var(--text);
 }

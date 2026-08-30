@@ -114,6 +114,15 @@ export function formatAppDate(
     return formatIntlDate(date, { day: "numeric", month: "short", year: "numeric" }, lang);
 }
 
+/** 29 สิงหาคม 2569 */
+export function formatLongDate(
+    value: Date | string | number[] | null | undefined,
+    lang?: string,
+): string {
+    const date = value instanceof Date ? value : parseTxDateTime(value);
+    return formatIntlDate(date, { day: "numeric", month: "long", year: "numeric" }, lang);
+}
+
 export function formatAppMonthYear(
     value: Date | string | null | undefined,
     lang?: string,

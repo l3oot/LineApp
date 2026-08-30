@@ -11,6 +11,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.example.demo.dto.ApiRes;
 import com.example.demo.enums.ErrorCode;
@@ -46,6 +47,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiRes<Object>> handleAccessDenied(AccessDeniedException ex) {
         ApiRes<Object> body = ApiRes.failure(ErrorCode.FORBIDDEN, "Forbidden");
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiRes<Object>> handleNoResource(NoResourceFoundException ex) {
+        ApiRes<Object> body = ApiRes.failure(ErrorCode.NOT_FOUND, "Not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
     @ExceptionHandler(Exception.class)

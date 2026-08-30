@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { FiCheck, FiChevronDown, FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import BottomSheet from "./BottomSheet";
@@ -44,16 +44,38 @@ function ScrollPickerField({
     selectedCode,
     onSelect,
 }: ScrollPickerFieldProps) {
+    const { t } = useTranslation();
     const isOpen = activePicker === pickerKey;
+    const [query, setQuery] = useState("");
+    const searchRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setQuery("");
+            return;
+        }
+        const timer = window.setTimeout(() => searchRef.current?.focus(), 0);
+        return () => window.clearTimeout(timer);
+    }, [isOpen]);
+
+    const filteredOptions = useMemo(() => {
+        const needle = query.trim().toLowerCase();
+        if (!needle) return options;
+        return options.filter((item) => item.name.toLowerCase().includes(needle));
+    }, [options, query]);
+
+    const handleSelect = (code: string) => {
+        onSelect(code);
+    };
 
     return (
-        <label className="text-sm font-bold text-[var(--text)]">
+        <div className="text-sm font-bold text-[var(--text)]">
             {label}
             <button
                 type="button"
                 disabled={disabled}
                 onClick={() => onToggle(pickerKey)}
-                className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm transition-all hover:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm font-medium transition-all hover:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
             >
                 <span className={selectedName ? "text-[var(--text)]" : "text-[var(--text-soft)]"}>
                     {selectedName ?? placeholder}
@@ -64,40 +86,63 @@ function ScrollPickerField({
                 />
             </button>
             {isOpen && !disabled && (
-                <div className="mt-2 max-h-[180px] overflow-y-auto rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)]">
-                    <button
-                        type="button"
-                        onClick={() => onSelect("")}
-                        className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-all ${
-                            !selectedCode
-                                ? "bg-[var(--primary-soft)] text-[var(--primary)]"
-                                : "text-[var(--text-soft)] hover:bg-[var(--surface-soft)]"
-                        }`}
-                    >
-                        <span>{placeholder}</span>
-                        {!selectedCode && <FiCheck size={18} className="text-[var(--text-soft)]" />}
-                    </button>
-                    {options.map((item) => {
-                        const isSelected = selectedCode === item.code;
-                        return (
+                <div className="mt-2 overflow-hidden rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)]">
+                    <div className="border-b border-[var(--border)] p-2">
+                        <input
+                            ref={searchRef}
+                            type="text"
+                            value={query}
+                            onChange={(event) => setQuery(event.target.value)}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") event.preventDefault();
+                            }}
+                            placeholder={t("settings.profileSheet.searchPlaceholder")}
+                            className="w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-medium text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
+                        />
+                    </div>
+                    <div className="max-h-[180px] overflow-y-auto">
+                        {!query.trim() && (
                             <button
-                                key={item.code}
                                 type="button"
-                                onClick={() => onSelect(item.code)}
-                                className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-all ${
-                                    isSelected
+                                onClick={() => handleSelect("")}
+                                className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium transition-all ${
+                                    !selectedCode
                                         ? "bg-[var(--primary-soft)] text-[var(--primary)]"
-                                        : "text-[var(--text)] hover:bg-[var(--surface-soft)]"
+                                        : "text-[var(--text-soft)] hover:bg-[var(--surface-soft)]"
                                 }`}
                             >
-                                <span>{item.name}</span>
-                                {isSelected && <FiCheck size={18} className="text-[var(--text-soft)]" />}
+                                <span>{placeholder}</span>
+                                {!selectedCode && <FiCheck size={18} className="text-[var(--text-soft)]" />}
                             </button>
-                        );
-                    })}
+                        )}
+                        {filteredOptions.length === 0 ? (
+                            <p className="px-4 py-3 text-sm font-medium text-[var(--text-soft)]">
+                                {t("settings.profileSheet.searchNoResults")}
+                            </p>
+                        ) : (
+                            filteredOptions.map((item) => {
+                                const isSelected = selectedCode === item.code;
+                                return (
+                                    <button
+                                        key={item.code}
+                                        type="button"
+                                        onClick={() => handleSelect(item.code)}
+                                        className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium transition-all ${
+                                            isSelected
+                                                ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                                                : "text-[var(--text)] hover:bg-[var(--surface-soft)]"
+                                        }`}
+                                    >
+                                        <span>{item.name}</span>
+                                        {isSelected && <FiCheck size={18} className="text-[var(--text-soft)]" />}
+                                    </button>
+                                );
+                            })
+                        )}
+                    </div>
                 </div>
             )}
-        </label>
+        </div>
     );
 }
 

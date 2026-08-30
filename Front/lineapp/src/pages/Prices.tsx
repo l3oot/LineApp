@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { LuSearch, LuTrendingUp } from "react-icons/lu";
+import { LuSearch } from "react-icons/lu";
 import {
     CategoryScale,
     Chart as ChartJS,
@@ -13,14 +13,13 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import MainLayout from "../layouts/MainLayout";
-import { agriPriceApi, type AgriPricePeriod, type AgriPriceRow } from "../lib/agriPriceApi";
+import { agriPriceApi, type AgriPriceRow } from "../lib/agriPriceApi";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
 import { CHART_INCOME, chartColorWithAlpha } from "../utils/chartTheme";
 import "../styles/Prices.css";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
-const PERIODS: AgriPricePeriod[] = ["daily", "weekly", "monthly"];
 const ALL_MARKETS = "__all__";
 const SUGGESTION_LIMIT = 8;
 
@@ -36,33 +35,16 @@ function formatPrice(value: number, language: string): string {
     }).format(value);
 }
 
-function monthLabel(month: string | null | undefined, language: string): string {
-    const monthNum = Number(month);
-    if (!Number.isFinite(monthNum) || monthNum < 1 || monthNum > 12) {
-        return month ?? "";
-    }
+function pointLabel(row: AgriPriceRow, language: string): string {
     const locale = language.startsWith("en") ? "en-US" : language.startsWith("jp") ? "ja-JP" : "th-TH";
-    return new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(2026, monthNum - 1, 1));
+    const parsed = Date.parse(row.dateKey);
+    if (Number.isFinite(parsed)) {
+        return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(new Date(parsed));
+    }
+    return row.dateKey;
 }
 
-function pointLabel(row: AgriPriceRow, period: AgriPricePeriod, language: string): string {
-    if (period === "daily") {
-        const locale = language.startsWith("en") ? "en-US" : language.startsWith("jp") ? "ja-JP" : "th-TH";
-        const parsed = Date.parse(row.dateKey);
-        if (Number.isFinite(parsed)) {
-            return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(new Date(parsed));
-        }
-        return row.dateKey;
-    }
-    const month = monthLabel(row.month, language);
-    const year = row.yearTh ?? "";
-    if (period === "monthly") {
-        return `${month} ${year}`.trim();
-    }
-    return `${month} ${year} W${row.week ?? ""}`.trim();
-}
-
-function buildChartPoints(rows: AgriPriceRow[], period: AgriPricePeriod, language: string): ChartPoint[] {
+function buildChartPoints(rows: AgriPriceRow[], language: string): ChartPoint[] {
     const buckets = new Map<string, { sum: number; count: number; sample: AgriPriceRow }>();
     for (const row of rows) {
         const current = buckets.get(row.dateKey);
@@ -76,7 +58,7 @@ function buildChartPoints(rows: AgriPriceRow[], period: AgriPricePeriod, languag
     return [...buckets.entries()]
         .map(([dateKey, bucket]) => ({
             dateKey,
-            label: pointLabel(bucket.sample, period, language),
+            label: pointLabel(bucket.sample, language),
             price: bucket.sum / bucket.count,
         }))
         .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
@@ -85,7 +67,6 @@ function buildChartPoints(rows: AgriPriceRow[], period: AgriPricePeriod, languag
 export default function Prices() {
     const { t, i18n } = useTranslation();
     const [query, setQuery] = useState("");
-    const [period, setPeriod] = useState<AgriPricePeriod>("daily");
     const [productNames, setProductNames] = useState<string[]>([]);
     const [items, setItems] = useState<AgriPriceRow[]>([]);
     const [matchedName, setMatchedName] = useState("");
@@ -129,8 +110,8 @@ export default function Prices() {
     }, [items, market]);
 
     const chartPoints = useMemo(
-        () => buildChartPoints(filteredItems, period, i18n.language),
-        [filteredItems, period, i18n.language],
+        () => buildChartPoints(filteredItems, i18n.language),
+        [filteredItems, i18n.language],
     );
 
     const latestPoint = chartPoints.at(-1) ?? null;
@@ -196,17 +177,16 @@ export default function Prices() {
             .slice(0, 8);
     }, [filteredItems]);
 
-    async function runSearch(nextQuery: string, nextPeriod = period) {
+    async function runSearch(nextQuery: string) {
         const trimmed = nextQuery.trim();
         if (!trimmed) return;
         setQuery(trimmed);
-        setPeriod(nextPeriod);
         setLoading(true);
         setLoadError(null);
         setSearched(true);
         setMarket(ALL_MARKETS);
         try {
-            const result = await agriPriceApi.search(trimmed, nextPeriod);
+            const result = await agriPriceApi.search(trimmed);
             setItems(result.items ?? []);
             setMatchedName(result.matchedName ?? trimmed);
             setTotal(result.total ?? result.items?.length ?? 0);
@@ -222,7 +202,7 @@ export default function Prices() {
 
     function handleSubmit(event: FormEvent) {
         event.preventDefault();
-        void runSearch(query, period);
+        void runSearch(query);
     }
 
     return (
@@ -230,16 +210,6 @@ export default function Prices() {
             <div className="home-page">
                 <div className="home-content-card">
                     <div className="prices-page">
-                        <section className="prices-hero">
-                            <span className="prices-hero-icon-ring" aria-hidden>
-                                <LuTrendingUp size={20} />
-                            </span>
-                            <div className="prices-hero-text">
-                                <h1 className="prices-hero-title">{t("prices.pageTitle")}</h1>
-                                <p className="prices-hero-subtitle">{t("prices.pageSubtitle")}</p>
-                            </div>
-                        </section>
-
                         <section className="prices-card">
                             <form className="prices-search" onSubmit={handleSubmit}>
                                 <label className="prices-search-label" htmlFor="prices-query">
@@ -268,29 +238,13 @@ export default function Prices() {
                                             key={name}
                                             type="button"
                                             className={`prices-chip${query.trim() === name ? " is-active" : ""}`}
-                                            onClick={() => void runSearch(name, period)}
+                                            onClick={() => void runSearch(name)}
                                         >
                                             {name}
                                         </button>
                                     ))}
                                 </div>
                             )}
-
-                            <div className="prices-period pill-segment-track">
-                                {PERIODS.map((item) => (
-                                    <button
-                                        key={item}
-                                        type="button"
-                                        className={`pill-control pill-control--chip pill-control--ghost${period === item ? " is-active" : ""}`}
-                                        onClick={() => {
-                                            setPeriod(item);
-                                            if (query.trim()) void runSearch(query, item);
-                                        }}
-                                    >
-                                        {t(`prices.period.${item}`)}
-                                    </button>
-                                ))}
-                            </div>
                         </section>
 
                         {loadError && <p className="prices-error">{loadError}</p>}
@@ -361,7 +315,7 @@ export default function Prices() {
                                                 <div className="prices-list-main">
                                                     <p className="prices-list-name">{row.productName ?? titleName}</p>
                                                     <p className="prices-list-meta">
-                                                        {[row.marketName, row.province, pointLabel(row, period, i18n.language)]
+                                                        {[row.marketName, row.province, pointLabel(row, i18n.language)]
                                                             .filter(Boolean)
                                                             .join(" · ")}
                                                     </p>
