@@ -2,13 +2,12 @@ import {
     FaCalculator,
     FaFileContract,
     FaLandmark,
-    FaMapMarkerAlt,
     FaSeedling,
     FaWater,
 } from "react-icons/fa";
 import type { IconType } from "react-icons";
 
-export type GovContactTone = "green" | "blue" | "teal" | "amber" | "purple" | "pink";
+export type GovContactTone = "green" | "blue" | "teal" | "amber" | "purple";
 
 export type GovContact = {
     id: string;
@@ -65,14 +64,6 @@ export const governmentContacts: GovContact[] = [
         purpose: "เรื่องบัญชีสหกรณ์/กลุ่มเกษตรกร และข้อมูลบริการของกรม",
         icon: FaCalculator,
         tone: "purple",
-    },
-    {
-        id: "district-office",
-        agency: "สำนักงานเกษตรอำเภอ",
-        parentAgency: "กรมส่งเสริมการเกษตร",
-        purpose: "ติดต่อเจ้าหน้าที่ในพื้นที่โดยตรง โดยเฉพาะเรื่องทะเบียนเกษตรกรและกิจกรรมการเกษตร",
-        icon: FaMapMarkerAlt,
-        tone: "pink",
     },
 ];
 

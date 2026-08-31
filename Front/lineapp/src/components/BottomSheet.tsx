@@ -156,7 +156,7 @@ export default function BottomSheet({
             <div
                 role="dialog"
                 aria-modal="true"
-                className={`absolute inset-x-0 bottom-0 rounded-t-[16px] bg-[var(--surface)] shadow-[0_-10px_22px_rgba(0,0,0,0.12)] ${panelClassName}`}
+                className={`absolute inset-x-0 bottom-0 rounded-t-[22px] bg-[var(--surface)] shadow-[0_-12px_32px_rgba(90,130,190,0.14)] ${panelClassName}`}
                 style={{
                     transform: panelTransform,
                     transition: isDragging ? "none" : `transform ${CLOSE_MS}ms cubic-bezier(0.32, 0.72, 0, 1)`,

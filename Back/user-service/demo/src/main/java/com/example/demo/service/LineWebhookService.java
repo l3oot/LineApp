@@ -61,6 +61,8 @@ public class LineWebhookService {
     private final LineFlexMessageBuilder lineFlexMessageBuilder;
     private final TransactionService transactionService;
     private final LineProperties lineProperties;
+    private final LineWeatherBriefService lineWeatherBriefService;
+    private final LineAgriPriceService lineAgriPriceService;
 
     public LineWebhookService(
             UserRepository userRepository,
@@ -68,13 +70,17 @@ public class LineWebhookService {
             LineMessagingService lineMessagingService,
             LineFlexMessageBuilder lineFlexMessageBuilder,
             TransactionService transactionService,
-            LineProperties lineProperties) {
+            LineProperties lineProperties,
+            LineWeatherBriefService lineWeatherBriefService,
+            LineAgriPriceService lineAgriPriceService) {
         this.userRepository = userRepository;
         this.aiClientService = aiClientService;
         this.lineMessagingService = lineMessagingService;
         this.lineFlexMessageBuilder = lineFlexMessageBuilder;
         this.transactionService = transactionService;
         this.lineProperties = lineProperties;
+        this.lineWeatherBriefService = lineWeatherBriefService;
+        this.lineAgriPriceService = lineAgriPriceService;
     }
 
     @Async("lineWebhookExecutor")
@@ -116,6 +122,32 @@ public class LineWebhookService {
                     "วิธีพิมพ์ข้อความบันทึกรายการ",
                     lineFlexMessageBuilder.buildHelpContents());
             return;
+        }
+
+        if ("สภาพอากาศ".equals(userText.trim())) {
+            try {
+                UserEntity user = upsertUserBySub(userSub);
+                String brief = lineWeatherBriefService.buildBrief(user.getUserId());
+                lineMessagingService.reply(replyToken, brief);
+            } catch (Exception e) {
+                log.error("[line-weather] brief failed for user={}: {}", userSub, e.getMessage(), e);
+                lineMessagingService.reply(replyToken, "🌦️ ยายยังดึงอากาศไม่ได้ตอนนี้ ลองพิมพ์ สภาพอากาศ อีกครั้งนะจ๊ะ");
+            }
+            return;
+        }
+
+        if (userText.contains("ราคา")) {
+            try {
+                String priceReply = lineAgriPriceService.tryBuildReply(userText);
+                if (priceReply != null) {
+                    lineMessagingService.reply(replyToken, priceReply);
+                    return;
+                }
+            } catch (Exception e) {
+                log.error("[line-price] reply failed for user={}: {}", userSub, e.getMessage(), e);
+                lineMessagingService.reply(replyToken, "🥬 ยายยังดึงราคาไม่ได้ตอนนี้ ลองพิมพ์ ราคามะนาว อีกครั้งนะจ๊ะ");
+                return;
+            }
         }
 
         long t0 = System.currentTimeMillis();

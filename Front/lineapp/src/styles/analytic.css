@@ -10,7 +10,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--border) 85%, #d8cfc4);
+    border: none;
     border-radius: var(--radius-card);
     background: var(--surface);
     box-shadow: var(--shadow-soft);
@@ -120,7 +120,7 @@
     flex-direction: column;
     align-items: center;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--border) 85%, #d8cfc4);
+    border: none;
     border-radius: var(--radius-card);
     background: var(--surface);
     box-shadow: var(--shadow-soft);

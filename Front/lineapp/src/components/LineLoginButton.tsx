@@ -19,7 +19,7 @@ export default function LineLoginButton({ className = "" }: LineLoginButtonProps
                     const target = getLineLoginUrl();
                     if (target) window.location.assign(target);
                 }}
-                className="flex w-full min-h-[48px] items-center justify-center gap-2.5 rounded-[var(--radius-control)] bg-[#06C755] px-4 text-[15px] font-semibold text-white transition-colors hover:bg-[#05b34c] active:bg-[#049948] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#06C755]"
+                className="flex w-full min-h-[48px] items-center justify-center gap-2.5 rounded-full bg-[#06C755] px-4 text-[15px] font-semibold text-white transition-colors hover:bg-[#05b34c] active:bg-[#049948] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#06C755]"
             >
                 <SiLine className="h-6 w-6 shrink-0" aria-hidden />
                 {t("settings.lineLogin")}

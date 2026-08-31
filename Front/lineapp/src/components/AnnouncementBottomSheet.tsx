@@ -16,7 +16,7 @@ export default function AnnouncementBottomSheet({ open, onClose }: AnnouncementB
         <BottomSheet
             open={open}
             onClose={onClose}
-            panelClassName="mx-auto flex max-h-[70vh] w-full max-w-[420px] flex-col rounded-t-[22px] border border-[var(--border)] p-4 shadow-[var(--shadow-soft)]"
+            panelClassName="mx-auto flex max-h-[70vh] w-full max-w-[420px] flex-col rounded-t-[22px] p-4"
         >
             <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-base font-bold text-[var(--text)]">
@@ -36,7 +36,7 @@ export default function AnnouncementBottomSheet({ open, onClose }: AnnouncementB
                 {ANNOUNCEMENT_KEYS.map((key) => (
                     <article
                         key={key}
-                        className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-3"
+                        className="rounded-[var(--radius-card)] bg-[var(--surface-soft)] px-4 py-3"
                     >
                         <p className="text-sm font-bold text-[var(--text)]">
                             {t(`notificationSheet.items.${key}.title`)}

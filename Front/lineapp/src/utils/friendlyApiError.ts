@@ -55,6 +55,7 @@ function mapTypeErrorToFriendlyMessage(typeError: string | undefined, t: TFuncti
         case "INTERNAL_ERROR":
         case "SERVER_ERROR":
         case "AGRI_PRICE_API_ERROR":
+        case "WEATHER_API_ERROR":
             return t("errors.server");
         default:
             return null;

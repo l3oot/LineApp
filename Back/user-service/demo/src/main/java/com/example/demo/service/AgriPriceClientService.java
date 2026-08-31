@@ -18,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.demo.config.AgriPriceProperties;
+import com.example.demo.dto.res.AgriPriceLatestQuoteRes;
 import com.example.demo.dto.res.AgriPriceRowRes;
 import com.example.demo.dto.res.AgriPriceSearchRes;
 import com.example.demo.enums.ErrorCode;
@@ -55,6 +56,73 @@ public class AgriPriceClientService {
 
     public List<String> listProductNames() {
         return loadProductNames();
+    }
+
+    /**
+     * ชื่อสินค้าที่ตรงหรือมีคำค้นอยู่ข้างใน — ถ้าพิมพ์ไม่ครบสโคปจะได้ทุกรายการที่เจอ
+     */
+    public List<String> findMatchingProductNames(String rawQuery) {
+        String query = rawQuery == null ? "" : rawQuery.trim().replaceAll("\\s+", " ");
+        if (query.isEmpty()) {
+            return List.of();
+        }
+        List<String> names = loadProductNamesSafe();
+        if (names.isEmpty()) {
+            return List.of();
+        }
+        List<String> contains = names.stream().filter(name -> name.contains(query)).toList();
+        if (!contains.isEmpty()) {
+            return contains;
+        }
+        String token = firstToken(query);
+        if (!token.equals(query)) {
+            return names.stream().filter(name -> name.contains(token)).toList();
+        }
+        return List.of();
+    }
+
+    public AgriPriceSearchRes searchExactProduct(String productName) {
+        String name = productName == null ? "" : productName.trim();
+        if (name.isEmpty()) {
+            return new AgriPriceSearchRes("daily", "none", productName, 0, List.of());
+        }
+        FetchedPage<NabcDailyPrice> page = fetchDailyPages("/api/daily-prices/product", Map.of("product_name", name));
+        return toDailyResult("daily", "product", name, page);
+    }
+
+    public AgriPriceLatestQuoteRes latestAverage(List<AgriPriceRowRes> rows, String fallbackName) {
+        if (rows == null || rows.isEmpty()) {
+            return null;
+        }
+        String latestDate = rows.stream()
+                .map(AgriPriceRowRes::dateKey)
+                .filter(date -> date != null && !date.isBlank())
+                .max(String::compareTo)
+                .orElse(null);
+        if (latestDate == null) {
+            return null;
+        }
+        List<AgriPriceRowRes> latest = rows.stream()
+                .filter(row -> latestDate.equals(row.dateKey()) && row.price() != null)
+                .toList();
+        if (latest.isEmpty()) {
+            return null;
+        }
+        double average = latest.stream().mapToDouble(AgriPriceRowRes::price).average().orElse(Double.NaN);
+        if (Double.isNaN(average)) {
+            return null;
+        }
+        String unit = latest.stream()
+                .map(AgriPriceRowRes::unit)
+                .filter(value -> value != null && !value.isBlank())
+                .findFirst()
+                .orElse(null);
+        String productName = latest.stream()
+                .map(AgriPriceRowRes::productName)
+                .filter(value -> value != null && !value.isBlank())
+                .findFirst()
+                .orElse(fallbackName);
+        return new AgriPriceLatestQuoteRes(productName, latestDate, average, unit, latest.size());
     }
 
     public AgriPriceSearchRes search(String rawQuery, String rawPeriod) {

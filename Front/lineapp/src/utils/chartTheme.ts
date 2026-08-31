@@ -1,6 +1,6 @@
 /** Chart colors aligned with CSS theme variables in index.css */
-export const CHART_INCOME = "#5bb35f";
-export const CHART_EXPENSE = "#e57373";
+export const CHART_INCOME = "#3BB273";
+export const CHART_EXPENSE = "#F06B6B";
 
 export function chartColorWithAlpha(hex: string, alpha: number): string {
     const normalized = hex.replace("#", "");

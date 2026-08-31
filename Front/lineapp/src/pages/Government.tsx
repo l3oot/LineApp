@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
 import { FaPhoneAlt } from "react-icons/fa";
-import { LuLightbulb } from "react-icons/lu";
 import MainLayout from "../layouts/MainLayout";
 import "../styles/Government.css";
 import { governmentContacts, isHotlineNumber, telHref } from "../data/governmentContacts";
@@ -13,16 +12,6 @@ export default function Government() {
             <div className="home-page">
                 <div className="home-content-card">
                     <div className="government-page">
-                        <section className="gov-hero">
-                            <span className="gov-hero-icon-ring" aria-hidden>
-                                <FaPhoneAlt size={20} />
-                            </span>
-                            <div className="gov-hero-text">
-                                <h1 className="gov-hero-title">{t("government.pageTitle")}</h1>
-                                <p className="gov-hero-subtitle">{t("government.pageSubtitle")}</p>
-                            </div>
-                        </section>
-
                         <section className="gov-section">
                             <h2 className="home-section-title">
                                 <span className="home-section-decor home-section-decor--leaf" aria-hidden />
@@ -75,13 +64,6 @@ export default function Government() {
                                     );
                                 })}
                             </div>
-                        </section>
-
-                        <section className="gov-tip">
-                            <span className="gov-tip-icon" aria-hidden>
-                                <LuLightbulb size={16} />
-                            </span>
-                            <p className="gov-tip-text">{t("government.tip")}</p>
                         </section>
                     </div>
                 </div>

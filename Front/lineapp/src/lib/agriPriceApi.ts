@@ -24,6 +24,6 @@ export type AgriPriceSearch = {
 
 export const agriPriceApi = {
     productNames: () => api.get<string[]>("/api/agri-prices/product-names"),
-    search: (q: string, period: AgriPricePeriod) =>
-        api.get<AgriPriceSearch>("/api/agri-prices/search", { q, period }, 25_000),
+    search: (q: string) =>
+        api.get<AgriPriceSearch>("/api/agri-prices/search", { q, period: "daily" }, 25_000),
 };

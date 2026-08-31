@@ -1,9 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { FiChevronRight } from "react-icons/fi";
 import { LuEye, LuEyeOff } from "react-icons/lu";
-import cartIcon from "../assets/icon/cart.png";
-import bagIcon from "../assets/icon/bag.png";
-import StatisticGrowIcon from "./icons/StatisticGrowIcon";
 
 type FinanceOverviewProps = {
     income: number;
@@ -11,65 +10,53 @@ type FinanceOverviewProps = {
     balance: number;
 };
 
+function formatAmount(value: number, visible: boolean): string {
+    if (!visible) return "•••••";
+    return value.toLocaleString();
+}
+
 export default function FinanceOverview({ income, expense, balance }: FinanceOverviewProps) {
     const { t } = useTranslation();
     const [visible, setVisible] = useState(true);
-
-    const formatAmount = (value: number) => (visible ? value.toLocaleString() : "•••••");
+    const balanceTone = balance < 0 ? "negative" : "positive";
 
     return (
-        <section className="finance-overview-card" aria-label={t("sum.financeOverview")}>
-            <div className="finance-overview-top">
-                <div className="finance-overview-income">
-                    <span className="finance-overview-illus-slot finance-overview-illus-slot--filled" aria-hidden>
-                        <img src={cartIcon} alt="" className="finance-overview-illus-img" />
-                    </span>
-                    <div className="finance-overview-metric">
-                        <p className="finance-overview-label finance-overview-label--income">
-                            {t("sum.totalIncome")}
-                        </p>
-                        <p className="finance-overview-amount finance-overview-amount--income">
-                            {formatAmount(income)}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="finance-overview-expense">
-                    <div className="finance-overview-metric finance-overview-metric--end">
-                        <p className="finance-overview-label finance-overview-label--expense">
-                            {t("sum.totalExpense")}
-                        </p>
-                        <p className="finance-overview-amount finance-overview-amount--expense">
-                            {formatAmount(expense)}
-                        </p>
-                    </div>
-                    <span className="finance-overview-illus-slot finance-overview-illus-slot--filled" aria-hidden>
-                        <img src={bagIcon} alt="" className="finance-overview-illus-img" />
-                    </span>
-                </div>
-
-                <div className="finance-overview-center" aria-hidden>
-                    <div className="finance-overview-icon-ring">
-                        <StatisticGrowIcon color="#5BB35F" className="h-6 w-6" />
-                    </div>
-                </div>
-            </div>
-
-            <div className="finance-overview-bottom">
-                <p className="finance-overview-label finance-overview-label--balance">
-                    {t("sum.totalBalance")}
-                </p>
-                <div className="finance-overview-balance-row">
-                    <p className="finance-overview-balance-amount">{formatAmount(balance)}</p>
+        <section className="finance-summary" aria-label={t("sum.financeOverview")}>
+            <div className="finance-summary-header">
+                <h2 className="finance-summary-title">{t("sum.financeOverview")}</h2>
+                <div className="finance-summary-actions">
                     <button
                         type="button"
-                        className="finance-overview-visibility-btn"
+                        className="finance-summary-visibility-btn"
                         onClick={() => setVisible((prev) => !prev)}
                         aria-label={visible ? t("sum.hideBalance") : t("sum.showBalance")}
                     >
                         {visible ? <LuEye size={16} aria-hidden /> : <LuEyeOff size={16} aria-hidden />}
                     </button>
+                    <Link
+                        to="/analytics"
+                        className="finance-summary-next"
+                        aria-label={t("sum.viewAnalyticsAria")}
+                    >
+                        <FiChevronRight size={18} aria-hidden />
+                    </Link>
                 </div>
+            </div>
+
+            <div className={`finance-summary-hero finance-summary-hero--${balanceTone}`}>
+                <p className="finance-summary-hero-value">{formatAmount(balance, visible)}</p>
+                <p className="finance-summary-hero-label">{t("sum.totalBalance")}</p>
+            </div>
+
+            <div className="finance-summary-stats">
+                <article className="finance-summary-stat finance-summary-stat--income">
+                    <p className="finance-summary-stat-label">{t("sum.totalIncome")}</p>
+                    <p className="finance-summary-stat-value">{formatAmount(income, visible)}</p>
+                </article>
+                <article className="finance-summary-stat finance-summary-stat--expense">
+                    <p className="finance-summary-stat-label">{t("sum.totalExpense")}</p>
+                    <p className="finance-summary-stat-value">{formatAmount(expense, visible)}</p>
+                </article>
             </div>
         </section>
     );
