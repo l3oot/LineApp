@@ -7,6 +7,7 @@ import { FiX } from "react-icons/fi";
 import Addcycle from "../components/Addcycle";
 import BottomSheet from "../components/BottomSheet";
 import ConfirmBottomSheet from "../components/ConfirmBottomSheet";
+import CycleSummaryModal from "../components/CycleSummaryModal";
 import IconPickerSheet from "../components/IconPickerSheet";
 import { useTranslation } from "react-i18next";
 import { icons } from "../assets/Iconlist";
@@ -82,6 +83,7 @@ export default function CyclePage() {
     const [submitting, setSubmitting] = useState(false);
     const [deletingCycleId, setDeletingCycleId] = useState<string | null>(null);
     const [cycleToDelete, setCycleToDelete] = useState<Cycle | null>(null);
+    const [cycleToSummarize, setCycleToSummarize] = useState<Cycle | null>(null);
     const [editingCycle, setEditingCycle] = useState<Cycle | null>(null);
     const [planQuota, setPlanQuota] = useState<PlanQuota | null>(null);
 
@@ -308,6 +310,7 @@ export default function CyclePage() {
                                 deleting={deletingCycleId === cycle.cycleId}
                                 onEdit={() => openEditSheet(cycle)}
                                 onDelete={() => setCycleToDelete(cycle)}
+                                onSummarize={() => setCycleToSummarize(cycle)}
                                 onMore={() => navigate(`/cycle/${cycle.cycleId}`)}
                             />
                         );
@@ -469,6 +472,15 @@ export default function CyclePage() {
                             onClose={() => setIsIconPickerOpen(false)}
                         />
             </BottomSheet>
+            {cycleToSummarize && (
+                <CycleSummaryModal
+                    key={cycleToSummarize.cycleId}
+                    open
+                    cycleId={cycleToSummarize.cycleId}
+                    cycleName={cycleToSummarize.name}
+                    onClose={() => setCycleToSummarize(null)}
+                />
+            )}
             <ConfirmBottomSheet
                 open={cycleToDelete !== null}
                 title={t("cycle.deleteConfirmTitle")}

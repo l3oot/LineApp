@@ -63,6 +63,7 @@ public class LineWebhookService {
     private final LineProperties lineProperties;
     private final LineWeatherBriefService lineWeatherBriefService;
     private final LineAgriPriceService lineAgriPriceService;
+    private final LineCycleSummaryService lineCycleSummaryService;
 
     public LineWebhookService(
             UserRepository userRepository,
@@ -72,7 +73,8 @@ public class LineWebhookService {
             TransactionService transactionService,
             LineProperties lineProperties,
             LineWeatherBriefService lineWeatherBriefService,
-            LineAgriPriceService lineAgriPriceService) {
+            LineAgriPriceService lineAgriPriceService,
+            LineCycleSummaryService lineCycleSummaryService) {
         this.userRepository = userRepository;
         this.aiClientService = aiClientService;
         this.lineMessagingService = lineMessagingService;
@@ -81,6 +83,7 @@ public class LineWebhookService {
         this.lineProperties = lineProperties;
         this.lineWeatherBriefService = lineWeatherBriefService;
         this.lineAgriPriceService = lineAgriPriceService;
+        this.lineCycleSummaryService = lineCycleSummaryService;
     }
 
     @Async("lineWebhookExecutor")
@@ -136,9 +139,28 @@ public class LineWebhookService {
             return;
         }
 
+        if (LineCycleSummaryService.isSummaryRequest(userText)) {
+            try {
+                UserEntity user = upsertUserBySub(userSub);
+                String summary = lineCycleSummaryService.buildReply(user.getUserId(), userText);
+                lineMessagingService.reply(replyToken, summary);
+            } catch (Exception e) {
+                log.error("[line-cycle-summary] reply failed for user={}: {}", userSub, e.getMessage(), e);
+                lineMessagingService.reply(replyToken, LineCycleSummaryService.FALLBACK_REPLY);
+            }
+            return;
+        }
+
         if (userText.contains("ราคา")) {
             try {
                 String priceReply = lineAgriPriceService.tryBuildReply(userText);
+                if (LineAgriPriceService.ASK_NAME_REPLY.equals(priceReply)) {
+                    lineMessagingService.replyFlex(
+                            replyToken,
+                            "ลองพิมพ์ถามยายได้เลย เช่น ราคา ข้าว",
+                            lineFlexMessageBuilder.buildPriceHelpContents());
+                    return;
+                }
                 if (priceReply != null) {
                     lineMessagingService.reply(replyToken, priceReply);
                     return;

@@ -137,10 +137,11 @@ async function request<T>(
 export const api = {
     get: <T>(path: string, query?: Query, timeoutMs?: number) =>
         request<T>(path, { method: "GET", query, timeoutMs }),
-    post: <T>(path: string, payload?: unknown, query?: Query) =>
+    post: <T>(path: string, payload?: unknown, query?: Query, timeoutMs?: number) =>
         request<T>(path, {
             method: "POST",
             query,
+            timeoutMs,
             body: payload === undefined ? undefined : JSON.stringify(payload),
         }),
     put: <T>(path: string, payload?: unknown, query?: Query) =>

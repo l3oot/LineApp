@@ -21,11 +21,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.example.demo.config.AiServiceProperties;
 import com.example.demo.dto.req.AiAgriPriceBriefReq;
 import com.example.demo.dto.req.AiAgriPriceExtractReq;
+import com.example.demo.dto.req.AiCycleSummaryReq;
 import com.example.demo.dto.req.AiWeatherBriefReq;
 import com.example.demo.dto.req.AiWeatherWarningReq;
 import com.example.demo.dto.res.AgriPriceLatestQuoteRes;
 import com.example.demo.dto.res.AiAgriPriceBriefRes;
 import com.example.demo.dto.res.AiAgriPriceExtractRes;
+import com.example.demo.dto.res.AiCycleSummaryRes;
 import com.example.demo.dto.res.AiParseRes;
 import com.example.demo.dto.res.AiWeatherBriefRes;
 import com.example.demo.dto.res.AiWeatherWarningRes;
@@ -193,6 +195,36 @@ public class AiClientService {
             return resp.getBody();
         } catch (Exception e) {
             log.error("[agri-price-brief:ai-service] call failed elapsedMs={}: {}",
+                    System.currentTimeMillis() - t0, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * เรียก ai-service POST /cycle-summary/summarize — return null ถ้าพังหรือ timeout
+     */
+    public AiCycleSummaryRes summarizeCycle(String cycleInfo, String transactionData) {
+        long t0 = System.currentTimeMillis();
+        try {
+            URI uri = UriComponentsBuilder
+                    .fromUriString(props.getBaseUrl())
+                    .path(props.getCycleSummaryPath())
+                    .encode(StandardCharsets.UTF_8)
+                    .build()
+                    .toUri();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+            HttpEntity<AiCycleSummaryReq> entity =
+                    new HttpEntity<>(new AiCycleSummaryReq(cycleInfo, transactionData), headers);
+
+            ResponseEntity<AiCycleSummaryRes> resp =
+                    restTemplate.exchange(uri, HttpMethod.POST, entity, AiCycleSummaryRes.class);
+            log.info("[cycle-summary:ai-service] call ok elapsedMs={}", System.currentTimeMillis() - t0);
+            return resp.getBody();
+        } catch (Exception e) {
+            log.error("[cycle-summary:ai-service] call failed elapsedMs={}: {}",
                     System.currentTimeMillis() - t0, e.getMessage(), e);
             return null;
         }
