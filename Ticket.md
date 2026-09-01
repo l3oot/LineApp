@@ -2,29 +2,23 @@
 
 ## Frontend
 
-- [/] **Feature:** Add date income — **Deadline:** 17.08.26 [Wait Check]
-
-- [/] **Feature:** Export transactions to Excel/PDF — **Deadline:** 22.08.26 [Wait Check]
-
-- [/] **Feature:** Add field `note` to the component — **Deadline:** 22.08.26 [Wait Check]
+- [ ] **Fix:** Login Call Back Chack
 
 ## Backend
 
-- [/] **Feature:** Add field `note` to the cycle entity and check the server controller — **Deadline:** 22.08.26 [Wait Check]
-
-- [/] **Fix:** Check Ai Service Time Res Slow Debug Step {0.Ai Provider -> 1.Ai Service -> 2.User Service -> 3.Line Hook -> 4.Network} [Wait Check]
-
-- [ ] **Feature:** ส่งข้อความ Line ถามสภาพอากาศโดยใช้สถานที่จากโปรไฟล์
+- [ ] **Feature:** เพิ่ม API Rich menu
 
 ## DevOps
 
-- No tasks.
+- [ ] **Fix:** Docker Conflict target
 
 ## Database
 
-- [/] **Feature:** Add column `note` to the cycle table — **Deadline:** 22.08.26 [Wait Check]
+- No task
 
 ## Security
+
+- [ ] **Fix:** ดู Payment VM
 
 - [ ] **Fix:** Add a Cloudflare tunnel(cloud) — **Deadline:** 29.08.26
 
