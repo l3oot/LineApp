@@ -239,7 +239,7 @@ export function useWeatherPageData() {
                 setStatus("ready");
                 const extraDays = mergeSeries(nextDaily)
                     .map((row) => weatherDayKey(row.time))
-                    .filter((day): day is string => Boolean(day) && day !== today && isHourlyForecastDate(day));
+                    .filter((day): day is string => day != null && day !== today && isHourlyForecastDate(day));
                 extraDays.forEach((day) => {
                     void loadHourlyDay(day);
                 });
