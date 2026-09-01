@@ -13,7 +13,7 @@ services:
     build:
       context: ./Front/lineapp
       dockerfile: Dockerfile
-      target: dev
+      target: runtime
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_LINE_CHANNEL_ID: ${VITE_LINE_CHANNEL_ID}
