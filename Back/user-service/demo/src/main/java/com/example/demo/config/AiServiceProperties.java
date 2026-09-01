@@ -22,6 +22,7 @@ public class AiServiceProperties {
     private String weatherBriefPath = "/weather-brief/summarize";
     private String agriPriceExtractPath = "/agri-price/extract";
     private String agriPriceBriefPath = "/agri-price/summarize";
+    private String cycleSummaryPath = "/cycle-summary/summarize";
     private int timeoutSeconds = 60;
 
     public String getBaseUrl() {
@@ -70,6 +71,14 @@ public class AiServiceProperties {
 
     public void setAgriPriceBriefPath(String agriPriceBriefPath) {
         this.agriPriceBriefPath = agriPriceBriefPath;
+    }
+
+    public String getCycleSummaryPath() {
+        return cycleSummaryPath;
+    }
+
+    public void setCycleSummaryPath(String cycleSummaryPath) {
+        this.cycleSummaryPath = cycleSummaryPath;
     }
 
     public int getTimeoutSeconds() {

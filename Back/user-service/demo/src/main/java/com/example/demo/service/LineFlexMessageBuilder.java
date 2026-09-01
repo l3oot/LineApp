@@ -38,6 +38,7 @@ public class LineFlexMessageBuilder {
     private static final String TRANSACTION_TEMPLATE = "line/flex/transaction.json";
     private static final String EDIT_TEMPLATE = "line/flex/edit.json";
     private static final String HELP_TEMPLATE = "line/flex/help.json";
+    private static final String PRICE_TEMPLATE = "line/flex/price.json";
     private static final String INCOME_COLOR = "#30793F";
     private static final String EXPENSE_COLOR = "#E36C64";
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -128,13 +129,24 @@ public class LineFlexMessageBuilder {
      * Flex แนะนำตัวอย่างข้อความที่ผู้ใช้พิมพ์ได้
      */
     public Map<String, Object> buildHelpContents() {
-        String template = loadTemplate(HELP_TEMPLATE);
+        return parseStaticTemplate(HELP_TEMPLATE, "help");
+    }
+
+    /**
+     * Flex แนะนำตัวอย่างการถามราคาสินค้า เมื่อผู้ใช้ยังไม่บอกชื่อสินค้า
+     */
+    public Map<String, Object> buildPriceHelpContents() {
+        return parseStaticTemplate(PRICE_TEMPLATE, "price");
+    }
+
+    private Map<String, Object> parseStaticTemplate(String classpath, String name) {
+        String template = loadTemplate(classpath);
         try {
             return MAPPER.readValue(template, new TypeReference<>() {
             });
         } catch (IOException e) {
-            log.error("parse help flex template failed: {}", e.getMessage(), e);
-            throw new IllegalStateException("invalid help flex template", e);
+            log.error("parse {} flex template failed: {}", name, e.getMessage(), e);
+            throw new IllegalStateException("invalid " + name + " flex template", e);
         }
     }
 

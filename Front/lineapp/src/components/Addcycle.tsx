@@ -17,6 +17,7 @@ type AddcycleProps = {
     onEdit?: () => void;
     onDelete?: () => void;
     onMore?: () => void;
+    onSummarize?: () => void;
     deleting?: boolean;
 };
 
@@ -31,6 +32,7 @@ export default function Addcycle({
     onEdit,
     onDelete,
     onMore,
+    onSummarize,
     deleting = false,
 }: AddcycleProps) {
     const { t } = useTranslation();
@@ -170,16 +172,31 @@ export default function Addcycle({
                 </div>
             </div>
 
-            {onMore && (
-                <button
-                    type="button"
-                    className="cycle-card-more-btn"
-                    onClick={onMore}
-                    aria-label={t("addcycle.moreAria", { name: title })}
-                >
-                    {t("addcycle.more")}
-                    <FiChevronRight size={16} aria-hidden />
-                </button>
+            {(onSummarize || onMore) && (
+                <div className={`cycle-card-footer${onSummarize && onMore ? "" : " cycle-card-footer--single"}`}>
+                    {onSummarize && (
+                        <button
+                            type="button"
+                            className="cycle-card-summary-btn"
+                            onClick={onSummarize}
+                            disabled={deleting}
+                            aria-label={t("addcycle.summarizeAria", { name: title })}
+                        >
+                            {t("addcycle.summarize")}
+                        </button>
+                    )}
+                    {onMore && (
+                        <button
+                            type="button"
+                            className="cycle-card-more-btn"
+                            onClick={onMore}
+                            aria-label={t("addcycle.moreAria", { name: title })}
+                        >
+                            {t("addcycle.more")}
+                            <FiChevronRight size={16} aria-hidden />
+                        </button>
+                    )}
+                </div>
             )}
         </article>
     );

@@ -1,0 +1,66 @@
+{
+    "type": "carousel",
+    "contents": [
+      {
+        "type": "bubble",
+        "body": {
+          "type": "box",
+          "layout": "vertical",
+          "spacing": "md",
+          "contents": [
+            {
+              "type": "text",
+              "text": "ลองพิมพ์ถามยายได้เลย เช่น",
+              "weight": "bold",
+              "size": "lg",
+              "wrap": true
+            },
+            {
+              "type": "separator",
+              "margin": "md"
+            },
+            {
+              "type": "box",
+              "layout": "vertical",
+              "margin": "md",
+              "spacing": "sm",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "• ราคา ข้าว",
+                  "size": "sm",
+                  "wrap": true
+                },
+                {
+                  "type": "text",
+                  "text": "• ราคา มะนาว",
+                  "size": "sm",
+                  "wrap": true
+                }
+              ]
+            }
+          ]
+        },
+        "footer": {
+          "type": "box",
+          "layout": "vertical",
+          "spacing": "sm",
+          "contents": [
+            {
+              "type": "button",
+              "style": "primary",
+              "height": "md",
+              "action": {
+                "type": "postback",
+                "label": "📝 พิมพ์สินค้า",
+                "data": "action=open_keyboard",
+                "inputOption": "openKeyboard"
+              },
+              "color": "#61B35F"
+            }
+          ]
+        }
+      }
+    ]
+  }
+  

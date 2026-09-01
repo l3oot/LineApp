@@ -171,7 +171,7 @@ export default function CycleDetail() {
                                     incomeCategories={incomeCategories}
                                     loading={loading}
                                     loadError={loadError}
-                                    initialFilter="ALL"
+                                    initialFilter="1M"
                                 />
 
                                 <section className="list-page cycle-detail-list">

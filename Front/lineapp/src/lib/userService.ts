@@ -101,6 +101,11 @@ export type CycleCreatePayload = {
 
 export type CycleUpdatePayload = CycleCreatePayload & { cycleId: string };
 
+export type CycleSummary = {
+    cycleName: string;
+    summary: string;
+};
+
 export const cycleApi = {
     list: () => api.get<Cycle[]>(`/api/cycle/user/${requireUserId()}`),
 
@@ -112,6 +117,14 @@ export const cycleApi = {
 
     delete: (cycleId: string) =>
         api.delete<void>("/api/cycle", { cycleId, userId: requireUserId() }),
+
+    summarize: (cycleId: string) =>
+        api.post<CycleSummary>(
+            `/api/cycle/${cycleId}/summarize`,
+            undefined,
+            { userId: requireUserId() },
+            60_000,
+        ),
 };
 
 // ============ Plan / Quota ============

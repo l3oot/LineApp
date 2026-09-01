@@ -18,16 +18,20 @@ import com.example.demo.dto.ApiRes;
 import com.example.demo.dto.req.CycleCreateReq;
 import com.example.demo.dto.req.CycleUpdateReq;
 import com.example.demo.dto.res.CycleRes;
+import com.example.demo.dto.res.CycleSummaryRes;
 import com.example.demo.service.CycleService;
+import com.example.demo.service.CycleSummaryService;
 
 @RestController
 @RequestMapping("/api/cycle")
 public class CycleController {
 
     private final CycleService cycleService;
+    private final CycleSummaryService cycleSummaryService;
 
-    public CycleController(CycleService cycleService) {
+    public CycleController(CycleService cycleService, CycleSummaryService cycleSummaryService) {
         this.cycleService = cycleService;
+        this.cycleSummaryService = cycleSummaryService;
     }
 
     @GetMapping("/user/{userId}")
@@ -41,6 +45,14 @@ public class CycleController {
             @PathVariable UUID cycleId,
             @RequestParam UUID userId) {
         CycleRes data = cycleService.getCycle(cycleId, userId);
+        return ResponseEntity.ok(ApiRes.success(data, "OK"));
+    }
+
+    @PostMapping("/{cycleId}/summarize")
+    public ResponseEntity<ApiRes<CycleSummaryRes>> summarizeCycle(
+            @PathVariable UUID cycleId,
+            @RequestParam UUID userId) {
+        CycleSummaryRes data = cycleSummaryService.summarize(userId, cycleId);
         return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 

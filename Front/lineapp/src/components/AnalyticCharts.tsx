@@ -103,7 +103,7 @@ export default function AnalyticCharts({
     incomeCategories,
     loading,
     loadError,
-    initialFilter = "1Y",
+    initialFilter = "1M",
 }: AnalyticChartsProps) {
     const { t, i18n } = useTranslation();
     const [filter, setFilter] = useState<AnalyticFilter>(initialFilter);
