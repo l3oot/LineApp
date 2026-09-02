@@ -98,10 +98,10 @@ function listLiffStorageKeys(): string[] {
     }
 }
 
-function dumpLineCallbackDebug(label: string, extra?: Record<string, unknown>): void {
+function collectLineCallbackDebug(extra?: Record<string, unknown>): Record<string, unknown> {
     const params = new URLSearchParams(window.location.search);
     const expected = readExpectedState();
-    console.log(label, {
+    return {
         href: window.location.href,
         hasCode: Boolean(params.get("code")?.trim()),
         incomingState: params.get("state"),
@@ -110,8 +110,27 @@ function dumpLineCallbackDebug(label: string, extra?: Record<string, unknown>): 
         expectedState: expected?.state ?? null,
         expectedStateSource: expected?.source ?? null,
         liffKeys: listLiffStorageKeys(),
+        ua: navigator.userAgent,
         ...extra,
-    });
+    };
+}
+
+function formatLineCallbackDebug(dump: Record<string, unknown>): string {
+    return Object.entries(dump)
+        .map(([key, value]) => {
+            if (value == null || value === "") {
+                return `${key}: (none)`;
+            }
+            if (Array.isArray(value)) {
+                return `${key}: ${value.length ? value.join(", ") : "(none)"}`;
+            }
+            return `${key}: ${String(value)}`;
+        })
+        .join("\n");
+}
+
+function dumpLineCallbackDebug(label: string, extra?: Record<string, unknown>): void {
+    console.log(label, collectLineCallbackDebug(extra));
 }
 
 function normalizePostLoginRedirect(target: string): string | null {
@@ -280,8 +299,10 @@ function isOAuthRedirectRecentlyStarted(): boolean {
 
 export {
     clearLineOAuthState,
+    collectLineCallbackDebug,
     consumePostLoginRedirect,
     dumpLineCallbackDebug,
+    formatLineCallbackDebug,
     getLineLoginUrl,
     isLineLoginConfigured,
     isOAuthRedirectRecentlyStarted,

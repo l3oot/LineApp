@@ -26,7 +26,7 @@ export function hasPendingLiffLogin(): boolean {
     }
 }
 
-export function dumpLiffStatus(label: string, extra?: Record<string, unknown>): void {
+export function collectLiffStatus(extra?: Record<string, unknown>): Record<string, unknown> {
     let loggedIn: boolean | "uninitialized" = "uninitialized";
     let inClient: boolean | "uninitialized" = "uninitialized";
     let hasIdToken = false;
@@ -39,7 +39,7 @@ export function dumpLiffStatus(label: string, extra?: Record<string, unknown>): 
     } catch {
         // init ยังไม่เสร็จ — ค่า uninitialized ถูกต้อง
     }
-    console.log(label, {
+    return {
         configured: isLiffConfigured(),
         liffId: import.meta.env.VITE_LIFF_ID?.trim() || null,
         pendingLoginTmp: hasPendingLiffLogin(),
@@ -48,7 +48,11 @@ export function dumpLiffStatus(label: string, extra?: Record<string, unknown>): 
         hasIdToken,
         hasAccessToken,
         ...extra,
-    });
+    };
+}
+
+export function dumpLiffStatus(label: string, extra?: Record<string, unknown>): void {
+    console.log(label, collectLiffStatus(extra));
 }
 
 export async function initLiff(): Promise<boolean> {
