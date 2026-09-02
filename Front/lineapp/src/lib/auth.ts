@@ -7,8 +7,10 @@
 import { api } from "./api";
 import { isJwtExpired } from "./jwt";
 import {
+    dumpLiffStatus,
     getLiffTokens,
     initLiff,
+    isInLiffClient,
     isLiffConfigured,
     isLiffLoggedIn,
 } from "./liff";
@@ -148,14 +150,23 @@ export async function exchangeLiffSession(payload: LineLiffLoginReq): Promise<Au
  */
 export async function tryCompleteLiffSession(): Promise<AuthUser | null> {
     if (!isLiffConfigured()) {
+        console.warn("[tryCompleteLiffSession] skip: LIFF not configured");
         return null;
     }
     const ready = await initLiff();
-    if (!ready || !isLiffLoggedIn()) {
+    const loggedIn = ready && isLiffLoggedIn();
+    dumpLiffStatus("[tryCompleteLiffSession]", {
+        ready,
+        loggedIn,
+        inClient: ready ? isInLiffClient() : false,
+    });
+    if (!ready || !loggedIn) {
+        console.warn("[tryCompleteLiffSession] not ready or not logged in");
         return null;
     }
     const tokens = getLiffTokens();
     if (!tokens) {
+        console.warn("[tryCompleteLiffSession] logged in but tokens missing");
         return null;
     }
     return exchangeLiffSession(tokens);
