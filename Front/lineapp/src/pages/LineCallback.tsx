@@ -59,11 +59,13 @@ export function LineCallback() {
                 return;
             }
 
-            // เส้นเว็บ OAuth: state ตรงกับที่เก็บไว้ — ห้าม init LIFF (จะชิง code)
+            // เส้นเว็บ OAuth: มี code จาก LINE — ห้าม init LIFF (จะชิง code แล้วแลกไม่ติด)
             const parsed = parseLineCallback(location.search);
             if (parsed.ok) {
                 try {
-                    console.log("[LineCallback] Exchanging code with backend...");
+                    console.log("[LineCallback] Exchanging code with backend...", {
+                        storageLost: parsed.storageLost === true,
+                    });
                     const user = await exchangeLineCode(parsed.code);
                     clearLineOAuthState();
                     console.log("[LineCallback] Login success:", user);
@@ -76,21 +78,25 @@ export function LineCallback() {
                 return;
             }
 
-            // เส้น LIFF ที่หลุดมา /callback (มี loginTmp หรือ code จาก LIFF โดยไม่มี line_oauth_state)
-            dumpLiffStatus("[LineCallback] trying LIFF complete", { parseReason: parsed.reason });
-            try {
-                const liffUser = await tryCompleteLiffSession();
-                if (liffUser) {
-                    console.log("[LineCallback] LIFF login completed:", liffUser);
-                    finish(liffUser);
+            // LIFF ต่อได้เฉพาะตอนมี loginTmp — ห้าม init ถ้า URL มี code ของเว็บ OAuth
+            if (hasPendingLiffLogin()) {
+                dumpLiffStatus("[LineCallback] trying LIFF complete", { parseReason: parsed.reason });
+                try {
+                    const liffUser = await tryCompleteLiffSession();
+                    if (liffUser) {
+                        console.log("[LineCallback] LIFF login completed:", liffUser);
+                        finish(liffUser);
+                        return;
+                    }
+                    console.warn("[LineCallback] LIFF complete returned null");
+                } catch (err) {
+                    console.error("[LineCallback] LIFF complete failed:", err);
+                    if (ignore) return;
+                    setStatus({ kind: "error", message: getFriendlyApiErrorMessage(err, t) });
                     return;
                 }
-                console.warn("[LineCallback] LIFF complete returned null");
-            } catch (err) {
-                console.error("[LineCallback] LIFF complete failed:", err);
-                if (ignore) return;
-                setStatus({ kind: "error", message: getFriendlyApiErrorMessage(err, t) });
-                return;
+            } else {
+                console.warn("[LineCallback] skip LIFF complete: no loginTmp");
             }
 
             if (ignore) return;
