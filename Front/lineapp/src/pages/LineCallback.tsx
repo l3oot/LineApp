@@ -6,7 +6,7 @@ import {
     consumePostLoginRedirect,
     parseLineCallback,
 } from "../lib/lineLogin";
-import { auth, exchangeLineCode, type AuthUser } from "../lib/auth";
+import { auth, exchangeLineCode, tryCompleteLiffSession, type AuthUser } from "../lib/auth";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
 
 type CallbackStatus =
@@ -21,40 +21,64 @@ export function LineCallback() {
     const [status, setStatus] = useState<CallbackStatus>({ kind: "loading" });
 
     useEffect(() => {
-        if (auth.isAuthed()) {
-            navigate(consumePostLoginRedirect() ?? "/", { replace: true });
-            return;
-        }
+        let ignore = false;
 
-        const parsed = parseLineCallback(location.search);
-        if (!parsed.ok) {
+        const finish = (user: AuthUser) => {
+            if (ignore) return;
+            setStatus({ kind: "ok", user });
+            navigate(consumePostLoginRedirect() ?? "/", { replace: true });
+        };
+
+        const run = async () => {
+            if (auth.isAuthed()) {
+                navigate(consumePostLoginRedirect() ?? "/", { replace: true });
+                return;
+            }
+
+            // เส้นเว็บ OAuth: state ตรงกับ localStorage — ห้าม init LIFF (จะชิง code)
+            const parsed = parseLineCallback(location.search);
+            if (parsed.ok) {
+                try {
+                    console.log("[LineCallback] Exchanging code with backend...");
+                    const user = await exchangeLineCode(parsed.code);
+                    clearLineOAuthState();
+                    console.log("[LineCallback] Login success:", user);
+                    finish(user);
+                } catch (err) {
+                    console.error("[LineCallback] Login failed:", err);
+                    if (ignore) return;
+                    setStatus({ kind: "error", message: getFriendlyApiErrorMessage(err, t) });
+                }
+                return;
+            }
+
+            // เส้น LIFF ที่หลุดมา /callback (มี loginTmp แต่ไม่มี line_oauth_state)
+            try {
+                const liffUser = await tryCompleteLiffSession();
+                if (liffUser) {
+                    console.log("[LineCallback] LIFF login completed:", liffUser);
+                    finish(liffUser);
+                    return;
+                }
+            } catch (err) {
+                console.error("[LineCallback] LIFF complete failed:", err);
+                if (ignore) return;
+                setStatus({ kind: "error", message: getFriendlyApiErrorMessage(err, t) });
+                return;
+            }
+
+            if (ignore) return;
             console.warn("[LineCallback] parse failed:", parsed.message);
             clearLineOAuthState();
             setStatus({ kind: "error", message: parsed.message });
-            return;
-        }
+        };
 
-        let ignore = false;
-        (async () => {
-            try {
-                console.log("[LineCallback] Exchanging code with backend...");
-                const user = await exchangeLineCode(parsed.code);
-                clearLineOAuthState();
-                console.log("[LineCallback] Login success:", user);
-                if (ignore) return;
-                setStatus({ kind: "ok", user });
-                navigate(consumePostLoginRedirect() ?? "/", { replace: true });
-            } catch (err) {
-                console.error("[LineCallback] Login failed:", err);
-                if (ignore) return;
-                setStatus({ kind: "error", message: getFriendlyApiErrorMessage(err, t) });
-            }
-        })();
+        void run();
 
         return () => {
             ignore = true;
         };
-    }, [location.search, navigate]);
+    }, [location.search, navigate, t]);
 
     return (
         <main className="flex min-h-screen items-center justify-center p-6">

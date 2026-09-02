@@ -21,12 +21,15 @@ RUN --mount=type=cache,target=/root/.m2 \
         -Dmaven.wagon.http.retryHandler.count=5 \
         dependency:go-offline -DskipTests || true
 
-# source code จะ bind-mount มาจาก host ตอน runtime (ไม่ COPY ใน dev stage)
+# ต้องมี source ใน image — `compose build` / รัน image โดยไม่ bind mount จะได้หา main class เจอ
+# compose-dev ยัง mount ./Back/user-service/demo:/app ทับได้เมื่อต้องการ hot reload
+COPY src src
+
 EXPOSE 8080
 
 # spring-boot:run จะรวม spring-boot-devtools ให้อัตโนมัติ (ไม่เหมือน mvn package)
 # DevTools จะ watch /app/target/classes — IDE บน host compile-on-save → bind mount → restart
-CMD ["./mvnw", "-B", "-ntp", "spring-boot:run"]
+CMD ["./mvnw", "-B", "-ntp", "spring-boot:run", "-Dspring-boot.run.mainClass=com.example.demo.DemoApplication"]
 
 
 # ---------- Stage: builder (production JAR build) ----------

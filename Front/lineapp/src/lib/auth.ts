@@ -6,6 +6,12 @@
 
 import { api } from "./api";
 import { isJwtExpired } from "./jwt";
+import {
+    getLiffTokens,
+    initLiff,
+    isLiffConfigured,
+    isLiffLoggedIn,
+} from "./liff";
 
 const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
@@ -134,4 +140,23 @@ export async function exchangeLiffSession(payload: LineLiffLoginReq): Promise<Au
 
     pendingLiffExchange = { key, promise };
     return promise;
+}
+
+/**
+ * ต่อ LIFF login ที่ค้าง (loginTmp / code บน URL) ให้จบแล้วออก JWT
+ * คืน null ถ้าไม่ได้ตั้ง LIFF, init ไม่สำเร็จ, หรือยังไม่ logged in
+ */
+export async function tryCompleteLiffSession(): Promise<AuthUser | null> {
+    if (!isLiffConfigured()) {
+        return null;
+    }
+    const ready = await initLiff();
+    if (!ready || !isLiffLoggedIn()) {
+        return null;
+    }
+    const tokens = getLiffTokens();
+    if (!tokens) {
+        return null;
+    }
+    return exchangeLiffSession(tokens);
 }

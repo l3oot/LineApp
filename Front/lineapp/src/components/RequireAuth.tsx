@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import AppLoadingScreen from "./AppLoadingScreen";
-import { auth, exchangeLiffSession } from "../lib/auth";
+import { auth, tryCompleteLiffSession } from "../lib/auth";
 import {
     getLineLoginUrl,
     isLineLoginConfigured,
@@ -9,10 +9,11 @@ import {
     savePostLoginRedirect,
 } from "../lib/lineLogin";
 import {
-    getLiffTokens,
     initLiff,
+    isInLiffClient,
     isLiffConfigured,
     isLiffLoggedIn,
+    isLikelyLineInAppBrowser,
     loginWithLiff,
 } from "../lib/liff";
 
@@ -25,7 +26,8 @@ let redirectLock = false;
 
 /**
  * Guard ที่:
- *  - ถ้ายัง login → redirect ไป LINE login ทันที (auto, ไม่ต้องกดปุ่ม)
+ *  - ในแอป LINE → LIFF อย่างเดียว (ไม่ผ่าน /callback)
+ *  - เบราว์เซอร์นอก → เว็บ OAuth + line_oauth_state → /callback
  *  - ถ้า config ไม่ครบ → แสดงข้อความบอกให้ไปตั้งค่า env
  *  - ถ้า login แล้ว → render children ตามปกติ
  */
@@ -59,27 +61,27 @@ export default function RequireAuth({ children }: RequireAuthProps) {
                 window.location.pathname + window.location.search + window.location.hash;
             const forceExternalBrowser = new URLSearchParams(window.location.search).get("openExternalBrowser") === "1";
 
-            if (isLiffConfigured() && !forceExternalBrowser) {
+            if (isLiffConfigured() && !forceExternalBrowser && isLikelyLineInAppBrowser()) {
                 const liffReady = await initLiff();
-                if (liffReady) {
+                // ใช้ LIFF เฉพาะใน LINE in-app — เบราว์เซอร์นอกใช้เว็บ OAuth
+                if (liffReady && isInLiffClient()) {
                     if (!isLiffLoggedIn()) {
                         savePostLoginRedirect(currentPath);
                         redirectLock = true;
                         markOAuthRedirectStarted();
                         if (!ignore) setState("redirecting");
-                        loginWithLiff(window.location.href);
+                        loginWithLiff();
                         return;
                     }
 
-                    const tokens = getLiffTokens();
-                    if (tokens) {
-                        try {
-                            await exchangeLiffSession(tokens);
+                    try {
+                        const user = await tryCompleteLiffSession();
+                        if (user) {
                             if (!ignore) setState("ready");
                             return;
-                        } catch (err) {
-                            console.warn("[RequireAuth] LIFF exchange failed, fallback to OAuth:", err);
                         }
+                    } catch (err) {
+                        console.warn("[RequireAuth] LIFF exchange failed, fallback to OAuth:", err);
                     }
                 }
             }
