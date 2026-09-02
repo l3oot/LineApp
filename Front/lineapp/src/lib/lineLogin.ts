@@ -18,7 +18,7 @@ export type LineCallbackFailReason =
     | "invalid_state";
 
 export type LineCallbackPayload =
-    | { ok: true; code: string }
+    | { ok: true; code: string; storageLost?: boolean }
     | { ok: false; message: string; reason: LineCallbackFailReason };
 
 type StoredStateSource = "localStorage" | "sessionStorage" | "cookie";
@@ -27,8 +27,17 @@ function cookieSecureSuffix(): string {
     return window.location.protocol === "https:" ? "; Secure" : "";
 }
 
+/** ให้ cookie ใช้ร่วมกันได้ระหว่าง yaiphao.com กับ www.yaiphao.com */
+function cookieDomainSuffix(): string {
+    const host = window.location.hostname;
+    if (host === "yaiphao.com" || host.endsWith(".yaiphao.com")) {
+        return "; Domain=yaiphao.com";
+    }
+    return "";
+}
+
 function writeStateCookie(state: string): void {
-    document.cookie = `${STATE_KEY}=${encodeURIComponent(state)}; Path=/; Max-Age=600; SameSite=Lax${cookieSecureSuffix()}`;
+    document.cookie = `${STATE_KEY}=${encodeURIComponent(state)}; Path=/; Max-Age=600; SameSite=Lax${cookieSecureSuffix()}${cookieDomainSuffix()}`;
 }
 
 function readStateCookie(): string | null {
@@ -47,7 +56,18 @@ function readStateCookie(): string | null {
 }
 
 function clearStateCookie(): void {
-    document.cookie = `${STATE_KEY}=; Path=/; Max-Age=0; SameSite=Lax${cookieSecureSuffix()}`;
+    const base = `${STATE_KEY}=; Path=/; Max-Age=0; SameSite=Lax${cookieSecureSuffix()}`;
+    document.cookie = base;
+    const domain = cookieDomainSuffix();
+    if (domain) {
+        document.cookie = `${base}${domain}`;
+    }
+}
+
+function isAppIssuedState(value: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        value,
+    );
 }
 
 function readExpectedState(): { state: string; source: StoredStateSource } | null {
@@ -164,6 +184,10 @@ function getLineLoginUrl(): string | null {
     // Only use when backend gives a *complete* authorize URL. A bare
     // https://access.line.me/oauth2/v2.1/authorize (no query) would cause LINE 400.
     if (direct && isFullLineLoginUrl(direct)) {
+        const state = new URL(direct).searchParams.get("state")?.trim();
+        if (state) {
+            saveOAuthInflight(state, direct);
+        }
         return direct;
     }
 
@@ -240,11 +264,11 @@ function parseLineCallback(search: string): LineCallbackPayload {
     }
 
     const expected = readExpectedState();
-    if (!expected || expected.state !== state) {
+    if (expected && expected.state !== state) {
         console.warn("[parseLineCallback] state mismatch", {
             incomingState: state,
-            expectedState: expected?.state ?? null,
-            expectedStateSource: expected?.source ?? null,
+            expectedState: expected.state,
+            expectedStateSource: expected.source,
             liffKeys: listLiffStorageKeys(),
         });
         return {
@@ -252,6 +276,25 @@ function parseLineCallback(search: string): LineCallbackPayload {
             reason: "invalid_state",
             message: "Invalid login state. Please try again.",
         };
+    }
+    if (!expected) {
+        // Samsung / www vs apex / bounce-tracking มักล้าง storage ตอนกลับจาก LINE
+        // ถ้า state เป็น UUID ที่แอปออกเอง ให้แลก code ต่อได้
+        if (!isAppIssuedState(state)) {
+            console.warn("[parseLineCallback] stored state missing and incoming state is not app UUID", {
+                incomingState: state,
+                liffKeys: listLiffStorageKeys(),
+            });
+            return {
+                ok: false,
+                reason: "invalid_state",
+                message: "Invalid login state. Please try again.",
+            };
+        }
+        console.warn("[parseLineCallback] stored state missing, accepting LINE callback", {
+            incomingState: state,
+        });
+        return { ok: true, code, storageLost: true };
     }
 
     console.log("[parseLineCallback] ok", { source: expected.source });
