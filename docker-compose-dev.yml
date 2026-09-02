@@ -1,5 +1,6 @@
 # รันทั้ง stack แบบ DEV (hot reload ทุก service) — bind mount source code + watcher
-#   docker compose up -d --build
+#   docker compose -f docker-compose-dev.yml up -d --build
+# `build` อย่างเดียวไม่ติด volume — user-service ต้องมี /app/src ตอน spring-boot:run
 #
 # ทุก service ใช้ multi-stage Dockerfile โดย select `target: dev`
 #   - frontend     → Vite dev server + HMR (polling)

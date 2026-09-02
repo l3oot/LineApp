@@ -35,9 +35,12 @@ LINE เป็นทั้งช่องทาง login และ chatbot ข�
 
 **Flow**
 
-1. Front ส่ง user ไปหน้า authorize ของ LINE (`Front/lineapp/src/lib/lineLogin.ts`)
-2. ได้ `code` กลับมาที่ `/callback`
-3. Backend แลก token แล้ว verify `id_token` จากนั้น upsert user และออก JWT ของแอป (`LineAuthService`)
+เส้น login แยกตามที่เปิดแอป:
+
+- **เบราว์เซอร์นอก** → Front ส่งไป authorize ของ LINE (`lineLogin.ts`) มี `line_oauth_state` → กลับ `/callback` → `POST /api/auth/line`
+- **ในแอป LINE** → LIFF (`liff.ts`, `withLoginOnExternalBrowser: false`) → `POST /api/auth/line/liff`
+- ถ้า LIFF หลุดมา `/callback` หน้า callback จะต่อ `loginTmp` ให้จบก่อน แล้วค่อยถือเป็น error ของเว็บ OAuth
+- Backend แลก token แล้ว verify `id_token` จากนั้น upsert user และออก JWT ของแอป (`LineAuthService`)
 
 **API ของเราที่ห่อไว้**
 
@@ -49,7 +52,8 @@ LINE เป็นทั้งช่องทาง login และ chatbot ข�
 | ตัวแปร | ใช้ที่ |
 | --- | --- |
 | `VITE_LINE_CHANNEL_ID` | Front — `client_id` ของ authorize URL |
-| `VITE_LINE_REDIRECT_URI` | Front — callback ของเว็บ |
+| `VITE_LINE_REDIRECT_URI` | Front — callback ของเว็บ (`{origin}/callback`) |
+| `VITE_LIFF_ID` | Front — ใช้ LIFF เฉพาะในแอป LINE |
 | `LINE_CLIENT_ID` | user-service |
 | `LINE_CLIENT_SECRET` | user-service |
 | `LINE_REDIRECT_URI` | user-service |
@@ -58,10 +62,11 @@ LINE เป็นทั้งช่องทาง login และ chatbot ข�
 
 ใช้เมื่อเปิดแอปใน LINE in-app browser (`@line/liff`)
 
-- Front: `Front/lineapp/src/lib/liff.ts` — `liff.init` → `getIDToken` / `getAccessToken`
+- Front: `Front/lineapp/src/lib/liff.ts` — `liff.init({ withLoginOnExternalBrowser: false })` แล้วใช้ LIFF เฉพาะ `liff.isInClient()`
+- `liff.login` กลับที่ `{origin}/` (ต้องลงทะเบียนใน Callback URL) ไม่ใช้ URL หน้าปัจจุบันที่มี query
 - Backend ใช้ `LINE_LIFF_URL` เป็น base URL ของปุ่มแก้ไขใน Flex Message
 
-**Env:** `VITE_LIFF_ID`, `LINE_LIFF_URL` / `VITE_LINE_LIFF_URL`
+**Env:** `VITE_LIFF_ID`, `LINE_LIFF_URL`
 
 ### 1.3 Messaging API (Chatbot)
 
