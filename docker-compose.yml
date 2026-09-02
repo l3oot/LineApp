@@ -21,32 +21,8 @@ services:
         VITE_LIFF_ID: ${VITE_LIFF_ID}
     container_name: lineapp-frontend
     ports:
-      # Vite dev server ฟังที่ 5173 → expose ตรง ๆ (ไม่ใช่ผ่าน nginx)
+      # Production static server listens internally; nginx proxies public traffic.
       - "5173:5173"
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
-      VITE_LINE_CHANNEL_ID: ${VITE_LINE_CHANNEL_ID}
-      VITE_LINE_REDIRECT_URI: ${VITE_LINE_REDIRECT_URI}
-      VITE_LIFF_ID: ${VITE_LIFF_ID}
-      CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING:-true}
-      WATCHPACK_POLLING: ${WATCHPACK_POLLING:-true}
-    volumes:
-      # source code จาก host → container (Vite HMR จะ pick up การแก้ไฟล์)
-      - ./Front/lineapp:/app
-      # named volume ทับ /app/node_modules — กันไม่ให้ host เอา node_modules มาทับ
-      - frontend-node-modules:/app/node_modules
-    develop:
-      watch:
-        - action: sync
-          path: ./Front/lineapp
-          target: /app
-          ignore:
-            - node_modules/
-            - dist/
-        - action: rebuild
-          path: ./Front/lineapp/package.json
-        - action: rebuild
-          path: ./Front/lineapp/package-lock.json
     depends_on:
       - user-service
     restart: unless-stopped
@@ -167,9 +143,6 @@ services:
     restart: unless-stopped
     networks:
       - lineapp-net
-
-volumes:
-  frontend-node-modules:
 
 networks:
   lineapp-net:
