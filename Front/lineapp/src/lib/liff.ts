@@ -16,9 +16,45 @@ export function isLikelyLineInAppBrowser(): boolean {
     return /Line\//i.test(navigator.userAgent);
 }
 
+export function hasPendingLiffLogin(): boolean {
+    try {
+        return Object.keys(localStorage).some(
+            (key) => key.startsWith("LIFF_STORE:") && key.endsWith(":loginTmp"),
+        );
+    } catch {
+        return false;
+    }
+}
+
+export function dumpLiffStatus(label: string, extra?: Record<string, unknown>): void {
+    let loggedIn: boolean | "uninitialized" = "uninitialized";
+    let inClient: boolean | "uninitialized" = "uninitialized";
+    let hasIdToken = false;
+    let hasAccessToken = false;
+    try {
+        loggedIn = liff.isLoggedIn();
+        inClient = liff.isInClient();
+        hasIdToken = Boolean(liff.getIDToken()?.trim());
+        hasAccessToken = Boolean(liff.getAccessToken()?.trim());
+    } catch {
+        // init ยังไม่เสร็จ — ค่า uninitialized ถูกต้อง
+    }
+    console.log(label, {
+        configured: isLiffConfigured(),
+        liffId: import.meta.env.VITE_LIFF_ID?.trim() || null,
+        pendingLoginTmp: hasPendingLiffLogin(),
+        loggedIn,
+        inClient,
+        hasIdToken,
+        hasAccessToken,
+        ...extra,
+    });
+}
+
 export async function initLiff(): Promise<boolean> {
     const liffId = import.meta.env.VITE_LIFF_ID?.trim();
     if (!liffId) {
+        console.warn("[LIFF] skip init: VITE_LIFF_ID empty");
         return false;
     }
 
@@ -27,9 +63,14 @@ export async function initLiff(): Promise<boolean> {
         // ไม่งั้น LINE จะส่ง code กลับ /callback โดยไม่มี line_oauth_state
         initPromise = liff
             .init({ liffId, withLoginOnExternalBrowser: false })
-            .then(() => true)
+            .then(async () => {
+                await liff.ready;
+                dumpLiffStatus("[LIFF] init ok");
+                return true;
+            })
             .catch((err) => {
                 console.warn("[LIFF] init failed:", err);
+                initPromise = null;
                 return false;
             });
     }
@@ -54,12 +95,20 @@ export function isInLiffClient(): boolean {
     }
 }
 
-/** Callback ที่ลงทะเบียนใน LINE Console (origin + /) ไม่ใส่ query จากหน้าปัจจุบัน */
+/**
+ * ต้องตรงกับ Callback URL ใน LINE Console (VITE_LINE_REDIRECT_URI)
+ * ถ้าชี้ไป / แต่ Console มีแค่ /callback LINE จะส่ง code กลับ /callback แล้วแลก token ไม่ติด
+ */
 export function getLiffLoginRedirectUri(): string {
-    return `${window.location.origin}/`;
+    const configured = import.meta.env.VITE_LINE_REDIRECT_URI?.trim();
+    if (configured) {
+        return configured;
+    }
+    return `${window.location.origin}/callback`;
 }
 
 export function loginWithLiff(redirectUri: string = getLiffLoginRedirectUri()): void {
+    console.log("[LIFF] login", { redirectUri });
     liff.login({ redirectUri });
 }
 
@@ -67,6 +116,10 @@ export function getLiffTokens(): LiffTokens | null {
     const idToken = liff.getIDToken()?.trim();
     const accessToken = liff.getAccessToken()?.trim();
     if (!idToken || !accessToken) {
+        console.warn("[LIFF] missing tokens", {
+            hasIdToken: Boolean(idToken),
+            hasAccessToken: Boolean(accessToken),
+        });
         return null;
     }
     return { idToken, accessToken };

@@ -11,9 +11,60 @@ const POST_LOGIN_REDIRECT_KEY = "line_post_login_redirect";
 const REDIRECT_GUARD_KEY = "line_oauth_redirect_started_at";
 const REDIRECT_GUARD_TTL_MS = 5_000;
 
+export type LineCallbackFailReason =
+    | "line_error"
+    | "missing_code"
+    | "missing_state"
+    | "invalid_state";
+
 export type LineCallbackPayload =
     | { ok: true; code: string }
-    | { ok: false; message: string };
+    | { ok: false; message: string; reason: LineCallbackFailReason };
+
+type StoredStateSource = "localStorage" | "sessionStorage" | "cookie";
+
+function cookieSecureSuffix(): string {
+    return window.location.protocol === "https:" ? "; Secure" : "";
+}
+
+function writeStateCookie(state: string): void {
+    document.cookie = `${STATE_KEY}=${encodeURIComponent(state)}; Path=/; Max-Age=600; SameSite=Lax${cookieSecureSuffix()}`;
+}
+
+function readStateCookie(): string | null {
+    const prefix = `${STATE_KEY}=`;
+    const raw = document.cookie
+        .split("; ")
+        .find((part) => part.startsWith(prefix));
+    if (!raw) {
+        return null;
+    }
+    try {
+        return decodeURIComponent(raw.slice(prefix.length)).trim() || null;
+    } catch {
+        return null;
+    }
+}
+
+function clearStateCookie(): void {
+    document.cookie = `${STATE_KEY}=; Path=/; Max-Age=0; SameSite=Lax${cookieSecureSuffix()}`;
+}
+
+function readExpectedState(): { state: string; source: StoredStateSource } | null {
+    const fromLocal = localStorage.getItem(STATE_KEY)?.trim();
+    if (fromLocal) {
+        return { state: fromLocal, source: "localStorage" };
+    }
+    const fromSession = sessionStorage.getItem(STATE_KEY)?.trim();
+    if (fromSession) {
+        return { state: fromSession, source: "sessionStorage" };
+    }
+    const fromCookie = readStateCookie();
+    if (fromCookie) {
+        return { state: fromCookie, source: "cookie" };
+    }
+    return null;
+}
 
 function loadReusableState(): { state: string; loginUrl: string } | null {
     const state = localStorage.getItem(STATE_KEY)?.trim();
@@ -35,6 +86,32 @@ function saveOAuthInflight(state: string, loginUrl: string): void {
     localStorage.setItem(STATE_KEY, state);
     localStorage.setItem(STATE_CREATED_AT_KEY, String(Date.now()));
     localStorage.setItem(INFLIGHT_LOGIN_URL_KEY, loginUrl);
+    sessionStorage.setItem(STATE_KEY, state);
+    writeStateCookie(state);
+}
+
+function listLiffStorageKeys(): string[] {
+    try {
+        return Object.keys(localStorage).filter((key) => key.startsWith("LIFF_STORE"));
+    } catch {
+        return [];
+    }
+}
+
+function dumpLineCallbackDebug(label: string, extra?: Record<string, unknown>): void {
+    const params = new URLSearchParams(window.location.search);
+    const expected = readExpectedState();
+    console.log(label, {
+        href: window.location.href,
+        hasCode: Boolean(params.get("code")?.trim()),
+        incomingState: params.get("state"),
+        error: params.get("error"),
+        errorDescription: params.get("error_description"),
+        expectedState: expected?.state ?? null,
+        expectedStateSource: expected?.source ?? null,
+        liffKeys: listLiffStorageKeys(),
+        ...extra,
+    });
 }
 
 function normalizePostLoginRedirect(target: string): string | null {
@@ -111,28 +188,54 @@ function parseLineCallback(search: string): LineCallbackPayload {
     const error = params.get("error");
     const errorDescription = params.get("error_description");
     if (error) {
-        return {
+        const payload: LineCallbackPayload = {
             ok: false,
+            reason: "line_error",
             message: errorDescription
                 ? `LINE login error: ${errorDescription}`
                 : `LINE login error: ${error}`,
         };
+        console.warn("[parseLineCallback] LINE returned error", payload);
+        return payload;
     }
 
     const code = params.get("code")?.trim();
     const state = params.get("state")?.trim();
     if (!code) {
-        return { ok: false, message: "Missing authorization code." };
+        const payload: LineCallbackPayload = {
+            ok: false,
+            reason: "missing_code",
+            message: "Missing authorization code.",
+        };
+        console.warn("[parseLineCallback] missing code");
+        return payload;
     }
     if (!state) {
-        return { ok: false, message: "Missing state parameter." };
+        const payload: LineCallbackPayload = {
+            ok: false,
+            reason: "missing_state",
+            message: "Missing state parameter.",
+        };
+        console.warn("[parseLineCallback] missing state");
+        return payload;
     }
 
-    const expectedState = localStorage.getItem(STATE_KEY);
-    if (!expectedState || expectedState !== state) {
-        return { ok: false, message: "Invalid login state. Please try again." };
+    const expected = readExpectedState();
+    if (!expected || expected.state !== state) {
+        console.warn("[parseLineCallback] state mismatch", {
+            incomingState: state,
+            expectedState: expected?.state ?? null,
+            expectedStateSource: expected?.source ?? null,
+            liffKeys: listLiffStorageKeys(),
+        });
+        return {
+            ok: false,
+            reason: "invalid_state",
+            message: "Invalid login state. Please try again.",
+        };
     }
 
+    console.log("[parseLineCallback] ok", { source: expected.source });
     return { ok: true, code };
 }
 
@@ -158,6 +261,8 @@ function clearLineOAuthState(): void {
     localStorage.removeItem(STATE_KEY);
     localStorage.removeItem(STATE_CREATED_AT_KEY);
     localStorage.removeItem(INFLIGHT_LOGIN_URL_KEY);
+    sessionStorage.removeItem(STATE_KEY);
+    clearStateCookie();
 }
 
 /** เรียกก่อน location.replace(loginUrl) ทุกครั้ง เพื่อ mark ว่า redirect เริ่มไปแล้ว */
@@ -176,6 +281,7 @@ function isOAuthRedirectRecentlyStarted(): boolean {
 export {
     clearLineOAuthState,
     consumePostLoginRedirect,
+    dumpLineCallbackDebug,
     getLineLoginUrl,
     isLineLoginConfigured,
     isOAuthRedirectRecentlyStarted,

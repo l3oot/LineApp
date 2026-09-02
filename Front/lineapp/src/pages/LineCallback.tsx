@@ -4,9 +4,11 @@ import { useTranslation } from "react-i18next";
 import {
     clearLineOAuthState,
     consumePostLoginRedirect,
+    dumpLineCallbackDebug,
     parseLineCallback,
 } from "../lib/lineLogin";
 import { auth, exchangeLineCode, tryCompleteLiffSession, type AuthUser } from "../lib/auth";
+import { dumpLiffStatus, hasPendingLiffLogin } from "../lib/liff";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
 
 type CallbackStatus =
@@ -30,12 +32,18 @@ export function LineCallback() {
         };
 
         const run = async () => {
+            dumpLineCallbackDebug("[LineCallback] start", {
+                pendingLiffLogin: hasPendingLiffLogin(),
+                alreadyAuthed: auth.isAuthed(),
+            });
+
             if (auth.isAuthed()) {
+                console.log("[LineCallback] already authed, skipping exchange");
                 navigate(consumePostLoginRedirect() ?? "/", { replace: true });
                 return;
             }
 
-            // เส้นเว็บ OAuth: state ตรงกับ localStorage — ห้าม init LIFF (จะชิง code)
+            // เส้นเว็บ OAuth: state ตรงกับที่เก็บไว้ — ห้าม init LIFF (จะชิง code)
             const parsed = parseLineCallback(location.search);
             if (parsed.ok) {
                 try {
@@ -52,7 +60,8 @@ export function LineCallback() {
                 return;
             }
 
-            // เส้น LIFF ที่หลุดมา /callback (มี loginTmp แต่ไม่มี line_oauth_state)
+            // เส้น LIFF ที่หลุดมา /callback (มี loginTmp หรือ code จาก LIFF โดยไม่มี line_oauth_state)
+            dumpLiffStatus("[LineCallback] trying LIFF complete", { parseReason: parsed.reason });
             try {
                 const liffUser = await tryCompleteLiffSession();
                 if (liffUser) {
@@ -60,6 +69,7 @@ export function LineCallback() {
                     finish(liffUser);
                     return;
                 }
+                console.warn("[LineCallback] LIFF complete returned null");
             } catch (err) {
                 console.error("[LineCallback] LIFF complete failed:", err);
                 if (ignore) return;
@@ -68,7 +78,10 @@ export function LineCallback() {
             }
 
             if (ignore) return;
-            console.warn("[LineCallback] parse failed:", parsed.message);
+            dumpLineCallbackDebug("[LineCallback] parse failed", {
+                parseReason: parsed.reason,
+                parseMessage: parsed.message,
+            });
             clearLineOAuthState();
             setStatus({ kind: "error", message: parsed.message });
         };

@@ -60,9 +60,22 @@ export default function RequireAuth({ children }: RequireAuthProps) {
             const currentPath =
                 window.location.pathname + window.location.search + window.location.hash;
             const forceExternalBrowser = new URLSearchParams(window.location.search).get("openExternalBrowser") === "1";
+            const inLineUa = isLikelyLineInAppBrowser();
 
-            if (isLiffConfigured() && !forceExternalBrowser && isLikelyLineInAppBrowser()) {
+            console.log("[RequireAuth]", {
+                path: currentPath,
+                isLiffConfigured: isLiffConfigured(),
+                forceExternalBrowser,
+                isLikelyLineInAppBrowser: inLineUa,
+            });
+
+            if (isLiffConfigured() && !forceExternalBrowser && inLineUa) {
                 const liffReady = await initLiff();
+                console.log("[RequireAuth] after init", {
+                    liffReady,
+                    isInLiffClient: liffReady ? isInLiffClient() : false,
+                    isLiffLoggedIn: liffReady ? isLiffLoggedIn() : false,
+                });
                 // ใช้ LIFF เฉพาะใน LINE in-app — เบราว์เซอร์นอกใช้เว็บ OAuth
                 if (liffReady && isInLiffClient()) {
                     if (!isLiffLoggedIn()) {
@@ -86,6 +99,7 @@ export default function RequireAuth({ children }: RequireAuthProps) {
                 }
             }
 
+            console.log("[RequireAuth] using web OAuth");
             if (!isLineLoginConfigured()) {
                 if (!ignore) setState("misconfigured");
                 return;
