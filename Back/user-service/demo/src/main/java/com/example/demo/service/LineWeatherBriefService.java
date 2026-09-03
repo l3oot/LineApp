@@ -21,8 +21,6 @@ public class LineWeatherBriefService {
 
     private static final Logger log = LoggerFactory.getLogger(LineWeatherBriefService.class);
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final String FALLBACK_PROVINCE = "บุรีรัมย์";
-    private static final String FALLBACK_AMPHOE = "ลำปลายมาศ";
     private static final int MAX_CHARS = 300;
     private static final String FALLBACK_REPLY = "🌦️ ยายยังดึงอากาศไม่ได้ตอนนี้ ลองพิมพ์ สภาพอากาศ อีกครั้งนะจ๊ะ";
 
@@ -64,8 +62,7 @@ public class LineWeatherBriefService {
         String amphoe = blankToNull(profile.district());
         String tambon = blankToNull(profile.subDistrict());
         if (province == null) {
-            province = FALLBACK_PROVINCE;
-            amphoe = amphoe != null ? amphoe : FALLBACK_AMPHOE;
+            return "ไม่มีข้อมูลจังหวัดจ้า";
         }
         String date = AppTime.now().toLocalDate().format(DATE);
         try {
