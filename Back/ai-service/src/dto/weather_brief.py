@@ -11,4 +11,4 @@ class WeatherBriefSummarizeRequest(BaseModel):
 
 class WeatherBriefSummarizeResponse(BaseModel):
     source_model: str = Field(..., description="แหล่งโมเดลที่ตอบ")
-    summary: str = Field(..., description="ข้อความสรุปสำหรับ LINE ไม่เกิน 300 ตัวอักษร")
+    summary: str = Field(..., description="ข้อความสรุปสำหรับ LINE แบ่งบรรทัดตามช่วงเวลา ไม่เกิน 500 ตัวอักษร")

@@ -26,7 +26,7 @@ public class LineWeatherBriefService {
 
     private static final Logger log = LoggerFactory.getLogger(LineWeatherBriefService.class);
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final int MAX_CHARS = 300;
+    private static final int MAX_CHARS = 500;
     private static final String FALLBACK_REPLY = "🌦️ ยายยังดึงอากาศไม่ได้ตอนนี้ ลองพิมพ์ สภาพอากาศ อีกครั้งนะจ๊ะ";
     private static final String[] CONDITION_THAI = {
         "ไม่ระบุ",
@@ -251,22 +251,41 @@ public class LineWeatherBriefService {
     }
 
     private static String fallbackFromData(String hourlyText) {
-        StringBuilder sb = new StringBuilder("🌦️ ");
+        StringBuilder sb = new StringBuilder("• ");
         if (hourlyText != null) {
-            String first = hourlyText.lines().limit(3).reduce((a, b) -> a + " " + b).orElse(hourlyText);
-            sb.append(first);
+            hourlyText.lines()
+                    .map(String::trim)
+                    .filter(line -> !line.isEmpty())
+                    .limit(4)
+                    .forEach(line -> {
+                        if (sb.length() > 2) {
+                            sb.append('\n').append("• ");
+                        }
+                        sb.append(line);
+                    });
         }
         String text = sb.toString().trim();
-        return text.isEmpty() ? FALLBACK_REPLY : limitChars(text);
+        return text.isEmpty() || "•".equals(text) ? FALLBACK_REPLY : limitChars(text);
     }
 
     private static String limitChars(String text) {
-        String compact = text.replaceAll("\\s+", " ").trim();
-        if (compact.codePointCount(0, compact.length()) <= MAX_CHARS) {
-            return compact;
+        StringBuilder compact = new StringBuilder();
+        for (String line : text.split("\\R")) {
+            String trimmed = line.replaceAll("\\s+", " ").trim();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            if (compact.length() > 0) {
+                compact.append('\n');
+            }
+            compact.append(trimmed);
         }
-        int end = compact.offsetByCodePoints(0, MAX_CHARS);
-        return compact.substring(0, end).trim();
+        String result = compact.toString();
+        if (result.codePointCount(0, result.length()) <= MAX_CHARS) {
+            return result;
+        }
+        int end = result.offsetByCodePoints(0, MAX_CHARS);
+        return result.substring(0, end).trim();
     }
 
     private static String blankToNull(String value) {
