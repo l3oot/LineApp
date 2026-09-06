@@ -12,7 +12,7 @@ from src.service.llm_service import run_llm
 
 logger = logging.getLogger(__name__)
 
-MAX_CHARS = 300
+MAX_CHARS = 500
 
 
 def _summary_from_llm(payload: Any) -> str:
@@ -30,7 +30,8 @@ def _summary_from_llm(payload: Any) -> str:
 
 
 def _limit_chars(text: str) -> str:
-    compact = " ".join(text.split())
+    lines = [" ".join(line.split()) for line in (text or "").splitlines()]
+    compact = "\n".join(line for line in lines if line)
     if len(compact) <= MAX_CHARS:
         return compact
     return compact[:MAX_CHARS].rstrip()
