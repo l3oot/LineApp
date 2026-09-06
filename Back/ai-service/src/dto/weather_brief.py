@@ -6,8 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class WeatherBriefSummarizeRequest(BaseModel):
-    hourlyForecast: str = Field(..., description="ข้อความพยากรณ์รายชั่วโมงที่ย่อแล้ว")
-    descriptionThai: str = Field(default="", description="ข้อความจาก <DescriptionThai>")
+    hourlyForecast: str = Field(..., description="พยากรณ์รายชั่วโมงที่ย่อเป็นช่วงเวลา")
 
 
 class WeatherBriefSummarizeResponse(BaseModel):

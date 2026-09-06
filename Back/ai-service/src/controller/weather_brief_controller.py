@@ -16,6 +16,6 @@ def summarize(body: WeatherBriefSummarizeRequest) -> WeatherBriefSummarizeRespon
     if not hourly:
         raise HTTPException(status_code=400, detail="hourlyForecast is required")
     try:
-        return summarize_weather_brief(hourly, body.descriptionThai or "")
+        return summarize_weather_brief(hourly)
     except Exception as exc:
         raise HTTPException(status_code=502, detail="weather brief summarize failed") from exc
