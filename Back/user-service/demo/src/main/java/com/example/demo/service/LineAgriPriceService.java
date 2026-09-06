@@ -45,23 +45,25 @@ public class LineAgriPriceService {
         if (text.isEmpty() || !text.contains("ราคา")) {
             return null;
         }
+        if (looksLikeTransaction(text)) {
+            return null;
+        }
+
+        String stripped = stripPriceWords(text);
+        if (stripped == null) {
+            return ASK_NAME_REPLY;
+        }
 
         AiAgriPriceExtractRes extracted = aiClientService.extractAgriPriceQuery(text);
-        boolean isPriceQuestion;
-        String productQuery;
-        if (extracted == null) {
-            if (looksLikeTransaction(text)) {
-                return null;
-            }
-            isPriceQuestion = true;
-            productQuery = stripPriceWords(text);
-        } else {
+        boolean isPriceQuestion = true;
+        String productQuery = stripped;
+        if (extracted != null) {
             isPriceQuestion = extracted.isPriceQuestion() == null
-                    ? !looksLikeTransaction(text)
+                    ? true
                     : extracted.isPriceQuestion();
-            productQuery = blankToNull(extracted.productQuery());
-            if (productQuery == null) {
-                productQuery = stripPriceWords(text);
+            String fromAi = blankToNull(extracted.productQuery());
+            if (fromAi != null && text.contains(fromAi)) {
+                productQuery = fromAi;
             }
         }
 
@@ -136,6 +138,13 @@ public class LineAgriPriceService {
                 .replace("ล่าสุด", " ")
                 .replace("ขอดู", " ")
                 .replace("หน่อย", " ")
+                .replace("สินค้า", " ")
+                .replace("จ้า", " ")
+                .replace("จ๋า", " ")
+                .replace("ค่ะ", " ")
+                .replace("คะ", " ")
+                .replace("ครับ", " ")
+                .replace("นะ", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
         return stripped.isEmpty() ? null : stripped;

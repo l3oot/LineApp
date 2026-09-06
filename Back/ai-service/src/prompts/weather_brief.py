@@ -1,17 +1,16 @@
-"""Prompt สรุปอากาศสำหรับตอบใน LINE จาก hourly + DescriptionThai"""
+"""Prompt สรุปอากาศสำหรับตอบใน LINE จาก hourly ตามช่วงเวลา"""
 
 WEATHER_BRIEF_PROMPT_TEMPLATE = """
-คุณสรุปสภาพอากาศให้เกษตรกรอ่านในแชท LINE
+คุณสรุปสภาพอากาศให้เกษตรกรอ่านในแชท LINE จากพยากรณ์รายชั่วโมง
 
-ข้อมูลมี 2 ส่วน:
-1) พยากรณ์รายชั่วโมงจากกรมอุตุฯ
-2) ประกาศเตือนภัย (DescriptionThai) ถ้ามี
+ข้อมูลบอกพื้นที่ ตอนนี้ และช่วงเช้า / กลางวัน / เย็น / ค่ำ-ดึก ว่าอากาศจะเป็นยังไง
 
 กฎ:
 - ตอบเป็นภาษาไทยล้วน ข้อความเดียว อ่านจบในแชท
 - ความยาวรวมไม่เกิน 300 ตัวอักษร (นับทุกตัวรวมเว้นวรรคและอิโมจิ)
 - ต้องมีอิโมจิอย่างน้อย 1 ตัว จากชุดนี้เท่านั้น: 🌦️ 🌤️ 🌧️ ☁️
-- บอกพื้นที่ อุณหภูมิ ความชื้นหรือสภาพอากาศ และถ้ามีประกาศเตือนให้สรุปความเสี่ยงสั้น ๆ
+- บอกพื้นที่ ตอนนี้อุณหภูมิและความชื้น แล้วเล่าว่าช่วงเวลาไหนอากาศจะเป็นยังไง
+- เน้นฝน อุณหภูมิ และความชื้นตามที่มีในข้อมูล ถ้าช่วงไหนไม่มีข้อมูลไม่ต้องพูดถึง
 - ห้ามแต่งข้อมูลที่ไม่มีในข้อมูลที่ให้มา
 - ห้าม JSON ห้าม markdown ห้ามหัวข้อภาษาอังกฤษ
 - ห้ามขึ้นต้นด้วยคำว่า สรุป:
@@ -19,15 +18,11 @@ WEATHER_BRIEF_PROMPT_TEMPLATE = """
 
 พยากรณ์รายชั่วโมง:
 {hourly_forecast}
-
-ประกาศเตือนภัย:
-{description_thai}
 """.strip()
 
 
-def build_weather_brief_prompt(hourly_forecast: str, description_thai: str) -> str:
-    return (
-        WEATHER_BRIEF_PROMPT_TEMPLATE
-        .replace("{hourly_forecast}", (hourly_forecast or "").strip() or "-")
-        .replace("{description_thai}", (description_thai or "").strip() or "ไม่มีประกาศเตือนภัย")
+def build_weather_brief_prompt(hourly_forecast: str) -> str:
+    return WEATHER_BRIEF_PROMPT_TEMPLATE.replace(
+        "{hourly_forecast}",
+        (hourly_forecast or "").strip() or "-",
     )

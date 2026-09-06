@@ -113,7 +113,7 @@ public class AiClientService {
     /**
      * เรียก ai-service POST /weather-brief/summarize — return null ถ้าพังหรือ timeout
      */
-    public AiWeatherBriefRes summarizeWeatherBrief(String hourlyForecast, String descriptionThai) {
+    public AiWeatherBriefRes summarizeWeatherBrief(String hourlyForecast) {
         long t0 = System.currentTimeMillis();
         try {
             URI uri = UriComponentsBuilder
@@ -127,7 +127,7 @@ public class AiClientService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setAccept(List.of(MediaType.APPLICATION_JSON));
             HttpEntity<AiWeatherBriefReq> entity =
-                    new HttpEntity<>(new AiWeatherBriefReq(hourlyForecast, descriptionThai), headers);
+                    new HttpEntity<>(new AiWeatherBriefReq(hourlyForecast), headers);
 
             ResponseEntity<AiWeatherBriefRes> resp =
                     restTemplate.exchange(uri, HttpMethod.POST, entity, AiWeatherBriefRes.class);
