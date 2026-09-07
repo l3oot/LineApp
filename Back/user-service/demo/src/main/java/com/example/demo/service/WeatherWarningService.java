@@ -90,17 +90,6 @@ public class WeatherWarningService {
         return data;
     }
 
-    /** ดึง <DescriptionThai> จาก XML โดยไม่ผ่าน AI — ใช้ส่งให้ LINE weather-brief */
-    public String latestDescriptionThai() {
-        try {
-            ParsedWarning parsed = fetchAndParse();
-            return parsed == null ? null : blankToNull(parsed.descriptionThai());
-        } catch (Exception ex) {
-            log.warn("Weather warning description fetch failed: {}", ex.getMessage());
-            return null;
-        }
-    }
-
     private WeatherWarningRes toResponse(ParsedWarning parsed) {
         String summary = summarize(parsed.descriptionThai());
         if (blankToNull(summary) == null) {

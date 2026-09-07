@@ -1,4 +1,4 @@
-"""สรุปอากาศสำหรับ LINE จาก hourly + DescriptionThai"""
+"""สรุปอากาศสำหรับ LINE จาก hourly ตามช่วงเวลา"""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from src.service.llm_service import run_llm
 
 logger = logging.getLogger(__name__)
 
-MAX_CHARS = 300
+MAX_CHARS = 500
 
 
 def _summary_from_llm(payload: Any) -> str:
@@ -30,23 +30,23 @@ def _summary_from_llm(payload: Any) -> str:
 
 
 def _limit_chars(text: str) -> str:
-    compact = " ".join(text.split())
+    lines = [" ".join(line.split()) for line in (text or "").splitlines()]
+    compact = "\n".join(line for line in lines if line)
     if len(compact) <= MAX_CHARS:
         return compact
     return compact[:MAX_CHARS].rstrip()
 
 
-def summarize_weather_brief(hourly_forecast: str, description_thai: str) -> WeatherBriefSummarizeResponse:
-    prompt = build_weather_brief_prompt(hourly_forecast, description_thai)
+def summarize_weather_brief(hourly_forecast: str) -> WeatherBriefSummarizeResponse:
+    prompt = build_weather_brief_prompt(hourly_forecast)
     llm_out = run_llm(prompt)
     summary = _limit_chars(_summary_from_llm(llm_out.get("result")))
     if not summary:
         raise RuntimeError("weather brief LLM returned empty summary")
     source_model = str(llm_out.get("source_model") or "unknown")
     logger.info(
-        "[weather-brief] summarized chars_in=%d+%d chars_out=%d model=%s",
+        "[weather-brief] summarized chars_in=%d chars_out=%d model=%s",
         len(hourly_forecast or ""),
-        len(description_thai or ""),
         len(summary),
         source_model,
     )
