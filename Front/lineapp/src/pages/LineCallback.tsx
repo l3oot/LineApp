@@ -185,7 +185,7 @@ export function LineCallback() {
                             to="/settings"
                             className="inline-flex rounded-[var(--radius-control)] bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white"
                         >
-                            กลับไปหน้า Settings
+                            เข้าสู่ระบบ
                         </Link>
                     </div>
                 )}
