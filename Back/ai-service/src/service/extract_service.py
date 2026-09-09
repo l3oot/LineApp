@@ -6,6 +6,7 @@ import json
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextvars import copy_context
 from typing import Any
 
 from src.client.lineapp_api import (
@@ -28,6 +29,7 @@ from src.service.llm_response_parser import (
     sanitize_ids,
 )
 from src.service.llm_service import run_llm
+from src.utils.request_id import get_request_id
 
 logger = logging.getLogger(__name__)
 
@@ -57,26 +59,28 @@ def _build_response(
 def extract_transaction(text: str, user_id: str | None = None) -> AiParseResponse:
     """หลัก entrypoint ของ business logic — controller ควรเรียกตัวนี้ตัวเดียว"""
     t_start = time.monotonic()
+    req_id = get_request_id()
     base = get_lineapp_api_base()
     uid = (user_id or "").strip() or settings.lineapp_default_user_id
     cycles: list[dict[str, Any]] = []
     categories: list[dict[str, Any]] = []
+    user_svc_ms = 0
     if uid:
-        # [Debug Step 2.User Service] เดิมยิง 2 request ไป user-service ตามลำดับ
-        # (สูงสุดรวมกัน ~30s) — ยิงพร้อมกันแทนเพื่อลดเวลาที่รอ
         t_ctx = time.monotonic()
         with ThreadPoolExecutor(max_workers=2) as pool:
-            cycles_future = pool.submit(fetch_cycles_for_user, base, uid)
-            categories_future = pool.submit(fetch_categories_for_user, base, uid)
+            cycles_future = pool.submit(copy_context().run, fetch_cycles_for_user, base, uid)
+            categories_future = pool.submit(copy_context().run, fetch_categories_for_user, base, uid)
             cycles = cycles_future.result()
             categories = categories_future.result()
+        user_svc_ms = int((time.monotonic() - t_ctx) * 1000)
         logger.info(
-            "[step2:user-service] loaded %d cycles, %d categories for userId=%s from %s elapsed_ms=%d",
+            "[ai-latency] hop=ai reqId=%s action=context userSvcMs=%d cycles=%d categories=%d userId=%s base=%s",
+            req_id,
+            user_svc_ms,
             len(cycles),
             len(categories),
             uid,
             base,
-            (time.monotonic() - t_ctx) * 1000,
         )
 
     cycles_json = json.dumps(cycles_for_prompt(cycles), ensure_ascii=False)
@@ -96,7 +100,8 @@ def extract_transaction(text: str, user_id: str | None = None) -> AiParseRespons
             structured = sanitize_icon(structured)
             last_response = _build_response(llm_out["source_model"], structured, message)
             logger.info(
-                "[step1:ai-service] attempt=%d/%d model=%s elapsed_ms=%d",
+                "[ai-latency] hop=ai reqId=%s action=parse-attempt attempt=%d/%d model=%s elapsed_ms=%d",
+                req_id,
                 attempt,
                 max_attempts,
                 llm_out["source_model"],
@@ -125,10 +130,13 @@ def extract_transaction(text: str, user_id: str | None = None) -> AiParseRespons
 
         if is_valid_response(last_response, text):
             logger.info(
-                "extract_transaction attempt=%d/%d status=%s total_elapsed_ms=%d",
+                "[ai-latency] hop=ai reqId=%s action=parse-done attempt=%d/%d status=%s userSvcMs=%d llmMs=%d totalMs=%d",
+                req_id,
                 attempt,
                 max_attempts,
                 "structured" if structured else "grandma",
+                user_svc_ms,
+                int((time.monotonic() - t_start) * 1000) - user_svc_ms,
                 (time.monotonic() - t_start) * 1000,
             )
             return last_response
@@ -154,8 +162,10 @@ def extract_transaction(text: str, user_id: str | None = None) -> AiParseRespons
             return _build_response("regex-fallback", fallback, None)
 
     logger.warning(
-        "extract_transaction: gave up after %d attempts total_elapsed_ms=%d — returning last response",
+        "[ai-latency] hop=ai reqId=%s action=parse-giveup attempts=%d userSvcMs=%d totalMs=%d",
+        req_id,
         max_attempts,
+        user_svc_ms,
         (time.monotonic() - t_start) * 1000,
     )
     return last_response

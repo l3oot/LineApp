@@ -17,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.example.demo.config.LineProperties;
 import com.example.demo.dto.res.LineProfileRes;
+import com.example.demo.util.AiLatency;
 
 /**
  * เรียก LINE Messaging API — Reply (ใช้ replyToken จาก webhook) และ Push (ใช้ userId)
@@ -102,16 +103,21 @@ public class LineMessagingService {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         HttpEntity<Void> req = new HttpEntity<>(headers);
+        long t0 = System.currentTimeMillis();
 
         try {
             ResponseEntity<LineProfileRes> res = restTemplate.exchange(url, HttpMethod.GET, req, LineProfileRes.class);
+            log.info("[ai-latency] hop=user reqId={} action=line-profile elapsedMs={}",
+                    AiLatency.currentOrDash(), System.currentTimeMillis() - t0);
             return res.getBody();
         } catch (HttpStatusCodeException e) {
-            log.warn("LINE get profile failed: userId={} status={} body={}",
-                    userId, e.getStatusCode(), e.getResponseBodyAsString());
+            log.warn("[ai-latency] hop=user reqId={} action=line-profile-fail elapsedMs={} status={} body={}",
+                    AiLatency.currentOrDash(), System.currentTimeMillis() - t0, e.getStatusCode(),
+                    e.getResponseBodyAsString());
             return null;
         } catch (RestClientException e) {
-            log.warn("LINE get profile failed: userId={} error={}", userId, e.getMessage());
+            log.warn("[ai-latency] hop=user reqId={} action=line-profile-fail elapsedMs={} error={}",
+                    AiLatency.currentOrDash(), System.currentTimeMillis() - t0, e.getMessage());
             return null;
         }
     }
@@ -159,14 +165,20 @@ public class LineMessagingService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(token);
         HttpEntity<Map<String, Object>> req = new HttpEntity<>(body, headers);
+        long t0 = System.currentTimeMillis();
         try {
             restTemplate.postForEntity(url, req, String.class);
+            log.info("[ai-latency] hop=user reqId={} action=line-reply elapsedMs={} url={}",
+                    AiLatency.currentOrDash(), System.currentTimeMillis() - t0, url);
             return true;
         } catch (HttpStatusCodeException e) {
-            log.error("LINE call {} failed: status={} body={}", url, e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("[ai-latency] hop=user reqId={} action=line-reply-fail elapsedMs={} url={} status={} body={}",
+                    AiLatency.currentOrDash(), System.currentTimeMillis() - t0, url, e.getStatusCode(),
+                    e.getResponseBodyAsString());
             return false;
         } catch (RestClientException e) {
-            log.error("LINE call {} failed: {}", url, e.getMessage(), e);
+            log.error("[ai-latency] hop=user reqId={} action=line-reply-fail elapsedMs={} url={} error={}",
+                    AiLatency.currentOrDash(), System.currentTimeMillis() - t0, url, e.getMessage(), e);
             return false;
         }
     }

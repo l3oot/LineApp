@@ -11,6 +11,7 @@ import requests
 from openai import OpenAI
 
 from src.config import settings
+from src.utils.request_id import get_request_id
 
 logger = logging.getLogger(__name__)
 
@@ -83,14 +84,20 @@ def run_llm(prompt: str) -> dict[str, Any]:
     t0 = time.monotonic()
     try:
         text = _call_opentyphoon(prompt)
-        logger.info("[step0:ai-provider] opentyphoon ok elapsed_ms=%d", (time.monotonic() - t0) * 1000)
+        logger.info(
+            "[ai-latency] hop=ai-llm reqId=%s action=done provider=opentyphoon model=%s elapsed_ms=%d",
+            get_request_id(),
+            _LLM.opentyphoon_model,
+            (time.monotonic() - t0) * 1000,
+        )
         return {
             "source_model": f"api.opentyphoon.ai / {_LLM.opentyphoon_model}",
             "result": _try_json(text),
         }
     except Exception as exc:
         logger.warning(
-            "[step0:ai-provider] opentyphoon failed elapsed_ms=%d — fallback to thaillm typhoon: %s",
+            "[ai-latency] hop=ai-llm reqId=%s action=fail provider=opentyphoon elapsed_ms=%d error=%s",
+            get_request_id(),
             (time.monotonic() - t0) * 1000,
             exc,
         )
@@ -98,11 +105,16 @@ def run_llm(prompt: str) -> dict[str, Any]:
     t1 = time.monotonic()
     try:
         text = _call_thaillm(_LLM.thaillm_typhoon_url, prompt)
-        logger.info("[step0:ai-provider] thaillm/typhoon ok elapsed_ms=%d", (time.monotonic() - t1) * 1000)
+        logger.info(
+            "[ai-latency] hop=ai-llm reqId=%s action=done provider=thaillm/typhoon elapsed_ms=%d",
+            get_request_id(),
+            (time.monotonic() - t1) * 1000,
+        )
         return {"source_model": "thaillm / typhoon", "result": _try_json(text)}
     except Exception as exc:
         logger.warning(
-            "[step0:ai-provider] thaillm/typhoon failed elapsed_ms=%d — fallback to thaillm kbtg: %s",
+            "[ai-latency] hop=ai-llm reqId=%s action=fail provider=thaillm/typhoon elapsed_ms=%d error=%s",
+            get_request_id(),
             (time.monotonic() - t1) * 1000,
             exc,
         )
@@ -110,11 +122,16 @@ def run_llm(prompt: str) -> dict[str, Any]:
     t2 = time.monotonic()
     try:
         text = _call_thaillm(_LLM.thaillm_kbtg_url, prompt)
-        logger.info("[step0:ai-provider] thaillm/kbtg ok elapsed_ms=%d", (time.monotonic() - t2) * 1000)
+        logger.info(
+            "[ai-latency] hop=ai-llm reqId=%s action=done provider=thaillm/kbtg elapsed_ms=%d",
+            get_request_id(),
+            (time.monotonic() - t2) * 1000,
+        )
         return {"source_model": "thaillm / kbtg", "result": _try_json(text)}
     except Exception as exc:
         logger.error(
-            "[step0:ai-provider] all LLM providers failed total_elapsed_ms=%d: %s",
+            "[ai-latency] hop=ai-llm reqId=%s action=fail provider=all elapsed_ms=%d error=%s",
+            get_request_id(),
             (time.monotonic() - t0) * 1000,
             exc,
         )
