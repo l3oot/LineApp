@@ -19,7 +19,7 @@
 
 .prices-card-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 0.75rem;
 }
@@ -88,6 +88,21 @@
     cursor: not-allowed;
 }
 
+.prices-period-track {
+    width: 100%;
+}
+
+.prices-period-btn {
+    flex: 1;
+}
+
+.prices-period-hint {
+    margin: 0.15rem 0 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-soft);
+}
+
 .prices-suggest {
     display: flex;
     flex-wrap: wrap;
@@ -113,6 +128,13 @@
     border-color: var(--primary);
     background: var(--primary-soft);
     color: #2c4a7a;
+}
+
+.prices-variant-label {
+    margin: 0 0 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-soft);
 }
 
 .prices-market-select {
@@ -159,6 +181,16 @@
 .prices-chart-wrap {
     width: 100%;
     height: 250px;
+}
+
+.prices-filter-bar {
+    margin-top: 0.25rem;
+}
+
+.prices-filter-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 0.375rem 0.25rem;
 }
 
 .prices-loading,
