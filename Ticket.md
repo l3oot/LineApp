@@ -2,19 +2,23 @@
 
 ## Frontend
 
-- [ ] **Fix:** Login Call Back Chack
+- [x] **Fix:** Login Call Back Chack
 
 ## Backend
 
-- [ ] **Feature:** เพิ่ม API Rich menu
+- [x] **Feature:** เพิ่ม API Rich menu
 
-- [ ] **Fix:** line สภาพอากาศไม่เอาคำอธิบายเอาแต่ทำนาย พร้อมเอาอนาคตมาด้วย
+- [x] **Fix:** line สภาพอากาศไม่เอาคำอธิบายเอาแต่ทำนาย พร้อมเอาอนาคตมาด้วย
 
-- [ ] **Fix:** line ราคาตอนนี้ดึงมะนาวตลอด ถ้าพิมพ์แต่ "ราคา"
+- [x] **Fix:** line ราคาตอนนี้ดึงมะนาวตลอด ถ้าพิมพ์แต่ "ราคา"
+
+- [ ] **Fix:** Ai Service ตอบช้า
+
+- [ ] **Fix:** ราคาสินค้า วัน -> อาทิตย์ -> เดือน
 
 ## DevOps
 
-- [ ] **Fix:** Docker Conflict target
+- [x] **Fix:** Docker Conflict target
 
 ## Database
 
