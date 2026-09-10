@@ -151,7 +151,7 @@ public class LineAgriPriceService {
     }
 
     static String fallbackSummary(List<AgriPriceLatestQuoteRes> quotes) {
-        StringBuilder sb = new StringBuilder("🥬 ราคาเฉลี่ยทุกตลาดวันล่าสุด");
+        StringBuilder sb = new StringBuilder("🥬 ราคาเฉลี่ยล่าสุด");
         for (AgriPriceLatestQuoteRes quote : quotes) {
             sb.append('\n')
                     .append(quote.productName())

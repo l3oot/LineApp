@@ -22,6 +22,7 @@ import com.example.demo.dto.res.AiParseRes;
 import com.example.demo.dto.res.TransactionRes;
 import com.example.demo.entity.UserEntity;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.util.AiLatency;
 import com.example.demo.util.AppTime;
 
 /**
@@ -100,82 +101,126 @@ public class LineWebhookService {
 
         String userSub = src.userId();
         String replyToken = event.replyToken();
-
-        if ("postback".equals(event.type())) {
-            handlePostback(userSub, event.postback(), replyToken);
-            return;
+        String reqId = AiLatency.current();
+        if (reqId == null || reqId.isBlank()) {
+            reqId = AiLatency.newRequestId();
+            AiLatency.set(reqId);
         }
+        long t0 = System.currentTimeMillis();
+        long eventTs = Optional.ofNullable(event.timestamp()).orElse(t0);
+        long queueMs = Math.max(0, t0 - eventTs);
 
-        if (!"message".equals(event.type())) {
-            log.debug("skip unsupported event: type={}", event.type());
-            return;
-        }
-        LineWebhookReq.Message msg = event.message();
-        if (msg == null || !"text".equals(msg.type()) || msg.text() == null || msg.text().isBlank()) {
-            log.debug("skip non-text/empty message: {}", msg);
-            return;
-        }
-
-        String userText = msg.text();
-        long timestampMs = Optional.ofNullable(event.timestamp()).orElseGet(System::currentTimeMillis);
-
-        if ("แนะนำ".equals(userText.trim())) {
-            lineMessagingService.replyFlex(
-                    replyToken,
-                    "วิธีพิมพ์ข้อความบันทึกรายการ",
-                    lineFlexMessageBuilder.buildHelpContents());
-            return;
-        }
-
-        if ("สภาพอากาศ".equals(userText.trim())) {
-            try {
-                UserEntity user = upsertUserBySub(userSub);
-                String brief = lineWeatherBriefService.buildBrief(user.getUserId());
-                lineMessagingService.reply(replyToken, brief);
-            } catch (Exception e) {
-                log.error("[line-weather] brief failed for user={}: {}", userSub, e.getMessage(), e);
-                lineMessagingService.reply(replyToken, "🌦️ ยายยังดึงอากาศไม่ได้ตอนนี้ ลองพิมพ์ สภาพอากาศ อีกครั้งนะจ๊ะ");
-            }
-            return;
-        }
-
-        if (LineCycleSummaryService.isSummaryRequest(userText)) {
-            try {
-                UserEntity user = upsertUserBySub(userSub);
-                String summary = lineCycleSummaryService.buildReply(user.getUserId(), userText);
-                lineMessagingService.reply(replyToken, summary);
-            } catch (Exception e) {
-                log.error("[line-cycle-summary] reply failed for user={}: {}", userSub, e.getMessage(), e);
-                lineMessagingService.reply(replyToken, LineCycleSummaryService.FALLBACK_REPLY);
-            }
-            return;
-        }
-
-        if (userText.contains("ราคา")) {
-            try {
-                String priceReply = lineAgriPriceService.tryBuildReply(userText);
-                if (LineAgriPriceService.ASK_NAME_REPLY.equals(priceReply)) {
-                    lineMessagingService.replyFlex(
-                            replyToken,
-                            "ลองพิมพ์ถามยายได้เลย เช่น ราคา ข้าว",
-                            lineFlexMessageBuilder.buildPriceHelpContents());
-                    return;
-                }
-                if (priceReply != null) {
-                    lineMessagingService.reply(replyToken, priceReply);
-                    return;
-                }
-            } catch (Exception e) {
-                log.error("[line-price] reply failed for user={}: {}", userSub, e.getMessage(), e);
-                lineMessagingService.reply(replyToken, "🥬 ยายยังดึงราคาไม่ได้ตอนนี้ ลองพิมพ์ ราคามะนาว อีกครั้งนะจ๊ะ");
+        try {
+            if ("postback".equals(event.type())) {
+                handlePostback(userSub, event.postback(), replyToken);
+                log.info("[ai-latency] hop=user reqId={} action=done intent=postback lineUser={} totalMs={}",
+                        reqId, userSub, System.currentTimeMillis() - t0);
                 return;
             }
-        }
 
-        long t0 = System.currentTimeMillis();
-        try {
-            // [Debug Step 3.Line Hook] upsertUserBySub เรียก LINE profile API ก่อนเรียก
-            // ai-service — ถ้าช้าจะดูเหมือน "ai-service ช้า" ทั้งที่คอขวดอยู่ก่อนหน้านั้น
+            if (!"message".equals(event.type())) {
+                log.debug("skip unsupported event: type={}", event.type());
+                return;
+            }
+            LineWebhookReq.Message msg = event.message();
+            if (msg == null || !"text".equals(msg.type()) || msg.text() == null || msg.text().isBlank()) {
+                log.debug("skip non-text/empty message: {}", msg);
+                return;
+            }
+
+            String userText = msg.text();
+            log.info("[ai-latency] hop=user reqId={} action=start intent=line lineUser={} queueMs={} textLen={}",
+                    reqId, userSub, queueMs, userText.length());
+
+            if ("แนะนำ".equals(userText.trim())) {
+                long tReply0 = System.currentTimeMillis();
+                lineMessagingService.replyFlex(
+                        replyToken,
+                        "วิธีพิมพ์ข้อความบันทึกรายการ",
+                        lineFlexMessageBuilder.buildHelpContents());
+                log.info("[ai-latency] hop=user reqId={} action=done intent=help lineUser={} replyMs={} totalMs={}",
+                        reqId, userSub, System.currentTimeMillis() - tReply0, System.currentTimeMillis() - t0);
+                return;
+            }
+
+            if ("สภาพอากาศ".equals(userText.trim())) {
+                try {
+                    long tUser0 = System.currentTimeMillis();
+                    UserEntity user = upsertUserBySub(userSub);
+                    long tUser = System.currentTimeMillis() - tUser0;
+                    long tAi0 = System.currentTimeMillis();
+                    String brief = lineWeatherBriefService.buildBrief(user.getUserId());
+                    long tAi = System.currentTimeMillis() - tAi0;
+                    long tReply0 = System.currentTimeMillis();
+                    lineMessagingService.reply(replyToken, brief);
+                    log.info(
+                            "[ai-latency] hop=user reqId={} action=done intent=weather lineUser={} upsertMs={} workMs={} replyMs={} totalMs={}",
+                            reqId, userSub, tUser, tAi, System.currentTimeMillis() - tReply0,
+                            System.currentTimeMillis() - t0);
+                } catch (Exception e) {
+                    log.error("[ai-latency] hop=user reqId={} action=fail intent=weather lineUser={} elapsedMs={} error={}",
+                            reqId, userSub, System.currentTimeMillis() - t0, e.getMessage(), e);
+                    lineMessagingService.reply(replyToken, "🌦️ ยายยังดึงอากาศไม่ได้ตอนนี้ ลองพิมพ์ สภาพอากาศ อีกครั้งนะจ๊ะ");
+                }
+                return;
+            }
+
+            if (LineCycleSummaryService.isSummaryRequest(userText)) {
+                try {
+                    long tUser0 = System.currentTimeMillis();
+                    UserEntity user = upsertUserBySub(userSub);
+                    long tUser = System.currentTimeMillis() - tUser0;
+                    long tAi0 = System.currentTimeMillis();
+                    String summary = lineCycleSummaryService.buildReply(user.getUserId(), userText);
+                    long tAi = System.currentTimeMillis() - tAi0;
+                    long tReply0 = System.currentTimeMillis();
+                    lineMessagingService.reply(replyToken, summary);
+                    log.info(
+                            "[ai-latency] hop=user reqId={} action=done intent=cycle-summary lineUser={} upsertMs={} workMs={} replyMs={} totalMs={}",
+                            reqId, userSub, tUser, tAi, System.currentTimeMillis() - tReply0,
+                            System.currentTimeMillis() - t0);
+                } catch (Exception e) {
+                    log.error("[ai-latency] hop=user reqId={} action=fail intent=cycle-summary lineUser={} elapsedMs={} error={}",
+                            reqId, userSub, System.currentTimeMillis() - t0, e.getMessage(), e);
+                    lineMessagingService.reply(replyToken, LineCycleSummaryService.FALLBACK_REPLY);
+                }
+                return;
+            }
+
+            if (userText.contains("ราคา")) {
+                try {
+                    long tAi0 = System.currentTimeMillis();
+                    String priceReply = lineAgriPriceService.tryBuildReply(userText);
+                    long tAi = System.currentTimeMillis() - tAi0;
+                    if (LineAgriPriceService.ASK_NAME_REPLY.equals(priceReply)) {
+                        long tReply0 = System.currentTimeMillis();
+                        lineMessagingService.replyFlex(
+                                replyToken,
+                                "ลองพิมพ์ถามยายได้เลย เช่น ราคา ข้าว",
+                                lineFlexMessageBuilder.buildPriceHelpContents());
+                        log.info(
+                                "[ai-latency] hop=user reqId={} action=done intent=price-help lineUser={} workMs={} replyMs={} totalMs={}",
+                                reqId, userSub, tAi, System.currentTimeMillis() - tReply0,
+                                System.currentTimeMillis() - t0);
+                        return;
+                    }
+                    if (priceReply != null) {
+                        long tReply0 = System.currentTimeMillis();
+                        lineMessagingService.reply(replyToken, priceReply);
+                        log.info(
+                                "[ai-latency] hop=user reqId={} action=done intent=price lineUser={} workMs={} replyMs={} totalMs={}",
+                                reqId, userSub, tAi, System.currentTimeMillis() - tReply0,
+                                System.currentTimeMillis() - t0);
+                        return;
+                    }
+                } catch (Exception e) {
+                    log.error("[ai-latency] hop=user reqId={} action=fail intent=price lineUser={} elapsedMs={} error={}",
+                            reqId, userSub, System.currentTimeMillis() - t0, e.getMessage(), e);
+                    lineMessagingService.reply(replyToken, "🥬 ยายยังดึงราคาไม่ได้ตอนนี้ ลองพิมพ์ ราคามะนาว อีกครั้งนะจ๊ะ");
+                    return;
+                }
+            }
+
             long tUser0 = System.currentTimeMillis();
             UserEntity user = upsertUserBySub(userSub);
             long tUser = System.currentTimeMillis() - tUser0;
@@ -184,19 +229,19 @@ public class LineWebhookService {
             AiParseRes parsed = aiClientService.parse(userText, user.getUserId());
             long tAi = System.currentTimeMillis() - tAi0;
 
-            LineReply reply = decideReply(user, parsed, timestampMs);
+            long tSave0 = System.currentTimeMillis();
+            LineReply reply = decideReply(user, parsed, eventTs);
+            long tSave = System.currentTimeMillis() - tSave0;
 
             long tReply0 = System.currentTimeMillis();
             lineMessagingService.send(reply, replyToken);
-            long tReply = System.currentTimeMillis() - tReply0;
-
             log.info(
-                    "[step3:line-hook] handleEvent done user={} upsertUserMs={} aiParseMs={} lineReplyMs={} totalMs={}",
-                    userSub, tUser, tAi, tReply, System.currentTimeMillis() - t0);
-
+                    "[ai-latency] hop=user reqId={} action=done intent=parse lineUser={} upsertMs={} aiMs={} saveMs={} replyMs={} totalMs={}",
+                    reqId, userSub, tUser, tAi, tSave, System.currentTimeMillis() - tReply0,
+                    System.currentTimeMillis() - t0);
         } catch (Exception e) {
-            log.error("[step3:line-hook] LINE webhook handle failed for user={} elapsedMs={}: {}",
-                    userSub, System.currentTimeMillis() - t0, e.getMessage(), e);
+            log.error("[ai-latency] hop=user reqId={} action=fail intent=parse lineUser={} elapsedMs={} error={}",
+                    reqId, userSub, System.currentTimeMillis() - t0, e.getMessage(), e);
             lineMessagingService.reply(replyToken, "ยายขอโทษน้า ระบบขัดข้องชั่วคราว ลองใหม่อีกครั้งนะจ๊ะ");
         }
     }
@@ -251,9 +296,12 @@ public class LineWebhookService {
      */
     @Transactional
     UserEntity upsertUserBySub(String userSub) {
+        long t0 = System.currentTimeMillis();
         LineProfileRes profile = lineMessagingService.getUserProfile(userSub);
+        long tProfile = System.currentTimeMillis() - t0;
 
         UserEntity user = userRepository.findByUserSub(userSub).orElse(null);
+        UserEntity saved;
         if (user == null) {
             UserEntity fresh = new UserEntity(
                     null,
@@ -261,19 +309,22 @@ public class LineWebhookService {
                     userSub,
                     profile != null ? profile.displayName() : null,
                     LocalDateTime.now());
-            return userRepository.save(fresh);
-        }
- 
-        user.setLastLoginAt(LocalDateTime.now());
-        if (profile != null) {
-            if (profile.pictureUrl() != null) {
-                user.setUserPicture(profile.pictureUrl());
+            saved = userRepository.save(fresh);
+        } else {
+            user.setLastLoginAt(LocalDateTime.now());
+            if (profile != null) {
+                if (profile.pictureUrl() != null) {
+                    user.setUserPicture(profile.pictureUrl());
+                }
+                if (profile.displayName() != null) {
+                    user.setUserName(profile.displayName());
+                }
             }
-            if (profile.displayName() != null) {
-                user.setUserName(profile.displayName());
-            }
+            saved = userRepository.save(user);
         }
-        return userRepository.save(user);
+        log.info("[ai-latency] hop=user reqId={} action=upsert-user lineUser={} profileMs={} totalMs={}",
+                AiLatency.currentOrDash(), userSub, tProfile, System.currentTimeMillis() - t0);
+        return saved;
     }
 
     /**

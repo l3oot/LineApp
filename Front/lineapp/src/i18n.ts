@@ -339,7 +339,7 @@ const resources = {
             },
             prices: {
                 searchLabel: "ชื่อสินค้า",
-                searchPlaceholder: "เช่น มะนาว ผลขนาดใหญ่พิเศษ",
+                searchPlaceholder: "เช่น มะนาว, กระบือ",
                 search: "ค้นหา",
                 searching: "กำลังค้นหา...",
                 empty: "ไม่พบราคาสินค้าที่ค้นหา",
@@ -351,6 +351,21 @@ const resources = {
                 marketLabel: "ตลาด",
                 allMarkets: "ทุกตลาด (เฉลี่ย)",
                 recentTitle: "รายการล่าสุด",
+                periodLabel: "ช่วงราคา",
+                period: {
+                    auto: "อัตโนมัติ",
+                    daily: "วัน",
+                    weekly: "สัปดาห์",
+                    monthly: "เดือน",
+                },
+                periodHint: {
+                    daily: "ราคารายวัน",
+                    weekly: "ราคารายสัปดาห์",
+                    monthly: "ราคารายเดือน",
+                },
+                variantLabel: "ประเภท",
+                rangeLabel: "ช่วงเวลา",
+                emptyRange: "ไม่มีข้อมูลในช่วงเวลานี้",
             },
             icons: iconLabelsTh,
             addcycle: {
@@ -751,7 +766,7 @@ const resources = {
             },
             prices: {
                 searchLabel: "Product name",
-                searchPlaceholder: "e.g. Extra-large lime",
+                searchPlaceholder: "e.g. lime, buffalo",
                 search: "Search",
                 searching: "Searching...",
                 empty: "No prices found for this product",
@@ -763,6 +778,21 @@ const resources = {
                 marketLabel: "Market",
                 allMarkets: "All markets (avg)",
                 recentTitle: "Latest records",
+                periodLabel: "Price period",
+                period: {
+                    auto: "Auto",
+                    daily: "Day",
+                    weekly: "Week",
+                    monthly: "Month",
+                },
+                periodHint: {
+                    daily: "Daily prices",
+                    weekly: "Weekly prices",
+                    monthly: "Monthly prices",
+                },
+                variantLabel: "Grade",
+                rangeLabel: "Time range",
+                emptyRange: "No prices in this range",
             },
             icons: iconLabelsEn,
             addcycle: {
@@ -1163,7 +1193,7 @@ const resources = {
             },
             prices: {
                 searchLabel: "品目名",
-                searchPlaceholder: "例: ライム 特大",
+                searchPlaceholder: "例: ライム、水牛",
                 search: "検索",
                 searching: "検索中...",
                 empty: "この品目の価格が見つかりません",
@@ -1175,6 +1205,21 @@ const resources = {
                 marketLabel: "市場",
                 allMarkets: "全市場（平均）",
                 recentTitle: "最新データ",
+                periodLabel: "価格期間",
+                period: {
+                    auto: "自動",
+                    daily: "日",
+                    weekly: "週",
+                    monthly: "月",
+                },
+                periodHint: {
+                    daily: "日次価格",
+                    weekly: "週次価格",
+                    monthly: "月次価格",
+                },
+                variantLabel: "種類",
+                rangeLabel: "期間",
+                emptyRange: "この期間の価格はありません",
             },
             icons: iconLabelsJp,
             addcycle: {

@@ -31,6 +31,7 @@ import com.example.demo.dto.res.AiCycleSummaryRes;
 import com.example.demo.dto.res.AiParseRes;
 import com.example.demo.dto.res.AiWeatherBriefRes;
 import com.example.demo.dto.res.AiWeatherWarningRes;
+import com.example.demo.util.AiLatency;
 
 /**
  * Client เรียก ai-service (FastAPI) สำหรับ extract รายการ
@@ -59,173 +60,101 @@ public class AiClientService {
      * เรียก ai-service /parse — return null ถ้า ai-service พังหรือ timeout (เพื่อให้ caller fallback ได้)
      */
     public AiParseRes parse(String text, UUID userId) {
-        long t0 = System.currentTimeMillis();
-        try {
-            URI uri = UriComponentsBuilder
-                    .fromUriString(props.getBaseUrl())
-                    .path(props.getParsePath())
-                    .queryParam("text", text)
-                    .queryParamIfPresent("userId", userId == null ? java.util.Optional.empty() : java.util.Optional.of(userId.toString()))
-                    .encode(StandardCharsets.UTF_8)
-                    .build()
-                    .toUri();
-
-            ResponseEntity<AiParseRes> resp = restTemplate.exchange(uri, HttpMethod.GET, null, AiParseRes.class);
-            log.info("[step1:ai-service] call ai-service ok elapsedMs={}", System.currentTimeMillis() - t0);
-            return resp.getBody();
-        } catch (Exception e) {
-            log.error("[step1:ai-service] call ai-service failed elapsedMs={}: {}",
-                    System.currentTimeMillis() - t0, e.getMessage(), e);
-            return null;
-        }
+        URI uri = UriComponentsBuilder
+                .fromUriString(props.getBaseUrl())
+                .path(props.getParsePath())
+                .queryParam("text", text)
+                .queryParamIfPresent("userId", userId == null ? java.util.Optional.empty() : java.util.Optional.of(userId.toString()))
+                .encode(StandardCharsets.UTF_8)
+                .build()
+                .toUri();
+        return callAi(props.getParsePath(), uri, HttpMethod.GET, new HttpEntity<>(latencyHeaders(null)), AiParseRes.class);
     }
 
     /**
      * เรียก ai-service POST /weather-warning/summarize — return null ถ้าพังหรือ timeout
      */
     public AiWeatherWarningRes summarizeWeatherWarning(String descriptionThai) {
-        long t0 = System.currentTimeMillis();
-        try {
-            URI uri = UriComponentsBuilder
-                    .fromUriString(props.getBaseUrl())
-                    .path(props.getWeatherWarningPath())
-                    .encode(StandardCharsets.UTF_8)
-                    .build()
-                    .toUri();
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            HttpEntity<AiWeatherWarningReq> entity =
-                    new HttpEntity<>(new AiWeatherWarningReq(descriptionThai), headers);
-
-            ResponseEntity<AiWeatherWarningRes> resp =
-                    restTemplate.exchange(uri, HttpMethod.POST, entity, AiWeatherWarningRes.class);
-            log.info("[weather-warning:ai-service] call ok elapsedMs={}", System.currentTimeMillis() - t0);
-            return resp.getBody();
-        } catch (Exception e) {
-            log.error("[weather-warning:ai-service] call failed elapsedMs={}: {}",
-                    System.currentTimeMillis() - t0, e.getMessage(), e);
-            return null;
-        }
+        URI uri = aiUri(props.getWeatherWarningPath());
+        HttpEntity<AiWeatherWarningReq> entity =
+                new HttpEntity<>(new AiWeatherWarningReq(descriptionThai), latencyHeaders(MediaType.APPLICATION_JSON));
+        return callAi(props.getWeatherWarningPath(), uri, HttpMethod.POST, entity, AiWeatherWarningRes.class);
     }
 
     /**
      * เรียก ai-service POST /weather-brief/summarize — return null ถ้าพังหรือ timeout
      */
     public AiWeatherBriefRes summarizeWeatherBrief(String hourlyForecast) {
-        long t0 = System.currentTimeMillis();
-        try {
-            URI uri = UriComponentsBuilder
-                    .fromUriString(props.getBaseUrl())
-                    .path(props.getWeatherBriefPath())
-                    .encode(StandardCharsets.UTF_8)
-                    .build()
-                    .toUri();
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            HttpEntity<AiWeatherBriefReq> entity =
-                    new HttpEntity<>(new AiWeatherBriefReq(hourlyForecast), headers);
-
-            ResponseEntity<AiWeatherBriefRes> resp =
-                    restTemplate.exchange(uri, HttpMethod.POST, entity, AiWeatherBriefRes.class);
-            log.info("[weather-brief:ai-service] call ok elapsedMs={}", System.currentTimeMillis() - t0);
-            return resp.getBody();
-        } catch (Exception e) {
-            log.error("[weather-brief:ai-service] call failed elapsedMs={}: {}",
-                    System.currentTimeMillis() - t0, e.getMessage(), e);
-            return null;
-        }
+        URI uri = aiUri(props.getWeatherBriefPath());
+        HttpEntity<AiWeatherBriefReq> entity =
+                new HttpEntity<>(new AiWeatherBriefReq(hourlyForecast), latencyHeaders(MediaType.APPLICATION_JSON));
+        return callAi(props.getWeatherBriefPath(), uri, HttpMethod.POST, entity, AiWeatherBriefRes.class);
     }
 
     /**
      * เรียก ai-service POST /agri-price/extract — return null ถ้าพังหรือ timeout
      */
     public AiAgriPriceExtractRes extractAgriPriceQuery(String text) {
-        long t0 = System.currentTimeMillis();
-        try {
-            URI uri = UriComponentsBuilder
-                    .fromUriString(props.getBaseUrl())
-                    .path(props.getAgriPriceExtractPath())
-                    .encode(StandardCharsets.UTF_8)
-                    .build()
-                    .toUri();
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            HttpEntity<AiAgriPriceExtractReq> entity =
-                    new HttpEntity<>(new AiAgriPriceExtractReq(text), headers);
-
-            ResponseEntity<AiAgriPriceExtractRes> resp =
-                    restTemplate.exchange(uri, HttpMethod.POST, entity, AiAgriPriceExtractRes.class);
-            log.info("[agri-price-extract:ai-service] call ok elapsedMs={}", System.currentTimeMillis() - t0);
-            return resp.getBody();
-        } catch (Exception e) {
-            log.error("[agri-price-extract:ai-service] call failed elapsedMs={}: {}",
-                    System.currentTimeMillis() - t0, e.getMessage(), e);
-            return null;
-        }
+        URI uri = aiUri(props.getAgriPriceExtractPath());
+        HttpEntity<AiAgriPriceExtractReq> entity =
+                new HttpEntity<>(new AiAgriPriceExtractReq(text), latencyHeaders(MediaType.APPLICATION_JSON));
+        return callAi(props.getAgriPriceExtractPath(), uri, HttpMethod.POST, entity, AiAgriPriceExtractRes.class);
     }
 
     /**
      * เรียก ai-service POST /agri-price/summarize — return null ถ้าพังหรือ timeout
      */
     public AiAgriPriceBriefRes summarizeAgriPrice(String productQuery, List<AgriPriceLatestQuoteRes> quotes) {
-        long t0 = System.currentTimeMillis();
-        try {
-            URI uri = UriComponentsBuilder
-                    .fromUriString(props.getBaseUrl())
-                    .path(props.getAgriPriceBriefPath())
-                    .encode(StandardCharsets.UTF_8)
-                    .build()
-                    .toUri();
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            HttpEntity<AiAgriPriceBriefReq> entity =
-                    new HttpEntity<>(new AiAgriPriceBriefReq(productQuery, quotes), headers);
-
-            ResponseEntity<AiAgriPriceBriefRes> resp =
-                    restTemplate.exchange(uri, HttpMethod.POST, entity, AiAgriPriceBriefRes.class);
-            log.info("[agri-price-brief:ai-service] call ok elapsedMs={}", System.currentTimeMillis() - t0);
-            return resp.getBody();
-        } catch (Exception e) {
-            log.error("[agri-price-brief:ai-service] call failed elapsedMs={}: {}",
-                    System.currentTimeMillis() - t0, e.getMessage(), e);
-            return null;
-        }
+        URI uri = aiUri(props.getAgriPriceBriefPath());
+        HttpEntity<AiAgriPriceBriefReq> entity =
+                new HttpEntity<>(new AiAgriPriceBriefReq(productQuery, quotes), latencyHeaders(MediaType.APPLICATION_JSON));
+        return callAi(props.getAgriPriceBriefPath(), uri, HttpMethod.POST, entity, AiAgriPriceBriefRes.class);
     }
 
     /**
      * เรียก ai-service POST /cycle-summary/summarize — return null ถ้าพังหรือ timeout
      */
     public AiCycleSummaryRes summarizeCycle(String cycleInfo, String transactionData) {
-        long t0 = System.currentTimeMillis();
-        try {
-            URI uri = UriComponentsBuilder
-                    .fromUriString(props.getBaseUrl())
-                    .path(props.getCycleSummaryPath())
-                    .encode(StandardCharsets.UTF_8)
-                    .build()
-                    .toUri();
+        URI uri = aiUri(props.getCycleSummaryPath());
+        HttpEntity<AiCycleSummaryReq> entity =
+                new HttpEntity<>(new AiCycleSummaryReq(cycleInfo, transactionData), latencyHeaders(MediaType.APPLICATION_JSON));
+        return callAi(props.getCycleSummaryPath(), uri, HttpMethod.POST, entity, AiCycleSummaryRes.class);
+    }
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+    private URI aiUri(String path) {
+        return UriComponentsBuilder
+                .fromUriString(props.getBaseUrl())
+                .path(path)
+                .encode(StandardCharsets.UTF_8)
+                .build()
+                .toUri();
+    }
+
+    private HttpHeaders latencyHeaders(MediaType contentType) {
+        HttpHeaders headers = new HttpHeaders();
+        if (contentType != null) {
+            headers.setContentType(contentType);
             headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            HttpEntity<AiCycleSummaryReq> entity =
-                    new HttpEntity<>(new AiCycleSummaryReq(cycleInfo, transactionData), headers);
+        }
+        String reqId = AiLatency.current();
+        if (reqId != null && !reqId.isBlank()) {
+            headers.set(AiLatency.HEADER, reqId);
+        }
+        return headers;
+    }
 
-            ResponseEntity<AiCycleSummaryRes> resp =
-                    restTemplate.exchange(uri, HttpMethod.POST, entity, AiCycleSummaryRes.class);
-            log.info("[cycle-summary:ai-service] call ok elapsedMs={}", System.currentTimeMillis() - t0);
+    private <T> T callAi(String path, URI uri, HttpMethod method, HttpEntity<?> entity, Class<T> type) {
+        String reqId = AiLatency.currentOrDash();
+        long t0 = System.currentTimeMillis();
+        log.info("[ai-latency] hop=user→ai reqId={} action=start path={}", reqId, path);
+        try {
+            ResponseEntity<T> resp = restTemplate.exchange(uri, method, entity, type);
+            log.info("[ai-latency] hop=user→ai reqId={} action=done path={} status={} elapsedMs={}",
+                    reqId, path, resp.getStatusCode().value(), System.currentTimeMillis() - t0);
             return resp.getBody();
         } catch (Exception e) {
-            log.error("[cycle-summary:ai-service] call failed elapsedMs={}: {}",
-                    System.currentTimeMillis() - t0, e.getMessage(), e);
+            log.error("[ai-latency] hop=user→ai reqId={} action=fail path={} elapsedMs={} error={}",
+                    reqId, path, System.currentTimeMillis() - t0, e.getMessage(), e);
             return null;
         }
     }

@@ -10,6 +10,7 @@ from typing import Any
 import requests
 
 from src.utils.docker_network import candidate_urls, docker_default_gateway_ip, to_ipv4_base_url
+from src.utils.request_id import REQUEST_ID_HEADER, get_request_id
 
 logger = logging.getLogger(__name__)
 
@@ -38,33 +39,47 @@ def _get_api_data(
     candidates = candidate_urls(base_url, path)
     last_error: requests.RequestException | None = None
     response: requests.Response | None = None
+    req_id = get_request_id()
+    headers = {}
+    if req_id and req_id != "-":
+        headers[REQUEST_ID_HEADER] = req_id
     t0 = time.monotonic()
+    logger.info(
+        "[ai-latency] hop=ai→user reqId=%s action=start path=%s candidates=%d",
+        req_id,
+        path,
+        len(candidates),
+    )
     for url in candidates:
+        t_attempt = time.monotonic()
         try:
-            response = requests.get(url, params=params, timeout=timeout)
+            response = requests.get(url, params=params, headers=headers, timeout=timeout)
             logger.info(
-                "[step2/4:user-service+network] GET %s API status=%s url=%s elapsed_ms=%d",
-                log_label,
+                "[ai-latency] hop=ai→user reqId=%s action=done path=%s status=%s url=%s elapsed_ms=%d",
+                req_id,
+                path,
                 response.status_code,
                 response.url,
-                (time.monotonic() - t0) * 1000,
+                (time.monotonic() - t_attempt) * 1000,
             )
             response.raise_for_status()
             break
         except requests.RequestException as exc:
             last_error = exc
             logger.warning(
-                "[step2/4:user-service+network] %s attempt failed url=%s elapsed_ms=%d error=%s",
-                log_label,
+                "[ai-latency] hop=ai→user reqId=%s action=fail path=%s url=%s elapsed_ms=%d error=%s",
+                req_id,
+                path,
                 url,
-                (time.monotonic() - t0) * 1000,
+                (time.monotonic() - t_attempt) * 1000,
                 exc,
             )
             response = None
     if response is None:
         logger.warning(
-            "%s all attempts failed elapsed_ms=%d params=%s bases=%s last=%s",
-            log_label,
+            "[ai-latency] hop=ai→user reqId=%s action=fail path=%s elapsed_ms=%d params=%s bases=%s last=%s",
+            req_id,
+            path,
             (time.monotonic() - t0) * 1000,
             params,
             candidates,

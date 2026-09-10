@@ -1,13 +1,19 @@
 package com.example.demo.service;
 
 import java.net.URI;
+import java.text.Collator;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +40,11 @@ public class AgriPriceClientService {
 
     private static final Logger log = LoggerFactory.getLogger(AgriPriceClientService.class);
     private static final Duration PRODUCT_CACHE_TTL = Duration.ofHours(1);
+    private static final ZoneId BANGKOK = ZoneId.of("Asia/Bangkok");
+    private static final List<String> FALLBACK_COMMODs = List.of(
+            "กระบือ", "กุ้ง", "ไก่เนื้อ", "ข้าว", "ข้าวโพดเลี้ยงสัตว์", "ไข่เป็ด", "ไข่ไก่",
+            "โคเนื้อ", "เงาะ", "ทุเรียน", "ปาล์มน้ำมัน", "พริกไทย", "มะพร้าว", "มันสำปะหลัง",
+            "ยางพารา", "ลำไย", "สับปะรด", "สุกร");
 
     private final AgriPriceProperties props;
     private final RestTemplate restTemplate;
@@ -43,6 +54,9 @@ public class AgriPriceClientService {
     private volatile Instant productNamesCachedAt = Instant.EPOCH;
     private volatile List<String> cachedCategories = List.of();
     private volatile Instant categoriesCachedAt = Instant.EPOCH;
+    private volatile List<String> cachedDailyProductNames = List.of();
+    private volatile List<String> cachedPeriodProductNames = List.of();
+    private volatile List<String> cachedCommods = List.of();
 
     public AgriPriceClientService(AgriPriceProperties props) {
         this.props = props;
@@ -66,7 +80,7 @@ public class AgriPriceClientService {
         if (query.isEmpty()) {
             return List.of();
         }
-        List<String> names = loadProductNamesSafe();
+        List<String> names = loadMatchNamesSafe();
         if (names.isEmpty()) {
             return List.of();
         }
@@ -86,8 +100,7 @@ public class AgriPriceClientService {
         if (name.isEmpty()) {
             return new AgriPriceSearchRes("daily", "none", productName, 0, List.of());
         }
-        FetchedPage<NabcDailyPrice> page = fetchDailyPages("/api/daily-prices/product", Map.of("product_name", name));
-        return toDailyResult("daily", "product", name, page);
+        return search(name, "auto");
     }
 
     public AgriPriceLatestQuoteRes latestAverage(List<AgriPriceRowRes> rows, String fallbackName) {
@@ -135,8 +148,27 @@ public class AgriPriceClientService {
         return switch (period) {
             case "weekly" -> searchPeriod(query, period, "/api/weekly-prices/product", "/api/weekly-prices/commod");
             case "monthly" -> searchPeriod(query, period, "/api/monthly-prices/product", "/api/monthly-prices/commod");
+            case "auto" -> searchAuto(query);
             default -> searchDaily(query);
         };
+    }
+
+    private AgriPriceSearchRes searchAuto(String query) {
+        AgriPriceSearchRes daily = searchQuiet(() -> searchDaily(query));
+        if (hasItems(daily)) {
+            return daily;
+        }
+        AgriPriceSearchRes weekly = searchQuiet(() ->
+                searchPeriod(query, "weekly", "/api/weekly-prices/product", "/api/weekly-prices/commod"));
+        if (hasItems(weekly)) {
+            return weekly;
+        }
+        AgriPriceSearchRes monthly = searchQuiet(() ->
+                searchPeriod(query, "monthly", "/api/monthly-prices/product", "/api/monthly-prices/commod"));
+        if (hasItems(monthly)) {
+            return monthly;
+        }
+        return new AgriPriceSearchRes("daily", "none", query, 0, List.of());
     }
 
     private AgriPriceSearchRes searchDaily(String query) {
@@ -174,11 +206,19 @@ public class AgriPriceClientService {
     }
 
     private AgriPriceSearchRes searchPeriod(String query, String period, String productPath, String commodPath) {
-        String productMatch = resolveProductName(query);
+        String productMatch = resolvePeriodProductName(query);
         if (productMatch != null) {
             FetchedPage<NabcPeriodPrice> byResolved = fetchPeriodPages(productPath, Map.of("product_name", productMatch));
             if (!byResolved.items.isEmpty()) {
                 return toPeriodResult(period, "product", productMatch, byResolved);
+            }
+        }
+
+        String commodMatch = resolveCommod(query);
+        if (commodMatch != null) {
+            FetchedPage<NabcPeriodPrice> byResolvedCommod = fetchPeriodPages(commodPath, Map.of("commod", commodMatch));
+            if (!byResolvedCommod.items.isEmpty()) {
+                return toPeriodResult(period, "commod", commodMatch, byResolvedCommod);
             }
         }
 
@@ -236,7 +276,7 @@ public class AgriPriceClientService {
             Integer week = toInt(item.week());
             String dateKey = "monthly".equals(period)
                     ? yearTh + "-" + month
-                    : yearTh + "-" + month + "-W" + (week == null ? 0 : week);
+                    : yearTh + "-" + month + "-W" + String.format("%02d", week == null ? 0 : week);
             rows.add(new AgriPriceRowRes(
                     dateKey,
                     price,
@@ -280,9 +320,30 @@ public class AgriPriceClientService {
         if (!cachedProductNames.isEmpty() && Instant.now().isBefore(productNamesCachedAt.plus(PRODUCT_CACHE_TTL))) {
             return cachedProductNames;
         }
-        JsonNode root = getJson("/api/daily-prices/product-names", Map.of());
-        List<String> names = readStringList(root.path("data"));
-        cachedProductNames = List.copyOf(names);
+
+        List<String> dailyProducts = List.of();
+        try {
+            JsonNode root = getJson("/api/daily-prices/product-names", Map.of());
+            dailyProducts = readStringList(root.path("data"));
+        } catch (RuntimeException ex) {
+            log.warn("Could not load daily agri product names: {}", ex.getMessage());
+            dailyProducts = cachedDailyProductNames;
+        }
+
+        List<String> dailyCategories = loadCategoriesSafe();
+        PeriodCatalog periodCatalog = loadPeriodCatalogSafe();
+
+        Set<String> types = new LinkedHashSet<>();
+        dailyCategories.forEach(name -> addUnique(types, name));
+        periodCatalog.commods().forEach(name -> addUnique(types, name));
+        if (types.isEmpty()) {
+            FALLBACK_COMMODs.forEach(name -> addUnique(types, name));
+        }
+
+        cachedDailyProductNames = List.copyOf(dailyProducts);
+        cachedPeriodProductNames = List.copyOf(periodCatalog.products());
+        cachedCommods = List.copyOf(periodCatalog.commods());
+        cachedProductNames = List.copyOf(sortThai(types));
         productNamesCachedAt = Instant.now();
         return cachedProductNames;
     }
@@ -317,7 +378,30 @@ public class AgriPriceClientService {
     }
 
     private String resolveProductName(String query) {
-        List<String> names = loadProductNamesSafe();
+        return resolveUniqueName(loadDailyProductNamesSafe(), query);
+    }
+
+    private String resolvePeriodProductName(String query) {
+        return resolveUniqueName(loadPeriodProductNamesSafe(), query);
+    }
+
+    private String resolveCommod(String query) {
+        List<String> commods = loadCommodsSafe();
+        for (String name : commods) {
+            if (name.equals(query) || query.startsWith(name + " ")) {
+                return name;
+            }
+        }
+        String token = firstToken(query);
+        for (String name : commods) {
+            if (name.equals(token)) {
+                return name;
+            }
+        }
+        return null;
+    }
+
+    private static String resolveUniqueName(List<String> names, String query) {
         for (String name : names) {
             if (name.equals(query)) {
                 return name;
@@ -332,6 +416,80 @@ public class AgriPriceClientService {
             return starts.get(0);
         }
         return null;
+    }
+
+    private List<String> loadDailyProductNamesSafe() {
+        loadProductNamesSafe();
+        return cachedDailyProductNames;
+    }
+
+    private List<String> loadPeriodProductNamesSafe() {
+        loadProductNamesSafe();
+        return cachedPeriodProductNames;
+    }
+
+    private List<String> loadCommodsSafe() {
+        loadProductNamesSafe();
+        return cachedCommods.isEmpty() ? FALLBACK_COMMODs : cachedCommods;
+    }
+
+    private List<String> loadMatchNamesSafe() {
+        loadProductNamesSafe();
+        Set<String> names = new LinkedHashSet<>(cachedProductNames);
+        cachedDailyProductNames.forEach(name -> addUnique(names, name));
+        cachedPeriodProductNames.forEach(name -> addUnique(names, name));
+        return List.copyOf(names);
+    }
+
+    private PeriodCatalog loadPeriodCatalogSafe() {
+        YearMonth cursor = YearMonth.now(BANGKOK);
+        for (int i = 0; i < 4; i++) {
+            PeriodCatalog monthly = fetchPeriodCatalog("/api/monthly-prices/year-month", cursor.minusMonths(i));
+            if (!monthly.isEmpty()) {
+                return monthly;
+            }
+        }
+        for (int i = 0; i < 4; i++) {
+            PeriodCatalog weekly = fetchPeriodCatalog("/api/weekly-prices/year-month", cursor.minusMonths(i));
+            if (!weekly.isEmpty()) {
+                return weekly;
+            }
+        }
+        return new PeriodCatalog(FALLBACK_COMMODs, List.of());
+    }
+
+    private PeriodCatalog fetchPeriodCatalog(String path, YearMonth target) {
+        try {
+            JsonNode root = getJson(path, Map.of(
+                    "year_th", String.valueOf(target.getYear() + 543),
+                    "month", String.format("%02d", target.getMonthValue()),
+                    "page", "1"));
+            List<NabcPeriodPrice> items = readList(root.path("data"), NabcPeriodPrice.class);
+            Set<String> commods = new LinkedHashSet<>();
+            Set<String> products = new LinkedHashSet<>();
+            for (NabcPeriodPrice item : items) {
+                addUnique(commods, item.commod());
+                addUnique(products, item.productName());
+            }
+            return new PeriodCatalog(List.copyOf(commods), List.copyOf(products));
+        } catch (RuntimeException ex) {
+            log.warn("Could not load agri period catalog {}: {}", path, ex.getMessage());
+            return new PeriodCatalog(List.of(), List.of());
+        }
+    }
+
+    private AgriPriceSearchRes searchQuiet(java.util.function.Supplier<AgriPriceSearchRes> supplier) {
+        try {
+            AgriPriceSearchRes result = supplier.get();
+            return result == null ? new AgriPriceSearchRes("daily", "none", "", 0, List.of()) : result;
+        } catch (RuntimeException ex) {
+            log.warn("Agri price search step failed: {}", ex.getMessage());
+            return new AgriPriceSearchRes("daily", "none", "", 0, List.of());
+        }
+    }
+
+    private static boolean hasItems(AgriPriceSearchRes result) {
+        return result != null && result.items() != null && !result.items().isEmpty();
     }
 
     private String resolveCategory(String query) {
@@ -427,13 +585,30 @@ public class AgriPriceClientService {
 
     private static String normalizePeriod(String rawPeriod) {
         if (rawPeriod == null || rawPeriod.isBlank()) {
-            return "daily";
+            return "auto";
         }
         String period = rawPeriod.trim().toLowerCase(Locale.ROOT);
-        if (period.equals("weekly") || period.equals("monthly") || period.equals("daily")) {
+        if (period.equals("auto") || period.equals("weekly") || period.equals("monthly") || period.equals("daily")) {
             return period;
         }
-        throw new ApiException(ErrorCode.VALIDATION_ERROR, "period must be daily, weekly, or monthly");
+        throw new ApiException(ErrorCode.VALIDATION_ERROR, "period must be auto, daily, weekly, or monthly");
+    }
+
+    private static List<String> sortThai(Collection<String> names) {
+        Collator collator = Collator.getInstance(Locale.forLanguageTag("th-TH"));
+        return names.stream().sorted(collator).toList();
+    }
+
+    private static void addUnique(Set<String> into, String value) {
+        if (value != null && !value.isBlank()) {
+            into.add(value.trim());
+        }
+    }
+
+    private record PeriodCatalog(List<String> commods, List<String> products) {
+        boolean isEmpty() {
+            return commods.isEmpty() && products.isEmpty();
+        }
     }
 
     private static String firstToken(String query) {
