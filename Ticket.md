@@ -8,7 +8,6 @@
 
 - [ ] **Fix:** Ai Service ตอบช้า
 
-
 ## DevOps
 
 - No ticket
