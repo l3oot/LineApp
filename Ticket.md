@@ -2,27 +2,20 @@
 
 ## Frontend
 
-- [x] **Fix:** Login Call Back Chack
+- No ticket
 
 ## Backend
 
-- [x] **Feature:** เพิ่ม API Rich menu
-
-- [x] **Fix:** line สภาพอากาศไม่เอาคำอธิบายเอาแต่ทำนาย พร้อมเอาอนาคตมาด้วย
-
-- [x] **Fix:** line ราคาตอนนี้ดึงมะนาวตลอด ถ้าพิมพ์แต่ "ราคา"
-
 - [ ] **Fix:** Ai Service ตอบช้า
 
-- [x] **Fix:** ราคาสินค้า วัน -> อาทิตย์ -> เดือน
 
 ## DevOps
 
-- [x] **Fix:** Docker Conflict target
+- No ticket
 
 ## Database
 
-- No task
+- No ticket
 
 ## Security
 
