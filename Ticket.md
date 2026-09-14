@@ -2,11 +2,13 @@
 
 ## Frontend
 
-- No ticket
+- [ ] **Fix:** สรุป AI ดึงต้นทุนมาคำนวนด้วย
 
 ## Backend
 
 - [ ] **Fix:** Ai Service ตอบช้า
+
+- [ ] **Fix:** สรุป AI ดึงต้นทุนมาคำนวนด้วย
 
 ## DevOps
 
