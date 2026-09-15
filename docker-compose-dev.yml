@@ -98,10 +98,13 @@ services:
       SPRING_DEVTOOLS_RESTART_ENABLED: ${SPRING_DEVTOOLS_RESTART_ENABLED}
       SPRING_DEVTOOLS_RESTART_POLL_INTERVAL: ${SPRING_DEVTOOLS_RESTART_POLL_INTERVAL}
       SPRING_DEVTOOLS_RESTART_QUIET_PERIOD: ${SPRING_DEVTOOLS_RESTART_QUIET_PERIOD}
+      LOGGING_FILE_NAME: ${LOGGING_FILE_NAME:-/app/logs/user-service.log}
     volumes:
       # source code + pom + target/ จาก host → container
       # IDE compile-on-save จะอัปเดต target/classes/*.class → devtools restart
       - ./Back/user-service/demo:/app
+      # overlay ทับ /app/logs — ไม่ให้ log ปนกับ source ที่ bind mount
+      - ./log/user-service:/app/logs
       # Maven local repo เก็บใน named volume → ไม่ต้องโหลด deps ใหม่ทุกครั้งที่ rebuild
       - user-service-m2:/root/.m2
     extra_hosts:
@@ -125,10 +128,12 @@ services:
       WATCHFILES_FORCE_POLLING: ${WATCHFILES_FORCE_POLLING}
       api_key_openai: ${api_key_openai}
       api_key_thaillm: ${api_key_thaillm}
+      LOG_FILE: ${AI_LOG_FILE:-/app/logs/ai-service.log}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./Back/ai-service/src:/app/src
+      - ./log/ai-service:/app/logs
     command:
       - uvicorn
       - src.main:app

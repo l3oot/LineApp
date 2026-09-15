@@ -57,7 +57,8 @@ public class CycleSummaryService {
 
         Map<UUID, String> categoryNames = categoryNames(userId);
         CycleMoneyStats stats = statsOf(txs, categoryNames);
-        String cycleInfo = compactCycleInfo(cycle, stats);
+        BigDecimal capital = capitalOf(cycle);
+        String cycleInfo = compactCycleInfo(cycle, capital, stats);
         String transactionData = compactTransactions(txs, categoryNames, stats);
 
         AiCycleSummaryRes ai = aiClientService.summarizeCycle(cycleInfo, transactionData);
@@ -65,7 +66,7 @@ public class CycleSummaryService {
             return new CycleSummaryRes(cycle.name(), limitChars(ai.summary()));
         }
         log.warn("[cycle-summary] AI empty, using fallback cycleId={}", cycleId);
-        return new CycleSummaryRes(cycle.name(), fallbackSummary(cycle.name(), stats));
+        return new CycleSummaryRes(cycle.name(), fallbackSummary(cycle.name(), capital, stats));
     }
 
     private Map<UUID, String> categoryNames(UUID userId) {
@@ -103,19 +104,18 @@ public class CycleSummaryService {
                 ranked(incomeByLabel));
     }
 
-    private static String compactCycleInfo(CycleRes cycle, CycleMoneyStats stats) {
+    private static String compactCycleInfo(CycleRes cycle, BigDecimal capital, CycleMoneyStats stats) {
+        BigDecimal remaining = remainingOf(capital, stats);
         StringBuilder sb = new StringBuilder();
         sb.append("ชื่อรอบ: ").append(cycle.name()).append('\n');
         if (cycle.farmType() != null && !cycle.farmType().isBlank()) {
             sb.append("ประเภท: ").append(cycle.farmType()).append('\n');
         }
         sb.append("ช่วง: ").append(cycle.startDate()).append(" ถึง ").append(cycle.endDate()).append('\n');
-        if (cycle.budgetAmount() != null) {
-            sb.append("งบ: ").append(formatAmount(cycle.budgetAmount())).append('\n');
-        }
+        sb.append("ต้นทุน: ").append(formatAmount(capital)).append('\n');
         sb.append("รายรับรวม: ").append(formatAmount(stats.income())).append('\n');
         sb.append("รายจ่ายรวม: ").append(formatAmount(stats.expense())).append('\n');
-        sb.append("รายรับลบรายจ่าย: ").append(formatAmount(stats.net())).append('\n');
+        sb.append("เงินคงเหลือ: ").append(formatAmount(remaining)).append('\n');
         sb.append("จำนวนรายการ: ").append(stats.txCount());
         return sb.toString();
     }
@@ -148,8 +148,13 @@ public class CycleSummaryService {
         return text.length() > 4000 ? text.substring(0, 4000) : text;
     }
 
-    static String fallbackSummary(String cycleName, CycleMoneyStats stats) {
+    static String fallbackSummary(String cycleName, BigDecimal capital, CycleMoneyStats stats) {
+        BigDecimal start = capital == null ? BigDecimal.ZERO : capital;
+        BigDecimal remaining = remainingOf(start, stats);
         StringBuilder sb = new StringBuilder("👵 รอบ ").append(cycleName).append(' ');
+        if (start.signum() > 0) {
+            sb.append("ต้นทุน ").append(formatAmount(start)).append(" บาท ");
+        }
         if (stats.topExpense() != null) {
             sb.append("หลานใช้เงินไปกับ ").append(stats.topExpense().label())
                     .append(" เยอะสุด ").append(formatAmount(stats.topExpense().amount())).append(" บาท ");
@@ -158,7 +163,21 @@ public class CycleSummaryService {
             sb.append("ได้เงินจาก ").append(stats.topIncome().label())
                     .append(" ").append(formatAmount(stats.topIncome().amount())).append(" บาท ");
         }
-        if (stats.net().signum() > 0) {
+        if (start.signum() > 0) {
+            if (remaining.signum() > 0) {
+                sb.append("ตอนนี้คงเหลือ ").append(formatAmount(remaining)).append(" บาท ");
+                sb.append("ยังคุมต้นทุนได้อยู่ เก็บรายการต่อเนื่องนะจ๊ะ");
+            } else if (remaining.signum() == 0) {
+                sb.append("ตอนนี้ใช้ต้นทุนหมดพอดีแล้วจ้า รอบหน้าลองกันเงินสำรองไว้หน่อยนะจ๊ะ");
+            } else {
+                sb.append("ตอนนี้ใช้เกินต้นทุน ").append(formatAmount(remaining.abs())).append(" บาท ");
+                if (stats.topExpense() != null) {
+                    sb.append("ลองคุม ").append(stats.topExpense().label()).append(" ให้ลดลงหน่อยนะจ๊ะ");
+                } else {
+                    sb.append("ลองทบทวนรายจ่ายก้อนใหญ่ก่อนนะจ๊ะ");
+                }
+            }
+        } else if (stats.net().signum() > 0) {
             sb.append("รอบนี้รายรับมากกว่าจ่ายอยู่ ").append(formatAmount(stats.net())).append(" บาท ");
             sb.append("เก็บรายการต่อเนื่องแล้วรอบหน้าจะเห็นภาพชัดขึ้นนะจ๊ะ");
         } else if (stats.net().signum() < 0) {
@@ -172,6 +191,15 @@ public class CycleSummaryService {
             sb.append("รอบนี้รายรับกับรายจ่ายพอ ๆ กันจ้า เก็บรายการต่อแล้วยายจะช่วยดูให้นะจ๊ะ");
         }
         return limitChars(sb.toString());
+    }
+
+    static BigDecimal capitalOf(CycleRes cycle) {
+        return cycle.budgetAmount() == null ? BigDecimal.ZERO : cycle.budgetAmount();
+    }
+
+    static BigDecimal remainingOf(BigDecimal capital, CycleMoneyStats stats) {
+        BigDecimal start = capital == null ? BigDecimal.ZERO : capital;
+        return start.subtract(stats.expense().subtract(stats.income()));
     }
 
     private static void appendRanks(StringBuilder sb, List<LabeledAmount> ranks) {
