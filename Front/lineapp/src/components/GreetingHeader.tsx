@@ -1,26 +1,49 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LuBell, LuUserRound } from "react-icons/lu";
+import { LuCoins, LuUserRound } from "react-icons/lu";
 import { auth } from "../lib/auth";
+import { COIN_WALLET_CHANGED_EVENT, coinApi } from "../lib/userService";
 import { getGreetingPeriod } from "../utils/greeting";
 
-type GreetingHeaderProps = {
-    hasNotification?: boolean;
-    onNotificationClick?: () => void;
-};
-
-export default function GreetingHeader({
-    hasNotification = true,
-    onNotificationClick,
-}: GreetingHeaderProps) {
-    const { t } = useTranslation();
+export default function GreetingHeader() {
+    const { t, i18n } = useTranslation();
     const [avatarBroken, setAvatarBroken] = useState(false);
+    const [coinBalance, setCoinBalance] = useState(0);
 
     const user = useMemo(() => auth.getUser(), []);
     const displayName = user?.displayName?.trim() || t("greeting.fallbackName");
     const pictureUrl = user?.pictureUrl;
     const canShowAvatar = Boolean(pictureUrl) && !avatarBroken;
     const greetingPeriod = getGreetingPeriod();
+    const coinLabel = coinBalance.toLocaleString(
+        i18n.language.startsWith("en") ? "en-US" : i18n.language.startsWith("jp") ? "ja-JP" : "th-TH",
+    );
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadWallet = () => {
+            if (!auth.isAuthed()) {
+                if (!cancelled) setCoinBalance(0);
+                return;
+            }
+            coinApi
+                .getWallet()
+                .then((wallet) => {
+                    if (!cancelled) setCoinBalance(wallet.balance ?? 0);
+                })
+                .catch(() => {
+                    if (!cancelled) setCoinBalance(0);
+                });
+        };
+
+        loadWallet();
+        window.addEventListener(COIN_WALLET_CHANGED_EVENT, loadWallet);
+        return () => {
+            cancelled = true;
+            window.removeEventListener(COIN_WALLET_CHANGED_EVENT, loadWallet);
+        };
+    }, []);
 
     return (
         <header className="greeting-header">
@@ -46,15 +69,13 @@ export default function GreetingHeader({
                 </div>
             </div>
 
-            <button
-                type="button"
-                className="greeting-icon-btn greeting-noti-btn"
-                aria-label={t("greeting.notificationAria")}
-                onClick={onNotificationClick}
+            <div
+                className="greeting-coin"
+                aria-label={t("greeting.coinAria", { count: coinBalance })}
             >
-                <LuBell className="greeting-noti-icon" aria-hidden />
-                {hasNotification && <span className="greeting-noti-badge" aria-hidden />}
-            </button>
+                <LuCoins className="greeting-coin-icon" aria-hidden />
+                <span className="greeting-coin-value">{coinLabel}</span>
+            </div>
         </header>
     );
 }

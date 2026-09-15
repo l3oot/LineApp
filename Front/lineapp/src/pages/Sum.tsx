@@ -8,11 +8,9 @@ import MainLayout from "../layouts/MainLayout";
 import AppLoadingScreen from "../components/AppLoadingScreen";
 import DateFilterBar from "../components/DateFilterBar";
 import FinanceOverview from "../components/FinanceOverview";
-import GreetingHeader from "../components/GreetingHeader";
 import WeatherHero from "../components/WeatherHero";
 import QuickMenu from "../components/QuickMenu";
 import RecentTransactionRow from "../components/RecentTransactionRow";
-import AnnouncementBottomSheet from "../components/AnnouncementBottomSheet";
 import { icons } from "../assets/Iconlist";
 import "../styles/sum.css";
 import { auth } from "../lib/auth";
@@ -83,7 +81,6 @@ export default function Sum() {
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
   const weather = useWeatherForecast();
 
   useEffect(() => {
@@ -158,8 +155,6 @@ export default function Sum() {
   return (
     <MainLayout>
       <div className="home-page home-page--index">
-        <GreetingHeader onNotificationClick={() => setIsAnnouncementOpen(true)} />
-
         <WeatherHero
           province={weather.province}
           amphoe={weather.amphoe}
@@ -267,11 +262,6 @@ export default function Sum() {
           </div>
         </section>
       </div>
-
-      <AnnouncementBottomSheet
-        open={isAnnouncementOpen}
-        onClose={() => setIsAnnouncementOpen(false)}
-      />
     </MainLayout>
   );
 }

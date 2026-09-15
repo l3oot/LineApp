@@ -240,8 +240,14 @@ export const transactionApi = {
     get: (txId: string) =>
         api.get<Transaction>(`/api/transaction/${txId}`, { userId: requireUserId() }),
 
-    create: (payload: TransactionCreatePayload) =>
-        api.post<Transaction>("/api/transaction", { ...payload, userId: requireUserId() }),
+    create: async (payload: TransactionCreatePayload) => {
+        const data = await api.post<Transaction>("/api/transaction", {
+            ...payload,
+            userId: requireUserId(),
+        });
+        notifyCoinWalletChanged();
+        return data;
+    },
 
     update: (payload: TransactionUpdatePayload) =>
         api.put<Transaction>("/api/transaction", { ...payload, userId: requireUserId() }),
@@ -261,6 +267,23 @@ export const transactionApi = {
         const userId = requireUserId();
         return api.delete<void>(`/api/transaction/user/${encodeURIComponent(userId)}`);
     },
+};
+
+// ============ Coin ============
+
+export const COIN_WALLET_CHANGED_EVENT = "coin-wallet-changed";
+
+export type CoinWallet = {
+    userId: string;
+    balance: number;
+};
+
+function notifyCoinWalletChanged() {
+    window.dispatchEvent(new Event(COIN_WALLET_CHANGED_EVENT));
+}
+
+export const coinApi = {
+    getWallet: () => api.get<CoinWallet>("/api/coin/wallet", { userId: requireUserId() }),
 };
 
 // ============ User Profile ============

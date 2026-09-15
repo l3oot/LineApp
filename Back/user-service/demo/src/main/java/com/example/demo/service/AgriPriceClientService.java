@@ -73,6 +73,13 @@ public class AgriPriceClientService {
     }
 
     /**
+     * ชื่อที่ใช้จับคู่คำถามราคา — รวมประเภทใน product list กับชื่อสินค้า daily/period
+     */
+    public List<String> listMatchNames() {
+        return loadMatchNamesSafe();
+    }
+
+    /**
      * ชื่อสินค้าที่ตรงหรือมีคำค้นอยู่ข้างใน — ถ้าพิมพ์ไม่ครบสโคปจะได้ทุกรายการที่เจอ
      */
     public List<String> findMatchingProductNames(String rawQuery) {

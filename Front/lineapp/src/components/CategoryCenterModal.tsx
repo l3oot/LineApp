@@ -236,11 +236,7 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
                                 return (
                                     <li
                                         key={item.categoryId}
-                                        className={`flex w-full items-center justify-between gap-2 overflow-hidden rounded-[var(--radius-control)] border bg-[var(--surface)] px-3 py-2 text-[var(--text)] shadow-[var(--shadow-soft)] ${
-                                            isIncomeType
-                                                ? "border-[var(--primary)]/40"
-                                                : "border-[var(--danger)]/35"
-                                        }`}
+                                        className="flex w-full items-center justify-between gap-2 px-1 py-2 text-[var(--text)]"
                                     >
                                         {isEditing ? (
                                             <input

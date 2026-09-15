@@ -314,6 +314,25 @@
         "paddingStart": "xl",
         "paddingEnd": "xl",
         "paddingTop": "sm",
+        "paddingBottom": "sm"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "id": "coinRow",
+        "contents": [
+          {
+            "type": "text",
+            "text": "{{coinLine}}",
+            "size": "sm",
+            "color": "#669C5B",
+            "align": "center",
+            "weight": "bold",
+            "wrap": true
+          }
+        ],
+        "paddingStart": "xl",
+        "paddingEnd": "xl",
         "paddingBottom": "md"
       }
     ],

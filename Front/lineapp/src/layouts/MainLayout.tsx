@@ -4,6 +4,7 @@ import { type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import GreetingHeader from "../components/GreetingHeader";
 import {
     LuChartColumn,
     LuClipboardList,
@@ -49,6 +50,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
     return (
         <div className="min-h-screen flex flex-col">
             <main className={`main-layout-content flex-1 pb-24 page-tone page-tone--${pageTone}`}>
+                <div className="layout-greeting">
+                    <GreetingHeader />
+                </div>
                 {children}
             </main>
             <footer className="main-layout-footer">

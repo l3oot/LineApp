@@ -371,7 +371,7 @@ public class LineWebhookService {
                             saved,
                             timestampMs,
                             lineProperties.resolveLiffBaseUrl()),
-                    lineFlexMessageBuilder.buildAltText(data));
+                    lineFlexMessageBuilder.buildAltText(data, saved));
         } catch (ApiException e) {
             log.warn("createTransaction failed: {}", e.getMessage());
             return LineReply.text("บันทึกไม่สำเร็จจ้า ลองใหม่อีกครั้งนะจ๊ะ");

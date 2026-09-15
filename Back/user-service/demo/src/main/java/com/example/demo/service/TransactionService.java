@@ -7,6 +7,8 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.dto.req.TransactionCreateReq;
 import com.example.demo.dto.req.TransactionUpdateReq;
+import com.example.demo.dto.res.CoinEarnResult;
 import com.example.demo.dto.res.PageRes;
 import com.example.demo.dto.res.TransactionRes;
 import com.example.demo.entity.CycleEntity;
@@ -31,17 +34,22 @@ public class TransactionService {
     public static final int DEFAULT_PAGE_SIZE = 10;
     public static final int MAX_PAGE_SIZE = 100;
 
+    private static final Logger log = LoggerFactory.getLogger(TransactionService.class);
+
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final CycleRepository cycleRepository;
+    private final CoinService coinService;
 
     public TransactionService(
             TransactionRepository transactionRepository,
             UserRepository userRepository,
-            CycleRepository cycleRepository) {
+            CycleRepository cycleRepository,
+            CoinService coinService) {
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
         this.cycleRepository = cycleRepository;
+        this.coinService = coinService;
     }
 
     public List<TransactionRes> listTransactions(UUID userId, UUID cycleId) {
@@ -112,6 +120,7 @@ public class TransactionService {
         return toRes(entity);
     }
 
+    @Transactional
     public TransactionRes createTransaction(TransactionCreateReq req) {
         validateCommonFields(req.userId(), req.txType(), req.amount(), req.txDate());
         if (!userRepository.existsById(req.userId())) {
@@ -131,7 +140,8 @@ public class TransactionService {
                 req.note(),
                 req.icon(),
                 req.txDate());
-        return toRes(transactionRepository.save(entity));
+        TransactionEntity saved = transactionRepository.save(entity);
+        return toRes(saved, awardDailyRecordCoin(saved));
     }
 
     public TransactionRes updateTransaction(TransactionUpdateReq req) {
@@ -218,7 +228,22 @@ public class TransactionService {
         return c.map(x -> x.getUserId().equals(userId)).orElse(false);
     }
 
+    private CoinEarnResult awardDailyRecordCoin(TransactionEntity saved) {
+        try {
+            return coinService.tryAwardDailyRecord(saved.getUserId(), saved.getTxId());
+        } catch (RuntimeException e) {
+            log.warn("coin award failed for txId={}: {}", saved.getTxId(), e.getMessage());
+            return CoinEarnResult.none(0);
+        }
+    }
+
     private TransactionRes toRes(TransactionEntity e) {
+        return toRes(e, null);
+    }
+
+    private TransactionRes toRes(TransactionEntity e, CoinEarnResult earn) {
+        Integer coinsEarned = earn != null ? earn.coinsEarned() : null;
+        Integer walletBalance = earn != null ? earn.walletBalance() : null;
         return new TransactionRes(
                 e.getTxId(),
                 e.getUserId(),
@@ -229,7 +254,9 @@ public class TransactionService {
                 e.getNote(),
                 e.getIcon(),
                 e.getTxDate(),
-                e.getCreatedAt());
+                e.getCreatedAt(),
+                coinsEarned,
+                walletBalance);
     }
 }
 // appove flow

@@ -40,6 +40,7 @@ const resources = {
                 subtitle: "วันนี้มาบันทึกรายรับ\nรายจ่ายในสวนกันน้า",
                 menuAria: "เมนู",
                 notificationAria: "การแจ้งเตือน",
+                coinAria: "เหรียญสะสม {{count}} เหรียญ",
                 profileAria: "โปรไฟล์ผู้ใช้",
             },
             notificationSheet: {
@@ -467,6 +468,7 @@ const resources = {
                 subtitle: "Manage your finances well every day",
                 menuAria: "Menu",
                 notificationAria: "Notifications",
+                coinAria: "{{count}} coins",
                 profileAria: "User profile",
             },
             notificationSheet: {
@@ -894,6 +896,7 @@ const resources = {
                 subtitle: "毎日しっかり家計を管理しましょう",
                 menuAria: "メニュー",
                 notificationAria: "通知",
+                coinAria: "コイン {{count}}",
                 profileAria: "ユーザープロフィール",
             },
             notificationSheet: {
