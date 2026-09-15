@@ -10,6 +10,8 @@
 
 - [ ] **Fix:** สรุป AI ดึงต้นทุนมาคำนวนด้วย
 
+- [ ] **ADD:** เพิ่ม Log File
+
 ## DevOps
 
 - No ticket
