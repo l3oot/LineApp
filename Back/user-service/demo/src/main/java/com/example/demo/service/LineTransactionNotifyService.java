@@ -19,7 +19,7 @@ import com.example.demo.repository.CycleRepository;
 import com.example.demo.repository.UserRepository;
 
 /**
- * Push Flex card กลับ LINE chat หลังผู้ใช้แก้ไขรายการในแอป
+ * Push Flex card กลับ LINE chat หลังผู้ใช้บันทึก/แก้ไขรายการในแอป
  */
 @Service
 public class LineTransactionNotifyService {
@@ -46,6 +46,36 @@ public class LineTransactionNotifyService {
         this.lineFlexMessageBuilder = lineFlexMessageBuilder;
         this.lineMessagingService = lineMessagingService;
         this.lineProperties = lineProperties;
+    }
+
+    @Async("lineWebhookExecutor")
+    public void pushCreatedTransactionCard(TransactionRes tx) {
+        if (tx == null) {
+            return;
+        }
+
+        Optional<UserEntity> userOpt = userRepository.findById(tx.userId());
+        if (userOpt.isEmpty()) {
+            log.debug("skip created flex push: user not found userId={}", tx.userId());
+            return;
+        }
+
+        String lineUserId = userOpt.get().getUserSub();
+        if (lineUserId == null || lineUserId.isBlank()) {
+            log.debug("skip created flex push: no LINE userSub userId={}", tx.userId());
+            return;
+        }
+
+        String cycleName = resolveCycleName(tx.cycleId());
+        String categoryName = resolveCategoryName(tx.categoryId());
+        Map<String, Object> bubble = lineFlexMessageBuilder.buildCreatedTransactionBubble(
+                tx,
+                cycleName,
+                categoryName,
+                lineProperties.resolveLiffBaseUrl());
+        String altText = lineFlexMessageBuilder.buildCreatedAltText(tx);
+
+        lineMessagingService.pushFlex(lineUserId, altText, bubble);
     }
 
     @Async("lineWebhookExecutor")

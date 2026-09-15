@@ -71,6 +71,7 @@ public class TransactionController {
     @PostMapping("")
     public ResponseEntity<ApiRes<TransactionRes>> createTransaction(@RequestBody TransactionCreateReq req) {
         TransactionRes data = transactionService.createTransaction(req);
+        lineTransactionNotifyService.pushCreatedTransactionCard(data);
         return ResponseEntity.ok(ApiRes.success(data, "Insert Success"));
     }
 

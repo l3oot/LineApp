@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -56,7 +57,8 @@ public class LineFlexMessageBuilder {
             String liffBaseUrl) {
         LocalDateTime when = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestampMs), detectLanguage(data.main()));
         String txId = tx.txId().toString();
-        return fillBubble(
+        boolean earned = tx.coinsEarned() != null && tx.coinsEarned() > 0;
+        Map<String, Object> bubble = fillBubble(
                 TRANSACTION_TEMPLATE,
                 resolveTypeLabel(data.type()),
                 resolveTypeColor(data.type()),
@@ -67,7 +69,10 @@ public class LineFlexMessageBuilder {
                 when,
                 formatPrice(data.price()),
                 txId,
-                liffBaseUrl);
+                liffBaseUrl,
+                earned ? formatCoinLine(tx.coinsEarned(), tx.walletBalance()) : "");
+        removeCoinRowIfUnused(bubble, earned);
+        return bubble;
     }
 
     public static ZoneId detectLanguage(String main) {
@@ -92,6 +97,35 @@ public class LineFlexMessageBuilder {
     }
 
     /**
+     * Flex card หลังบันทึกรายการจากแอป (LIFF)
+     */
+    public Map<String, Object> buildCreatedTransactionBubble(
+            TransactionRes tx,
+            String cycleName,
+            String categoryName,
+            String liffBaseUrl) {
+        String txId = tx.txId().toString();
+        String note = tx.note() != null ? tx.note() : "";
+        LocalDateTime when = tx.txDate() != null ? tx.txDate() : LocalDateTime.now(detectLanguage(note));
+        boolean earned = tx.coinsEarned() != null && tx.coinsEarned() > 0;
+        Map<String, Object> bubble = fillBubble(
+                TRANSACTION_TEMPLATE,
+                resolveTypeLabel(tx.txType()),
+                resolveTypeColor(tx.txType()),
+                resolveAmountColor(tx.txType()),
+                cycleSubtitle(cycleName),
+                categorySubtitle(categoryName),
+                note,
+                when,
+                formatPrice(tx.amount()),
+                txId,
+                liffBaseUrl,
+                earned ? formatCoinLine(tx.coinsEarned(), tx.walletBalance()) : "");
+        removeCoinRowIfUnused(bubble, earned);
+        return bubble;
+    }
+
+    /**
      * Flex card หลังแก้ไขรายการ
      */
     public Map<String, Object> buildUpdatedTransactionBubble(
@@ -113,11 +147,29 @@ public class LineFlexMessageBuilder {
                 when,
                 formatPrice(tx.amount()),
                 txId,
-                liffBaseUrl);
+                liffBaseUrl,
+                "");
     }
 
     public String buildAltText(AiParseRes.Data data) {
-        return "บันทึก" + resolveTypeLabel(data.type()) + " " + data.main() + " " + formatPrice(data.price());
+        return buildAltText(data, null);
+    }
+
+    public String buildAltText(AiParseRes.Data data, TransactionRes tx) {
+        String base = "บันทึก" + resolveTypeLabel(data.type()) + " " + data.main() + " " + formatPrice(data.price());
+        if (tx != null && tx.coinsEarned() != null && tx.coinsEarned() > 0) {
+            return base + " ได้ +" + tx.coinsEarned() + " Coin";
+        }
+        return base;
+    }
+
+    public String buildCreatedAltText(TransactionRes tx) {
+        String note = tx.note() != null ? tx.note() : "";
+        String base = "บันทึก" + resolveTypeLabel(tx.txType()) + " " + note + " " + formatPrice(tx.amount());
+        if (tx.coinsEarned() != null && tx.coinsEarned() > 0) {
+            return base + " ได้ +" + tx.coinsEarned() + " Coin";
+        }
+        return base;
     }
 
     public String buildUpdatedAltText(TransactionRes tx) {
@@ -161,7 +213,8 @@ public class LineFlexMessageBuilder {
             LocalDateTime when,
             String priceText,
             String txId,
-            String liffBaseUrl) {
+            String liffBaseUrl,
+            String coinLine) {
         String template = loadTemplate(templatePath);
         String editUri = buildEditUri(liffBaseUrl, txId);
 
@@ -179,7 +232,8 @@ public class LineFlexMessageBuilder {
                 .replace("{{txDisplayId}}", jsonEscape(formatDisplayId(txId)))
                 .replace("{{txId}}", jsonEscape(txId))
                 .replace("{{editUri}}", jsonEscape(editUri != null ? editUri : "https://line.me"))
-                .replace("{{deleteData}}", jsonEscape("action=delete&id=" + txId));
+                .replace("{{deleteData}}", jsonEscape("action=delete&id=" + txId))
+                .replace("{{coinLine}}", jsonEscape(coinLine != null && !coinLine.isBlank() ? coinLine : " "));
 
         try {
             return MAPPER.readValue(filled, new TypeReference<>() {
@@ -241,6 +295,29 @@ public class LineFlexMessageBuilder {
 
     private static String formatThaiDateTime(LocalDateTime dt, String main) {
         return formatThaiDate(dt, main) + "〡" + dt.format(TIME_FMT);
+    }
+
+    private static String formatCoinLine(int coinsEarned, Integer walletBalance) {
+        if (walletBalance != null) {
+            return "ได้ +" + coinsEarned + " Coin · ยอดรวม " + walletBalance;
+        }
+        return "ได้ +" + coinsEarned + " Coin";
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void removeCoinRowIfUnused(Map<String, Object> bubble, boolean earned) {
+        if (earned || bubble == null) {
+            return;
+        }
+        Object bodyObj = bubble.get("body");
+        if (!(bodyObj instanceof Map<?, ?> bodyMap)) {
+            return;
+        }
+        Object contentsObj = bodyMap.get("contents");
+        if (!(contentsObj instanceof List<?> contents)) {
+            return;
+        }
+        ((List<Object>) contents).removeIf(item -> item instanceof Map<?, ?> row && "coinRow".equals(row.get("id")));
     }
 
     private static String formatPrice(Double price) {

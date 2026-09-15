@@ -816,11 +816,14 @@ export default function List() {
                                 </div>
                             </div>
 
-                            <label className="text-sm font-bold text-[var(--text)]">
+                            <div className="text-sm font-bold text-[var(--text)]">
                                 {t("list.cycleLabel")}
                                 <button
                                     type="button"
-                                    onClick={() => setIsAddCycleOpen((prev) => !prev)}
+                                    onClick={() => {
+                                        setIsAddCycleOpen((prev) => !prev);
+                                        setIsAddCategoryOpen(false);
+                                    }}
                                     className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm text-[var(--text)] transition-all hover:border-[var(--primary)]"
                                 >
                                     <span className={selectedCycle ? "text-[var(--text)]" : "text-[var(--text-soft)]"}>
@@ -835,7 +838,9 @@ export default function List() {
                                     <div className="mt-2 max-h-[180px] overflow-y-auto rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)]">
                                         <button
                                             type="button"
-                                            onClick={() => {
+                                            onClick={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
                                                 setNewCycleId("");
                                                 setIsAddCycleOpen(false);
                                             }}
@@ -854,7 +859,9 @@ export default function List() {
                                                 <button
                                                     key={cycle.cycleId}
                                                     type="button"
-                                                    onClick={() => {
+                                                    onClick={(event) => {
+                                                        event.preventDefault();
+                                                        event.stopPropagation();
                                                         setNewCycleId(cycle.cycleId);
                                                         setIsAddCycleOpen(false);
                                                     }}
@@ -876,13 +883,16 @@ export default function List() {
                                         })}
                                     </div>
                                 )}
-                            </label>
+                            </div>
 
-                            <label className="text-sm font-bold text-[var(--text)]">
+                            <div className="text-sm font-bold text-[var(--text)]">
                                 {t("list.categoryTitle")}
                                 <button
                                     type="button"
-                                    onClick={() => setIsAddCategoryOpen((prev) => !prev)}
+                                    onClick={() => {
+                                        setIsAddCategoryOpen((prev) => !prev);
+                                        setIsAddCycleOpen(false);
+                                    }}
                                     className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm text-[var(--text)] transition-all hover:border-[var(--primary)]"
                                 >
                                     <span className={selectedFormCategory ? "text-[var(--text)]" : "text-[var(--text-soft)]"}>
@@ -897,7 +907,9 @@ export default function List() {
                                     <div className="mt-2 max-h-[180px] overflow-y-auto rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)]">
                                         <button
                                             type="button"
-                                            onClick={() => {
+                                            onClick={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
                                                 setNewCategoryId("");
                                                 setIsAddCategoryOpen(false);
                                             }}
@@ -919,7 +931,9 @@ export default function List() {
                                                     <button
                                                         key={category.categoryId}
                                                         type="button"
-                                                        onClick={() => {
+                                                        onClick={(event) => {
+                                                            event.preventDefault();
+                                                            event.stopPropagation();
                                                             setNewCategoryId(category.categoryId);
                                                             setIsAddCategoryOpen(false);
                                                         }}
@@ -937,7 +951,7 @@ export default function List() {
                                         )}
                                     </div>
                                 )}
-                            </label>
+                            </div>
 
                             <div className="flex items-end gap-2">
                                 <label className="flex-1 text-sm font-bold text-[var(--text)]">

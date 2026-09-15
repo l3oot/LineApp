@@ -31,3 +31,13 @@ class AgriPriceSummarizeRequest(BaseModel):
 class AgriPriceSummarizeResponse(BaseModel):
     source_model: str = Field(..., description="แหล่งโมเดลที่ตอบ")
     summary: str = Field(..., description="ข้อความสรุปสำหรับ LINE")
+
+
+class AgriPriceMatchRequest(BaseModel):
+    productQuery: str = Field(..., min_length=1, description="ชื่อสินค้าที่ผู้ใช้ถาม")
+    productNames: list[str] = Field(default_factory=list, description="รายชื่อจาก product list")
+
+
+class AgriPriceMatchResponse(BaseModel):
+    source_model: str = Field(..., description="แหล่งโมเดลที่ตอบ")
+    matchedNames: list[str] = Field(default_factory=list, description="ชื่อจากคลังที่จับคู่ได้")

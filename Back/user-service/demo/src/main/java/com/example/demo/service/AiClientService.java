@@ -21,12 +21,14 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.example.demo.config.AiServiceProperties;
 import com.example.demo.dto.req.AiAgriPriceBriefReq;
 import com.example.demo.dto.req.AiAgriPriceExtractReq;
+import com.example.demo.dto.req.AiAgriPriceMatchReq;
 import com.example.demo.dto.req.AiCycleSummaryReq;
 import com.example.demo.dto.req.AiWeatherBriefReq;
 import com.example.demo.dto.req.AiWeatherWarningReq;
 import com.example.demo.dto.res.AgriPriceLatestQuoteRes;
 import com.example.demo.dto.res.AiAgriPriceBriefRes;
 import com.example.demo.dto.res.AiAgriPriceExtractRes;
+import com.example.demo.dto.res.AiAgriPriceMatchRes;
 import com.example.demo.dto.res.AiCycleSummaryRes;
 import com.example.demo.dto.res.AiParseRes;
 import com.example.demo.dto.res.AiWeatherBriefRes;
@@ -99,6 +101,16 @@ public class AiClientService {
         HttpEntity<AiAgriPriceExtractReq> entity =
                 new HttpEntity<>(new AiAgriPriceExtractReq(text), latencyHeaders(MediaType.APPLICATION_JSON));
         return callAi(props.getAgriPriceExtractPath(), uri, HttpMethod.POST, entity, AiAgriPriceExtractRes.class);
+    }
+
+    /**
+     * เรียก ai-service POST /agri-price/match — return null ถ้าพังหรือ timeout
+     */
+    public AiAgriPriceMatchRes matchAgriProduct(String productQuery, List<String> productNames) {
+        URI uri = aiUri(props.getAgriPriceMatchPath());
+        HttpEntity<AiAgriPriceMatchReq> entity =
+                new HttpEntity<>(new AiAgriPriceMatchReq(productQuery, productNames), latencyHeaders(MediaType.APPLICATION_JSON));
+        return callAi(props.getAgriPriceMatchPath(), uri, HttpMethod.POST, entity, AiAgriPriceMatchRes.class);
     }
 
     /**

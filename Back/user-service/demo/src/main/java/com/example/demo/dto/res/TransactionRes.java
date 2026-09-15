@@ -14,5 +14,7 @@ public record TransactionRes(
         String note,
         String icon,
         LocalDateTime txDate,
-        LocalDateTime createdAt) {
+        LocalDateTime createdAt,
+        Integer coinsEarned,
+        Integer walletBalance) {
 }
