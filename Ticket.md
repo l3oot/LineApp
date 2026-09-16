@@ -31,3 +31,5 @@
 - [ ] **Fix:** Delete and Not Use ssl_certificate(Nginx/server) — **Deadline:** 29.08.26
 
 - [ ] **Fix:** Not listen 80/433 (Nginx/Docker Compose) — **Deadline:** 29.08.26
+
+- [ ] **ADD:** OWASP ZAP
