@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,14 +33,6 @@ public class LineAgriPriceService {
     private static final Duration PRICE_CACHE_TTL = Duration.ofMinutes(15);
     private static final Pattern HAS_DIGIT = Pattern.compile("\\d");
     private static final Pattern TRANSACTION_VERB = Pattern.compile("ซื้อ|ขาย|จ่าย|ได้|รับ");
-    static final Map<String, List<String>> PRODUCT_SYNONYMS = Map.ofEntries(
-            Map.entry("วัว", List.of("โค", "โคเนื้อ")),
-            Map.entry("โค", List.of("วัว", "โคเนื้อ")),
-            Map.entry("หมู", List.of("สุกร")),
-            Map.entry("สุกร", List.of("หมู")),
-            Map.entry("ควาย", List.of("กระบือ")),
-            Map.entry("กระบือ", List.of("ควาย")),
-            Map.entry("ไก่", List.of("ไก่เนื้อ")));
 
     private final AgriPriceClientService agriPriceClientService;
     private final AiClientService aiClientService;
@@ -80,43 +71,36 @@ public class LineAgriPriceService {
         String matchSource = matches.isEmpty() ? "none" : "local";
         long localMatchMs = System.currentTimeMillis() - tMatch0;
 
-        long synonymMs = 0;
         long catalogMs = 0;
         long aiMatchMs = 0;
         int llmCalls = 0;
         if (matches.isEmpty()) {
-            long tSyn0 = System.currentTimeMillis();
+            long tCatalog0 = System.currentTimeMillis();
             List<String> catalog = catalogForAi();
-            catalogMs = System.currentTimeMillis() - tSyn0;
-            matches = synonymMatches(productQuery, catalog);
-            synonymMs = System.currentTimeMillis() - tSyn0 - catalogMs;
-            if (!matches.isEmpty()) {
-                matchSource = "synonym";
+            catalogMs = System.currentTimeMillis() - tCatalog0;
+            long tAiMatch0 = System.currentTimeMillis();
+            List<String> cachedMatch = getFresh(matchCache, productQuery);
+            if (cachedMatch != null) {
+                matches = cachedMatch;
+                matchSource = "ai-cache";
+                log.info("[ai-latency] hop=user reqId={} action=price-match cache=hit query={}",
+                        reqId, productQuery);
             } else {
-                long tAiMatch0 = System.currentTimeMillis();
-                List<String> cachedMatch = getFresh(matchCache, productQuery);
-                if (cachedMatch != null) {
-                    matches = cachedMatch;
-                    matchSource = "ai-cache";
-                    log.info("[ai-latency] hop=user reqId={} action=price-match cache=hit query={}",
-                            reqId, productQuery);
-                } else {
-                    matches = mapWithAi(productQuery, catalog);
-                    if (!matches.isEmpty()) {
-                        putCache(matchCache, productQuery, matches);
-                        matchSource = "ai";
-                        llmCalls += 1;
-                    }
+                matches = mapWithAi(productQuery, catalog);
+                if (!matches.isEmpty()) {
+                    putCache(matchCache, productQuery, matches);
+                    matchSource = "ai";
+                    llmCalls += 1;
                 }
-                aiMatchMs = System.currentTimeMillis() - tAiMatch0;
             }
+            aiMatchMs = System.currentTimeMillis() - tAiMatch0;
         }
         if (matches.isEmpty()) {
             log.info(
                     "[ai-latency] hop=user reqId={} action=price-breakdown query={} matchSource={} "
-                            + "extractMs=0 skippedExtract=true localMatchMs={} catalogMs={} synonymMs={} aiMatchMs={} "
+                            + "extractMs=0 skippedExtract=true localMatchMs={} catalogMs={} aiMatchMs={} "
                             + "quotesMs=0 summarizeMs=0 llmCalls={} totalMs={}",
-                    reqId, productQuery, matchSource, localMatchMs, catalogMs, synonymMs, aiMatchMs,
+                    reqId, productQuery, matchSource, localMatchMs, catalogMs, aiMatchMs,
                     llmCalls, System.currentTimeMillis() - t0);
             return NOT_FOUND_REPLY;
         }
@@ -128,9 +112,9 @@ public class LineAgriPriceService {
         if (quotes.isEmpty()) {
             log.info(
                     "[ai-latency] hop=user reqId={} action=price-breakdown query={} matchSource={} "
-                            + "extractMs=0 skippedExtract=true localMatchMs={} catalogMs={} synonymMs={} aiMatchMs={} "
+                            + "extractMs=0 skippedExtract=true localMatchMs={} catalogMs={} aiMatchMs={} "
                             + "quotesMs={} summarizeMs=0 llmCalls={} totalMs={}",
-                    reqId, productQuery, matchSource, localMatchMs, catalogMs, synonymMs, aiMatchMs,
+                    reqId, productQuery, matchSource, localMatchMs, catalogMs, aiMatchMs,
                     quotesMs, llmCalls, System.currentTimeMillis() - t0);
             return FALLBACK_REPLY;
         }
@@ -156,9 +140,9 @@ public class LineAgriPriceService {
         }
         log.info(
                 "[ai-latency] hop=user reqId={} action=price-breakdown query={} matchSource={} products={} "
-                        + "extractMs=0 skippedExtract=true localMatchMs={} catalogMs={} synonymMs={} aiMatchMs={} "
+                        + "extractMs=0 skippedExtract=true localMatchMs={} catalogMs={} aiMatchMs={} "
                         + "quotesMs={} summarizeMs={} llmCalls={} totalMs={}",
-                reqId, productQuery, matchSource, toFetch, localMatchMs, catalogMs, synonymMs, aiMatchMs,
+                reqId, productQuery, matchSource, toFetch, localMatchMs, catalogMs, aiMatchMs,
                 quotesMs, summarizeMs, llmCalls, System.currentTimeMillis() - t0);
         return summary;
     }
@@ -321,28 +305,6 @@ public class LineAgriPriceService {
             return formatted.substring(0, formatted.length() - 1);
         }
         return formatted;
-    }
-
-    static List<String> synonymMatches(String query, List<String> catalog) {
-        if (query == null || catalog == null || catalog.isEmpty()) {
-            return List.of();
-        }
-        List<String> aliases = PRODUCT_SYNONYMS.getOrDefault(query, List.of());
-        if (aliases.isEmpty()) {
-            return List.of();
-        }
-        Set<String> matched = new LinkedHashSet<>();
-        for (String alias : aliases) {
-            for (String name : catalog) {
-                if (name.equals(alias) || name.startsWith(alias) || alias.startsWith(name)) {
-                    matched.add(name);
-                    if (matched.size() >= MATCH_LIMIT) {
-                        return List.copyOf(matched);
-                    }
-                }
-            }
-        }
-        return List.copyOf(matched);
     }
 
     private static String summaryKey(String productQuery, List<AgriPriceLatestQuoteRes> quotes) {
