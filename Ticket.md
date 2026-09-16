@@ -12,6 +12,8 @@
 
 - [x] **ADD:** เพิ่ม Log File
 
+- [x] **Fix:** \service\CoinService.java : REFERENCE_TYPE_TRANSACTION = "TRANSACTION";
+
 ## DevOps
 
 - No ticket
@@ -31,3 +33,5 @@
 - [ ] **Fix:** Delete and Not Use ssl_certificate(Nginx/server) — **Deadline:** 29.08.26
 
 - [ ] **Fix:** Not listen 80/433 (Nginx/Docker Compose) — **Deadline:** 29.08.26
+
+- [ ] **ADD:** OWASP ZAP
