@@ -1,12 +1,15 @@
 package com.example.demo.service;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
@@ -16,8 +19,8 @@ import org.springframework.stereotype.Service;
 import com.example.demo.dto.res.AgriPriceLatestQuoteRes;
 import com.example.demo.dto.res.AgriPriceSearchRes;
 import com.example.demo.dto.res.AiAgriPriceBriefRes;
-import com.example.demo.dto.res.AiAgriPriceExtractRes;
 import com.example.demo.dto.res.AiAgriPriceMatchRes;
+import com.example.demo.util.AiLatency;
 
 @Service
 public class LineAgriPriceService {
@@ -28,11 +31,23 @@ public class LineAgriPriceService {
     private static final String FALLBACK_REPLY = "🥬 ยายยังดึงราคาไม่ได้ตอนนี้ ลองพิมพ์ ราคามะนาว อีกครั้งนะจ๊ะ";
     private static final int MATCH_LIMIT = 8;
     private static final int AI_CATALOG_LIMIT = 300;
+    private static final Duration PRICE_CACHE_TTL = Duration.ofMinutes(15);
     private static final Pattern HAS_DIGIT = Pattern.compile("\\d");
     private static final Pattern TRANSACTION_VERB = Pattern.compile("ซื้อ|ขาย|จ่าย|ได้|รับ");
+    static final Map<String, List<String>> PRODUCT_SYNONYMS = Map.ofEntries(
+            Map.entry("วัว", List.of("โค", "โคเนื้อ")),
+            Map.entry("โค", List.of("วัว", "โคเนื้อ")),
+            Map.entry("หมู", List.of("สุกร")),
+            Map.entry("สุกร", List.of("หมู")),
+            Map.entry("ควาย", List.of("กระบือ")),
+            Map.entry("กระบือ", List.of("ควาย")),
+            Map.entry("ไก่", List.of("ไก่เนื้อ")));
 
     private final AgriPriceClientService agriPriceClientService;
     private final AiClientService aiClientService;
+    private final ConcurrentHashMap<String, CacheEntry<List<String>>> matchCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, CacheEntry<AgriPriceLatestQuoteRes>> quoteCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, CacheEntry<String>> summaryCache = new ConcurrentHashMap<>();
 
     public LineAgriPriceService(
             AgriPriceClientService agriPriceClientService,
@@ -45,6 +60,8 @@ public class LineAgriPriceService {
      * ตอบคำถามราคา — คืน null ถ้าข้อความเป็นบันทึกรายการ ไม่ใช่คำถามราคา
      */
     public String tryBuildReply(String userText) {
+        long t0 = System.currentTimeMillis();
+        String reqId = AiLatency.currentOrDash();
         String text = userText == null ? "" : userText.trim();
         if (text.isEmpty() || !text.contains("ราคา")) {
             return null;
@@ -53,59 +70,113 @@ public class LineAgriPriceService {
             return null;
         }
 
-        String stripped = stripPriceWords(text);
-        if (stripped == null) {
-            return ASK_NAME_REPLY;
-        }
-
-        AiAgriPriceExtractRes extracted = aiClientService.extractAgriPriceQuery(text);
-        boolean isPriceQuestion = true;
-        String productQuery = stripped;
-        if (extracted != null) {
-            isPriceQuestion = extracted.isPriceQuestion() == null
-                    ? true
-                    : extracted.isPriceQuestion();
-            String fromAi = blankToNull(extracted.productQuery());
-            if (fromAi != null && text.contains(fromAi)) {
-                productQuery = fromAi;
-            }
-        }
-
-        if (!isPriceQuestion) {
-            return null;
-        }
+        String productQuery = stripPriceWords(text);
         if (productQuery == null) {
             return ASK_NAME_REPLY;
         }
 
-        List<String> catalog = catalogForAi();
+        long tMatch0 = System.currentTimeMillis();
         List<String> matches = agriPriceClientService.findMatchingProductNames(productQuery);
+        String matchSource = matches.isEmpty() ? "none" : "local";
+        long localMatchMs = System.currentTimeMillis() - tMatch0;
+
+        long synonymMs = 0;
+        long catalogMs = 0;
+        long aiMatchMs = 0;
+        int llmCalls = 0;
         if (matches.isEmpty()) {
-            matches = mapWithAi(productQuery, catalog);
+            long tSyn0 = System.currentTimeMillis();
+            List<String> catalog = catalogForAi();
+            catalogMs = System.currentTimeMillis() - tSyn0;
+            matches = synonymMatches(productQuery, catalog);
+            synonymMs = System.currentTimeMillis() - tSyn0 - catalogMs;
+            if (!matches.isEmpty()) {
+                matchSource = "synonym";
+            } else {
+                long tAiMatch0 = System.currentTimeMillis();
+                List<String> cachedMatch = getFresh(matchCache, productQuery);
+                if (cachedMatch != null) {
+                    matches = cachedMatch;
+                    matchSource = "ai-cache";
+                    log.info("[ai-latency] hop=user reqId={} action=price-match cache=hit query={}",
+                            reqId, productQuery);
+                } else {
+                    matches = mapWithAi(productQuery, catalog);
+                    if (!matches.isEmpty()) {
+                        putCache(matchCache, productQuery, matches);
+                        matchSource = "ai";
+                        llmCalls += 1;
+                    }
+                }
+                aiMatchMs = System.currentTimeMillis() - tAiMatch0;
+            }
         }
         if (matches.isEmpty()) {
+            log.info(
+                    "[ai-latency] hop=user reqId={} action=price-breakdown query={} matchSource={} "
+                            + "extractMs=0 skippedExtract=true localMatchMs={} catalogMs={} synonymMs={} aiMatchMs={} "
+                            + "quotesMs=0 summarizeMs=0 llmCalls={} totalMs={}",
+                    reqId, productQuery, matchSource, localMatchMs, catalogMs, synonymMs, aiMatchMs,
+                    llmCalls, System.currentTimeMillis() - t0);
             return NOT_FOUND_REPLY;
         }
 
         List<String> toFetch = selectProducts(productQuery, matches);
+        long tQuotes0 = System.currentTimeMillis();
         List<AgriPriceLatestQuoteRes> quotes = fetchQuotes(toFetch);
+        long quotesMs = System.currentTimeMillis() - tQuotes0;
         if (quotes.isEmpty()) {
+            log.info(
+                    "[ai-latency] hop=user reqId={} action=price-breakdown query={} matchSource={} "
+                            + "extractMs=0 skippedExtract=true localMatchMs={} catalogMs={} synonymMs={} aiMatchMs={} "
+                            + "quotesMs={} summarizeMs=0 llmCalls={} totalMs={}",
+                    reqId, productQuery, matchSource, localMatchMs, catalogMs, synonymMs, aiMatchMs,
+                    quotesMs, llmCalls, System.currentTimeMillis() - t0);
             return FALLBACK_REPLY;
         }
 
-        AiAgriPriceBriefRes ai = aiClientService.summarizeAgriPrice(productQuery, quotes);
-        if (ai != null && ai.summary() != null && !ai.summary().isBlank()) {
-            return ai.summary().trim();
+        long tSum0 = System.currentTimeMillis();
+        String cachedSummary = getFresh(summaryCache, summaryKey(productQuery, quotes));
+        String summary;
+        long summarizeMs;
+        if (cachedSummary != null) {
+            summary = cachedSummary;
+            summarizeMs = System.currentTimeMillis() - tSum0;
+            log.info("[ai-latency] hop=user reqId={} action=price-summarize cache=hit query={}", reqId, productQuery);
+        } else {
+            AiAgriPriceBriefRes ai = aiClientService.summarizeAgriPrice(productQuery, quotes);
+            summarizeMs = System.currentTimeMillis() - tSum0;
+            if (ai != null && ai.summary() != null && !ai.summary().isBlank()) {
+                summary = ai.summary().trim();
+                llmCalls += 1;
+                putCache(summaryCache, summaryKey(productQuery, quotes), summary);
+            } else {
+                summary = fallbackSummary(quotes);
+            }
         }
-        return fallbackSummary(quotes);
+        log.info(
+                "[ai-latency] hop=user reqId={} action=price-breakdown query={} matchSource={} products={} "
+                        + "extractMs=0 skippedExtract=true localMatchMs={} catalogMs={} synonymMs={} aiMatchMs={} "
+                        + "quotesMs={} summarizeMs={} llmCalls={} totalMs={}",
+                reqId, productQuery, matchSource, toFetch, localMatchMs, catalogMs, synonymMs, aiMatchMs,
+                quotesMs, summarizeMs, llmCalls, System.currentTimeMillis() - t0);
+        return summary;
     }
 
     private List<AgriPriceLatestQuoteRes> fetchQuotes(List<String> productNames) {
         List<CompletableFuture<AgriPriceLatestQuoteRes>> futures = productNames.stream()
                 .map(name -> CompletableFuture.supplyAsync(() -> {
+                    AgriPriceLatestQuoteRes cached = getFresh(quoteCache, name);
+                    if (cached != null) {
+                        return cached;
+                    }
                     try {
                         AgriPriceSearchRes search = agriPriceClientService.searchExactProduct(name);
-                        return agriPriceClientService.latestAverage(search.items(), name);
+                        AgriPriceLatestQuoteRes quote = agriPriceClientService.latestAverage(search.items(), name);
+                        if (quote != null) {
+                            putCache(quoteCache, name, quote);
+                        }
+                        return quote;
                     } catch (Exception e) {
                         log.warn("[line-price] fetch failed product={}: {}", name, e.getMessage());
                         return null;
@@ -252,11 +323,60 @@ public class LineAgriPriceService {
         return formatted;
     }
 
-    private static String blankToNull(String value) {
-        if (value == null) {
+    static List<String> synonymMatches(String query, List<String> catalog) {
+        if (query == null || catalog == null || catalog.isEmpty()) {
+            return List.of();
+        }
+        List<String> aliases = PRODUCT_SYNONYMS.getOrDefault(query, List.of());
+        if (aliases.isEmpty()) {
+            return List.of();
+        }
+        Set<String> matched = new LinkedHashSet<>();
+        for (String alias : aliases) {
+            for (String name : catalog) {
+                if (name.equals(alias) || name.startsWith(alias) || alias.startsWith(name)) {
+                    matched.add(name);
+                    if (matched.size() >= MATCH_LIMIT) {
+                        return List.copyOf(matched);
+                    }
+                }
+            }
+        }
+        return List.copyOf(matched);
+    }
+
+    private static String summaryKey(String productQuery, List<AgriPriceLatestQuoteRes> quotes) {
+        StringBuilder sb = new StringBuilder(productQuery == null ? "" : productQuery);
+        for (AgriPriceLatestQuoteRes quote : quotes) {
+            sb.append('|')
+                    .append(quote.productName())
+                    .append(':')
+                    .append(quote.dateKey())
+                    .append(':')
+                    .append(quote.averagePrice());
+        }
+        return sb.toString();
+    }
+
+    private static <T> T getFresh(ConcurrentHashMap<String, CacheEntry<T>> cache, String key) {
+        CacheEntry<T> entry = cache.get(key);
+        if (entry == null) {
             return null;
         }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+        if (!entry.fresh()) {
+            cache.remove(key, entry);
+            return null;
+        }
+        return entry.value();
+    }
+
+    private static <T> void putCache(ConcurrentHashMap<String, CacheEntry<T>> cache, String key, T value) {
+        cache.put(key, new CacheEntry<>(value, System.currentTimeMillis() + PRICE_CACHE_TTL.toMillis()));
+    }
+
+    private record CacheEntry<T>(T value, long expiresAtMs) {
+        boolean fresh() {
+            return System.currentTimeMillis() < expiresAtMs;
+        }
     }
 }
