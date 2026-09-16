@@ -28,7 +28,7 @@ from src.service.llm_response_parser import (
     sanitize_icon,
     sanitize_ids,
 )
-from src.service.llm_service import run_llm
+from src.service.llm_service import LLM_TIMEOUT_SECONDS, run_llm
 from src.utils.request_id import get_request_id
 
 logger = logging.getLogger(__name__)
@@ -54,6 +54,17 @@ def _build_response(
         message=message,
         structured_ok=structured is not None,
     )
+
+
+def _payload_chars(payload: Any) -> int:
+    if payload is None:
+        return 0
+    if isinstance(payload, str):
+        return len(payload)
+    try:
+        return len(json.dumps(payload, ensure_ascii=False))
+    except (TypeError, ValueError):
+        return len(str(payload))
 
 
 def extract_transaction(text: str, user_id: str | None = None) -> AiParseResponse:
@@ -83,28 +94,71 @@ def extract_transaction(text: str, user_id: str | None = None) -> AiParseRespons
             base,
         )
 
+    t_prompt = time.monotonic()
     cycles_json = json.dumps(cycles_for_prompt(cycles), ensure_ascii=False)
     categories_json = json.dumps(categories_for_prompt(categories), ensure_ascii=False)
     icons_json = icons_json_for_prompt()
     base_prompt = build_extract_prompt(text, cycles_json, categories_json, icons_json)
+    prompt_ms = int((time.monotonic() - t_prompt) * 1000)
+    prompt_chars = len(base_prompt)
+    logger.info(
+        "[ai-latency] hop=ai reqId=%s action=prompt-prep promptMs=%d promptChars=%d "
+        "model=%s timeoutS=%.1f maxRetries=%d textChars=%d",
+        req_id,
+        prompt_ms,
+        prompt_chars,
+        settings.llm.opentyphoon_model,
+        LLM_TIMEOUT_SECONDS,
+        settings.extract_max_retries,
+        len(text or ""),
+    )
 
     max_attempts = max(1, settings.extract_max_retries + 1)
     last_response = _build_response("", None, None)
+    llm_calls = 0
+    llm_ms_total = 0
+    parse_ms_total = 0
+    validate_ms_total = 0
+    last_model = ""
+    last_providers_tried = 0
+    last_result_chars = 0
     for attempt in range(1, max_attempts + 1):
         prompt = base_prompt if attempt == 1 else base_prompt + _RETRY_HINT
         t_attempt = time.monotonic()
         try:
+            t_llm = time.monotonic()
             llm_out = run_llm(prompt)
+            llm_ms = int(llm_out.get("llm_ms") or ((time.monotonic() - t_llm) * 1000))
+            llm_calls += int(llm_out.get("providers_tried") or 1)
+            llm_ms_total += llm_ms
+            last_model = str(llm_out.get("source_model") or "")
+            last_providers_tried = int(llm_out.get("providers_tried") or 1)
+            last_result_chars = int(llm_out.get("result_chars") or _payload_chars(llm_out.get("result")))
+
+            t_parse = time.monotonic()
             structured, message = parse_llm_payload(llm_out["result"], cycles, categories)
+            parse_ms = int((time.monotonic() - t_parse) * 1000)
+            parse_ms_total += parse_ms
+
+            t_validate = time.monotonic()
             structured = sanitize_ids(structured, cycles, categories)
             structured = sanitize_icon(structured)
             last_response = _build_response(llm_out["source_model"], structured, message)
+            valid = is_valid_response(last_response, text)
+            validate_ms = int((time.monotonic() - t_validate) * 1000)
+            validate_ms_total += validate_ms
             logger.info(
-                "[ai-latency] hop=ai reqId=%s action=parse-attempt attempt=%d/%d model=%s elapsed_ms=%d",
+                "[ai-latency] hop=ai reqId=%s action=parse-attempt attempt=%d/%d model=%s "
+                "llmMs=%d parseMs=%d validateMs=%d providersTried=%d resultChars=%d elapsed_ms=%d",
                 req_id,
                 attempt,
                 max_attempts,
-                llm_out["source_model"],
+                last_model,
+                llm_ms,
+                parse_ms,
+                validate_ms,
+                last_providers_tried,
+                last_result_chars,
                 (time.monotonic() - t_attempt) * 1000,
             )
         except Exception as exc:
@@ -128,15 +182,26 @@ def extract_transaction(text: str, user_id: str | None = None) -> AiParseRespons
             )
             continue
 
-        if is_valid_response(last_response, text):
+        if valid:
             logger.info(
-                "[ai-latency] hop=ai reqId=%s action=parse-done attempt=%d/%d status=%s userSvcMs=%d llmMs=%d totalMs=%d",
+                "[ai-latency] hop=ai reqId=%s action=parse-breakdown "
+                "status=%s attempt=%d/%d llmCalls=%d model=%s "
+                "contextMs=%d promptMs=%d llmMs=%d parseMs=%d validateMs=%d "
+                "promptChars=%d resultChars=%d timeoutS=%.1f totalMs=%d",
                 req_id,
+                "structured" if structured else "grandma",
                 attempt,
                 max_attempts,
-                "structured" if structured else "grandma",
+                llm_calls,
+                last_model,
                 user_svc_ms,
-                int((time.monotonic() - t_start) * 1000) - user_svc_ms,
+                prompt_ms,
+                llm_ms_total,
+                parse_ms_total,
+                validate_ms_total,
+                prompt_chars,
+                last_result_chars,
+                LLM_TIMEOUT_SECONDS,
                 (time.monotonic() - t_start) * 1000,
             )
             return last_response
@@ -162,10 +227,16 @@ def extract_transaction(text: str, user_id: str | None = None) -> AiParseRespons
             return _build_response("regex-fallback", fallback, None)
 
     logger.warning(
-        "[ai-latency] hop=ai reqId=%s action=parse-giveup attempts=%d userSvcMs=%d totalMs=%d",
+        "[ai-latency] hop=ai reqId=%s action=parse-giveup attempts=%d llmCalls=%d "
+        "contextMs=%d promptMs=%d llmMs=%d parseMs=%d validateMs=%d totalMs=%d",
         req_id,
         max_attempts,
+        llm_calls,
         user_svc_ms,
+        prompt_ms,
+        llm_ms_total,
+        parse_ms_total,
+        validate_ms_total,
         (time.monotonic() - t_start) * 1000,
     )
     return last_response
