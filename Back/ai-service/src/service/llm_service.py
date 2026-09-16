@@ -19,15 +19,21 @@ _LLM = settings.llm
 
 # [Debug Step 0.AI Provider] SDK default ไม่มี timeout (รอได้นานหลายนาที) —
 # ถ้าไม่กำหนดเอง provider ที่ตอบช้า/ค้าง จะไม่ fallback ไป thaillm ตามที่ตั้งใจ
-_OPENTYPHOON_TIMEOUT_SECONDS = 20.0
-_THAILLM_TIMEOUT_SECONDS = 20.0
+LLM_TIMEOUT_SECONDS = 20.0
 
-_opentyphoon_client = OpenAI(
-    api_key=_LLM.openai_api_key,
-    base_url=_LLM.opentyphoon_base_url,
-    timeout=_OPENTYPHOON_TIMEOUT_SECONDS,
-    max_retries=0,
-)
+_opentyphoon_client: OpenAI | None = None
+
+
+def _get_opentyphoon_client() -> OpenAI:
+    global _opentyphoon_client
+    if _opentyphoon_client is None:
+        _opentyphoon_client = OpenAI(
+            api_key=_LLM.openai_api_key,
+            base_url=_LLM.opentyphoon_base_url,
+            timeout=LLM_TIMEOUT_SECONDS,
+            max_retries=0,
+        )
+    return _opentyphoon_client
 
 
 def _thaillm_headers() -> dict[str, str]:
@@ -45,7 +51,7 @@ def _try_json(text: str) -> Any:
 
 
 def _call_opentyphoon(prompt: str) -> str:
-    stream = _opentyphoon_client.chat.completions.create(
+    stream = _get_opentyphoon_client().chat.completions.create(
         model=_LLM.opentyphoon_model,
         messages=[{"role": "system", "content": prompt}],
         temperature=0.3,
@@ -69,7 +75,7 @@ def _call_thaillm(url: str, prompt: str) -> str:
         "temperature": 0.3,
     }
     response = requests.post(
-        url, headers=_thaillm_headers(), json=body, timeout=_THAILLM_TIMEOUT_SECONDS
+        url, headers=_thaillm_headers(), json=body, timeout=LLM_TIMEOUT_SECONDS
     )
     response.raise_for_status()
     payload = response.json()
@@ -79,59 +85,122 @@ def _call_thaillm(url: str, prompt: str) -> str:
         raise ValueError(f"thaillm unexpected response shape: {str(payload)[:300]}") from exc
 
 
+def _payload_chars(payload: Any) -> int:
+    if payload is None:
+        return 0
+    if isinstance(payload, str):
+        return len(payload)
+    try:
+        return len(json.dumps(payload, ensure_ascii=False))
+    except (TypeError, ValueError):
+        return len(str(payload))
+
+
+def _llm_result(source_model: str, text: str, *, llm_ms: int, providers_tried: int) -> dict[str, Any]:
+    parsed = _try_json(text)
+    return {
+        "source_model": source_model,
+        "result": parsed,
+        "llm_ms": llm_ms,
+        "prompt_chars": 0,
+        "result_chars": _payload_chars(text if isinstance(text, str) else parsed),
+        "providers_tried": providers_tried,
+    }
+
+
 def run_llm(prompt: str) -> dict[str, Any]:
     """รัน LLM ตาม fallback chain — คืน {"source_model", "result"}"""
+    prompt_chars = len(prompt or "")
     t0 = time.monotonic()
+    providers_tried = 0
     try:
+        providers_tried += 1
         text = _call_opentyphoon(prompt)
+        llm_ms = int((time.monotonic() - t0) * 1000)
         logger.info(
-            "[ai-latency] hop=ai-llm reqId=%s action=done provider=opentyphoon model=%s elapsed_ms=%d",
+            "[ai-latency] hop=ai-llm reqId=%s action=done provider=opentyphoon model=%s "
+            "promptChars=%d resultChars=%d timeoutS=%.1f providersTried=%d elapsed_ms=%d",
             get_request_id(),
             _LLM.opentyphoon_model,
-            (time.monotonic() - t0) * 1000,
+            prompt_chars,
+            _payload_chars(text),
+            LLM_TIMEOUT_SECONDS,
+            providers_tried,
+            llm_ms,
         )
-        return {
-            "source_model": f"api.opentyphoon.ai / {_LLM.opentyphoon_model}",
-            "result": _try_json(text),
-        }
+        out = _llm_result(
+            f"api.opentyphoon.ai / {_LLM.opentyphoon_model}",
+            text,
+            llm_ms=llm_ms,
+            providers_tried=providers_tried,
+        )
+        out["prompt_chars"] = prompt_chars
+        return out
     except Exception as exc:
         logger.warning(
-            "[ai-latency] hop=ai-llm reqId=%s action=fail provider=opentyphoon elapsed_ms=%d error=%s",
+            "[ai-latency] hop=ai-llm reqId=%s action=fail provider=opentyphoon "
+            "promptChars=%d timeoutS=%.1f elapsed_ms=%d error=%s",
             get_request_id(),
+            prompt_chars,
+            LLM_TIMEOUT_SECONDS,
             (time.monotonic() - t0) * 1000,
             exc,
         )
 
     t1 = time.monotonic()
     try:
+        providers_tried += 1
         text = _call_thaillm(_LLM.thaillm_typhoon_url, prompt)
+        llm_ms = int((time.monotonic() - t1) * 1000)
         logger.info(
-            "[ai-latency] hop=ai-llm reqId=%s action=done provider=thaillm/typhoon elapsed_ms=%d",
+            "[ai-latency] hop=ai-llm reqId=%s action=done provider=thaillm/typhoon "
+            "promptChars=%d resultChars=%d timeoutS=%.1f providersTried=%d elapsed_ms=%d",
             get_request_id(),
-            (time.monotonic() - t1) * 1000,
+            prompt_chars,
+            _payload_chars(text),
+            LLM_TIMEOUT_SECONDS,
+            providers_tried,
+            llm_ms,
         )
-        return {"source_model": "thaillm / typhoon", "result": _try_json(text)}
+        out = _llm_result("thaillm / typhoon", text, llm_ms=llm_ms, providers_tried=providers_tried)
+        out["prompt_chars"] = prompt_chars
+        return out
     except Exception as exc:
         logger.warning(
-            "[ai-latency] hop=ai-llm reqId=%s action=fail provider=thaillm/typhoon elapsed_ms=%d error=%s",
+            "[ai-latency] hop=ai-llm reqId=%s action=fail provider=thaillm/typhoon "
+            "promptChars=%d timeoutS=%.1f elapsed_ms=%d error=%s",
             get_request_id(),
+            prompt_chars,
+            LLM_TIMEOUT_SECONDS,
             (time.monotonic() - t1) * 1000,
             exc,
         )
 
     t2 = time.monotonic()
     try:
+        providers_tried += 1
         text = _call_thaillm(_LLM.thaillm_kbtg_url, prompt)
+        llm_ms = int((time.monotonic() - t2) * 1000)
         logger.info(
-            "[ai-latency] hop=ai-llm reqId=%s action=done provider=thaillm/kbtg elapsed_ms=%d",
+            "[ai-latency] hop=ai-llm reqId=%s action=done provider=thaillm/kbtg "
+            "promptChars=%d resultChars=%d timeoutS=%.1f providersTried=%d elapsed_ms=%d",
             get_request_id(),
-            (time.monotonic() - t2) * 1000,
+            prompt_chars,
+            _payload_chars(text),
+            LLM_TIMEOUT_SECONDS,
+            providers_tried,
+            llm_ms,
         )
-        return {"source_model": "thaillm / kbtg", "result": _try_json(text)}
+        out = _llm_result("thaillm / kbtg", text, llm_ms=llm_ms, providers_tried=providers_tried)
+        out["prompt_chars"] = prompt_chars
+        return out
     except Exception as exc:
         logger.error(
-            "[ai-latency] hop=ai-llm reqId=%s action=fail provider=all elapsed_ms=%d error=%s",
+            "[ai-latency] hop=ai-llm reqId=%s action=fail provider=all "
+            "promptChars=%d providersTried=%d elapsed_ms=%d error=%s",
             get_request_id(),
+            prompt_chars,
+            providers_tried,
             (time.monotonic() - t0) * 1000,
             exc,
         )

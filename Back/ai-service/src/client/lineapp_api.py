@@ -124,14 +124,15 @@ def _get_api_data(
 def fetch_cycles_for_user(
     base_url: str, user_id: str, timeout: float = 15.0
 ) -> list[dict[str, Any]]:
-    """GET {base}/api/cycle?userId=... — คืน data[] จาก ApiRes หรือ [] เมื่อ error"""
+    """GET {base}/api/cycle/user/{userId} — คืน data[] จาก ApiRes หรือ [] เมื่อ error"""
     if not user_id or not str(user_id).strip():
         logger.info("fetch_cycles_for_user skipped: empty user_id")
         return []
+    uid = user_id.strip()
     rows = _get_api_data(
         base_url,
-        "/api/cycle",
-        {"userId": user_id.strip()},
+        f"/api/cycle/user/{uid}",
+        {},
         timeout=timeout,
         log_label="cycle",
     )
