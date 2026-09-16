@@ -12,6 +12,8 @@
 
 - [x] **ADD:** เพิ่ม Log File
 
+- [x] **Fix:** \service\CoinService.java : REFERENCE_TYPE_TRANSACTION = "TRANSACTION";
+
 ## DevOps
 
 - No ticket
