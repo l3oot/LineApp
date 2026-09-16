@@ -7,10 +7,12 @@ from fastapi import APIRouter, HTTPException
 from src.dto.agri_price import (
     AgriPriceExtractRequest,
     AgriPriceExtractResponse,
+    AgriPriceMatchRequest,
+    AgriPriceMatchResponse,
     AgriPriceSummarizeRequest,
     AgriPriceSummarizeResponse,
 )
-from src.service.agri_price_service import extract_product_query, summarize_agri_price
+from src.service.agri_price_service import extract_product_query, match_product_names, summarize_agri_price
 
 router = APIRouter()
 
@@ -34,3 +36,14 @@ def summarize(body: AgriPriceSummarizeRequest) -> AgriPriceSummarizeResponse:
         return summarize_agri_price(body.productQuery or "", body.quotes)
     except Exception as exc:
         raise HTTPException(status_code=502, detail="agri price summarize failed") from exc
+
+
+@router.post("/agri-price/match", response_model=AgriPriceMatchResponse)
+def match(body: AgriPriceMatchRequest) -> AgriPriceMatchResponse:
+    query = (body.productQuery or "").strip()
+    if not query:
+        raise HTTPException(status_code=400, detail="productQuery is required")
+    try:
+        return match_product_names(query, body.productNames or [])
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="agri price match failed") from exc

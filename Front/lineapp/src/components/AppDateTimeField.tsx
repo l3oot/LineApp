@@ -45,17 +45,15 @@ export default function AppDateTimeField({
     const { i18n } = useTranslation();
 
     const handleHourChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const nextHour = Number(event.target.value);
-        if (Number.isNaN(nextHour)) return;
-
-        onTimeChange(new Time(clamp(nextHour, 0, 23), time.minute));
+        const digits = event.target.value.replace(/\D/g, "").slice(0, 2);
+        if (digits === "") return;
+        onTimeChange(new Time(clamp(Number(digits), 0, 23), time.minute));
     };
 
     const handleMinuteChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const nextMinute = Number(event.target.value);
-        if (Number.isNaN(nextMinute)) return;
-
-        onTimeChange(new Time(time.hour, clamp(nextMinute, 0, 59)));
+        const digits = event.target.value.replace(/\D/g, "").slice(0, 2);
+        if (digits === "") return;
+        onTimeChange(new Time(time.hour, clamp(Number(digits), 0, 59)));
     };
 
     return (
@@ -127,10 +125,11 @@ export default function AppDateTimeField({
             >
                 <input
                     aria-label={`${ariaLabel} hour`}
-                    type="number"
-                    min={0}
-                    max={23}
+                    type="text"
                     inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={2}
+                    autoComplete="off"
                     value={String(time.hour).padStart(2, "0")}
                     onChange={handleHourChange}
                     className={timeInputClassName}
@@ -140,10 +139,11 @@ export default function AppDateTimeField({
                 <span className="text-sm font-semibold text-[var(--text-soft)]">:</span>
                 <input
                     aria-label={`${ariaLabel} minute`}
-                    type="number"
-                    min={0}
-                    max={59}
+                    type="text"
                     inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={2}
+                    autoComplete="off"
                     value={String(time.minute).padStart(2, "0")}
                     onChange={handleMinuteChange}
                     className={timeInputClassName}

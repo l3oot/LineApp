@@ -57,3 +57,39 @@ def build_agri_price_summarize_prompt(product_query: str, price_data: str) -> st
         .replace("{product_query}", (product_query or "").strip() or "-")
         .replace("{price_data}", (price_data or "").strip() or "-")
     )
+
+
+AGRI_PRICE_MATCH_PROMPT_TEMPLATE = """
+คุณจับคู่ชื่อสินค้าที่เกษตรกรถาม กับรายชื่อในคลังราคาเท่านั้น
+
+คำค้นของผู้ใช้:
+"{product_query}"
+
+รายชื่อในคลัง:
+{product_names}
+
+หน้าที่:
+1. คิดก่อนว่าในคลังมีสินค้าชนิดเดียวกันหรือไม่ แม้ชื่อจะไม่ตรงตัว
+2. ถ้ามี ให้คืนชื่อจากคลังที่ตรงชนิดเดียวกัน เช่น วัว=โค/โคเนื้อ, หมู=สุกร, ควาย=กระบือ, ไก่=ไก่เนื้อ
+3. คัดลอกชื่อจากคลังมาเป๊ะ ๆ ห้ามย่อ ห้ามแต่ง ห้ามแปลเป็นชื่อที่ไม่มีในคลัง
+4. ถ้าคำค้นตรงหรือเป็นส่วนหนึ่งของชื่อในคลัง ให้คืนชื่อนั้น
+5. ถ้าไม่มีชนิดเดียวกันจริง ๆ ให้ matchedNames เป็น []
+6. ห้ามจับคู่ของคนละชนิด เช่น วัว≠กระบือ ไก่≠ไข่ไก่ ข้าว≠ข้าวโพด
+7. คืนได้ไม่เกิน 8 ชื่อ เรียงของที่ใกล้ที่สุดก่อน
+
+ตอบ JSON เท่านั้น ห้าม markdown ห้ามข้อความอื่น
+ตัวอย่าง:
+คำค้น "วัว" คลังมี "โคเนื้อ" → {"matchedNames": ["โคเนื้อ"]}
+คำค้น "หมู" คลังมี "สุกร" → {"matchedNames": ["สุกร"]}
+คำค้น "มะนาว" คลังมี "มะนาว" → {"matchedNames": ["มะนาว"]}
+คำค้น "ทุเรียนนอกโลก" คลังไม่มีของใกล้เคียง → {"matchedNames": []}
+""".strip()
+
+
+def build_agri_price_match_prompt(product_query: str, product_names: list[str]) -> str:
+    names = "\n".join(f"- {name}" for name in product_names) if product_names else "-"
+    return (
+        AGRI_PRICE_MATCH_PROMPT_TEMPLATE
+        .replace("{product_query}", (product_query or "").strip() or "-")
+        .replace("{product_names}", names)
+    )

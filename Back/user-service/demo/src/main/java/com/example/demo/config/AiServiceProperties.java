@@ -21,6 +21,7 @@ public class AiServiceProperties {
     private String weatherWarningPath = "/weather-warning/summarize";
     private String weatherBriefPath = "/weather-brief/summarize";
     private String agriPriceExtractPath = "/agri-price/extract";
+    private String agriPriceMatchPath = "/agri-price/match";
     private String agriPriceBriefPath = "/agri-price/summarize";
     private String cycleSummaryPath = "/cycle-summary/summarize";
     private int timeoutSeconds = 60;
@@ -63,6 +64,14 @@ public class AiServiceProperties {
 
     public void setAgriPriceExtractPath(String agriPriceExtractPath) {
         this.agriPriceExtractPath = agriPriceExtractPath;
+    }
+
+    public String getAgriPriceMatchPath() {
+        return agriPriceMatchPath;
+    }
+
+    public void setAgriPriceMatchPath(String agriPriceMatchPath) {
+        this.agriPriceMatchPath = agriPriceMatchPath;
     }
 
     public String getAgriPriceBriefPath() {

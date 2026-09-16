@@ -1,6 +1,7 @@
 package com.example.demo.util;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -14,6 +15,10 @@ public final class AppTime {
 
     public static LocalDateTime now() {
         return LocalDateTime.now(ZONE);
+    }
+
+    public static LocalDate today() {
+        return LocalDate.now(ZONE);
     }
 
     public static LocalDateTime fromEpochMilli(long epochMilli) {

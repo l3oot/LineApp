@@ -2,8 +2,10 @@ package com.example.demo.service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
@@ -15,6 +17,7 @@ import com.example.demo.dto.res.AgriPriceLatestQuoteRes;
 import com.example.demo.dto.res.AgriPriceSearchRes;
 import com.example.demo.dto.res.AiAgriPriceBriefRes;
 import com.example.demo.dto.res.AiAgriPriceExtractRes;
+import com.example.demo.dto.res.AiAgriPriceMatchRes;
 
 @Service
 public class LineAgriPriceService {
@@ -24,6 +27,7 @@ public class LineAgriPriceService {
     static final String NOT_FOUND_REPLY = "ตอนนี้ยังไม่สินค้านี้จ้า";
     private static final String FALLBACK_REPLY = "🥬 ยายยังดึงราคาไม่ได้ตอนนี้ ลองพิมพ์ ราคามะนาว อีกครั้งนะจ๊ะ";
     private static final int MATCH_LIMIT = 8;
+    private static final int AI_CATALOG_LIMIT = 300;
     private static final Pattern HAS_DIGIT = Pattern.compile("\\d");
     private static final Pattern TRANSACTION_VERB = Pattern.compile("ซื้อ|ขาย|จ่าย|ได้|รับ");
 
@@ -74,7 +78,11 @@ public class LineAgriPriceService {
             return ASK_NAME_REPLY;
         }
 
+        List<String> catalog = catalogForAi();
         List<String> matches = agriPriceClientService.findMatchingProductNames(productQuery);
+        if (matches.isEmpty()) {
+            matches = mapWithAi(productQuery, catalog);
+        }
         if (matches.isEmpty()) {
             return NOT_FOUND_REPLY;
         }
@@ -115,6 +123,73 @@ public class LineAgriPriceService {
         return quotes;
     }
 
+    private List<String> mapWithAi(String productQuery, List<String> catalog) {
+        if (catalog.isEmpty()) {
+            return List.of();
+        }
+        List<String> promptCatalog = catalog.size() <= AI_CATALOG_LIMIT
+                ? catalog
+                : catalog.subList(0, AI_CATALOG_LIMIT);
+        AiAgriPriceMatchRes mapped = aiClientService.matchAgriProduct(productQuery, promptCatalog);
+        if (mapped == null) {
+            return List.of();
+        }
+        List<String> resolved = resolveMatchedNames(mapped.matchedNames(), catalog);
+        if (!resolved.isEmpty()) {
+            log.info("[line-price] ai-mapped query={} -> {}", productQuery, resolved);
+        }
+        return resolved;
+    }
+
+    private List<String> catalogForAi() {
+        Set<String> names = new LinkedHashSet<>();
+        agriPriceClientService.listProductNames().forEach(name -> addUnique(names, name));
+        agriPriceClientService.listMatchNames().forEach(name -> addUnique(names, name));
+        return List.copyOf(names);
+    }
+
+    static List<String> resolveMatchedNames(List<String> aiNames, List<String> catalog) {
+        if (aiNames == null || catalog == null || catalog.isEmpty()) {
+            return List.of();
+        }
+        Set<String> allowed = new LinkedHashSet<>(catalog);
+        Set<String> resolved = new LinkedHashSet<>();
+        for (String raw : aiNames) {
+            if (raw == null) {
+                continue;
+            }
+            String name = raw.trim();
+            if (name.isEmpty()) {
+                continue;
+            }
+            if (allowed.contains(name)) {
+                resolved.add(name);
+            } else {
+                for (String candidate : catalog) {
+                    if (candidate.startsWith(name) || name.startsWith(candidate)) {
+                        resolved.add(candidate);
+                    }
+                    if (resolved.size() >= MATCH_LIMIT) {
+                        break;
+                    }
+                }
+            }
+            if (resolved.size() >= MATCH_LIMIT) {
+                break;
+            }
+        }
+        if (resolved.size() <= MATCH_LIMIT) {
+            return List.copyOf(resolved);
+        }
+        return resolved.stream().limit(MATCH_LIMIT).toList();
+    }
+
+    private static void addUnique(Set<String> into, String value) {
+        if (value != null && !value.isBlank()) {
+            into.add(value.trim());
+        }
+    }
+
     static List<String> selectProducts(String query, List<String> matches) {
         List<String> exact = matches.stream().filter(name -> name.equals(query)).toList();
         List<String> chosen = exact.isEmpty() ? matches : exact;
@@ -151,7 +226,7 @@ public class LineAgriPriceService {
     }
 
     static String fallbackSummary(List<AgriPriceLatestQuoteRes> quotes) {
-        StringBuilder sb = new StringBuilder("🥬 ราคาเฉลี่ยทุกตลาดวันล่าสุด");
+        StringBuilder sb = new StringBuilder("🥬 ราคาเฉลี่ยล่าสุด");
         for (AgriPriceLatestQuoteRes quote : quotes) {
             sb.append('\n')
                     .append(quote.productName())

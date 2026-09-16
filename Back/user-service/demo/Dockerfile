@@ -25,6 +25,8 @@ RUN --mount=type=cache,target=/root/.m2 \
 # compose-dev ยัง mount ./Back/user-service/demo:/app ทับได้เมื่อต้องการ hot reload
 COPY src src
 
+RUN mkdir -p /app/logs
+
 EXPOSE 8080
 
 # spring-boot:run จะรวม spring-boot-devtools ให้อัตโนมัติ (ไม่เหมือน mvn package)
@@ -62,6 +64,8 @@ WORKDIR /app
 
 # คัดลอก JAR ที่ build ได้ (ใช้ wildcard เพราะชื่อมี version)
 COPY --from=builder /app/target/*.jar app.jar
+
+RUN mkdir -p /app/logs
 
 EXPOSE 8080
 

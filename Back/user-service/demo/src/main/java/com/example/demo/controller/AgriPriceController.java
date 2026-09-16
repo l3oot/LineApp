@@ -31,7 +31,7 @@ public class AgriPriceController {
     @GetMapping("/search")
     public ResponseEntity<ApiRes<AgriPriceSearchRes>> search(
             @RequestParam String q,
-            @RequestParam(defaultValue = "daily") String period) {
+            @RequestParam(defaultValue = "auto") String period) {
         AgriPriceSearchRes data = agriPriceClientService.search(q, period);
         return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
