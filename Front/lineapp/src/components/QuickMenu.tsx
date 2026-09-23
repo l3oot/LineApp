@@ -9,7 +9,7 @@ export default function QuickMenu() {
 
     return (
         <section className="home-promo-row" aria-label={t("sum.quickMenu.title")}>
-            <Link to="/government" className="price-promo-card price-promo-card--pink">
+            <Link to="/app/government" className="price-promo-card price-promo-card--pink">
                 <span className="price-promo-icon" aria-hidden>
                     <FaLandmark size={16} />
                 </span>
@@ -22,7 +22,7 @@ export default function QuickMenu() {
                 </span>
             </Link>
 
-            <Link to="/prices" className="price-promo-card">
+            <Link to="/app/prices" className="price-promo-card">
                 <span className="price-promo-icon" aria-hidden>
                     <LuClipboardList size={16} />
                 </span>

@@ -45,7 +45,7 @@ export default function CycleDetail() {
 
     useEffect(() => {
         if (!auth.isAuthed()) {
-            navigate("/settings", { replace: true });
+            navigate("/app/settings", { replace: true });
             return;
         }
         if (!cycleId) {
@@ -141,7 +141,7 @@ export default function CycleDetail() {
                         <button
                             type="button"
                             className="cycle-detail-back"
-                            onClick={() => navigate("/cycle")}
+                            onClick={() => navigate("/app/cycle")}
                         >
                             <FiChevronLeft size={18} aria-hidden />
                             {t("cycle.detailBack")}
@@ -217,7 +217,7 @@ export default function CycleDetail() {
                                                     selectedTxIds={[]}
                                                     onToggleSelect={() => undefined}
                                                     onEdit={(tx) =>
-                                                        navigate(`/list?editTxId=${encodeURIComponent(tx.txId)}`)
+                                                        navigate(`/app/list?editTxId=${encodeURIComponent(tx.txId)}`)
                                                     }
                                                 />
                                             ))}

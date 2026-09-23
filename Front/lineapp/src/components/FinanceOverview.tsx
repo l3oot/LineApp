@@ -34,7 +34,7 @@ export default function FinanceOverview({ income, expense, balance }: FinanceOve
                         {visible ? <LuEye size={16} aria-hidden /> : <LuEyeOff size={16} aria-hidden />}
                     </button>
                     <Link
-                        to="/analytics"
+                        to="/app/analytics"
                         className="finance-summary-next"
                         aria-label={t("sum.viewAnalyticsAria")}
                     >

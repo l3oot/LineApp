@@ -192,7 +192,7 @@ export default function Sum() {
         <section className="home-section">
           <div className="home-section-header">
             <h2 className="home-section-title">{t("sum.myCycles")}</h2>
-            <Link to="/cycle" className="home-add-btn">
+            <Link to="/app/cycle" className="home-add-btn">
               <LuPlus size={14} aria-hidden />
               {t("sum.addCycle")}
             </Link>
@@ -207,7 +207,7 @@ export default function Sum() {
                 const remaining = cycleRemaining(cycle, stats.income, stats.expense);
                 const iconName = isIconName(cycle.icon) ? cycle.icon : "corn";
                 return (
-                  <Link key={cycle.cycleId} to="/cycle" className="home-cycle-row">
+                  <Link key={cycle.cycleId} to="/app/cycle" className="home-cycle-row">
                     <span className="home-cycle-icon" aria-hidden>
                       {icons[iconName]}
                     </span>
@@ -231,7 +231,7 @@ export default function Sum() {
         <section className="home-section">
           <div className="home-section-header">
             <h2 className="home-section-title">{t("sum.recentTransactions")}</h2>
-            <Link to="/list" className="home-see-all">
+            <Link to="/app/list" className="home-see-all">
               {t("sum.seeAll")}
               <FiChevronRight size={16} aria-hidden />
             </Link>

@@ -4,9 +4,9 @@
 
 - [x] **Fix:** สรุป AI ดึงต้นทุนมาคำนวนด้วย
 
-- [ ] **ADD:** ทำ web landing page ที่ base domain /about /contact /terms /privacy
+- [x] **ADD:** ทำ web landing page ที่ base domain /about /contact /terms /privacy
 
-- [ ] **FIX:** แก้ part ของ /app เพื่อแยกจาก web landing page
+- [x] **FIX:** แก้ part ของ /app เพื่อแยกจาก web landing page
 
 - [ ] **ADD:** สำหรับผู้ประกอบการ
 

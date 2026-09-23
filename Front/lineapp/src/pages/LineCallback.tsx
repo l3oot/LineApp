@@ -44,7 +44,7 @@ export function LineCallback() {
         const finish = (user: AuthUser) => {
             if (ignore) return;
             setStatus({ kind: "ok", user });
-            navigate(consumePostLoginRedirect() ?? "/", { replace: true });
+            navigate(consumePostLoginRedirect() ?? "/app", { replace: true });
         };
 
         const run = async () => {
@@ -55,7 +55,7 @@ export function LineCallback() {
 
             if (auth.isAuthed()) {
                 console.log("[LineCallback] already authed, skipping exchange");
-                navigate(consumePostLoginRedirect() ?? "/", { replace: true });
+                navigate(consumePostLoginRedirect() ?? "/app", { replace: true });
                 return;
             }
 
@@ -182,7 +182,7 @@ export function LineCallback() {
                             </div>
                         )}
                         <Link
-                            to="/settings"
+                            to="/app/settings"
                             className="inline-flex rounded-[var(--radius-control)] bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white"
                         >
                             เข้าสู่ระบบ

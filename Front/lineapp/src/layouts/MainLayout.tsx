@@ -13,6 +13,7 @@ import {
     LuSprout,
 } from "react-icons/lu";
 import type { IconType } from "react-icons";
+import { APP_BASE, appPath } from "../lib/appPaths";
 
 type MainLayoutProps = {
     children: ReactNode;
@@ -26,18 +27,19 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-    { to: "/", labelKey: "nav.summary", Icon: LuHouse, end: true },
-    { to: "/cycle", labelKey: "nav.cycle", Icon: LuSprout },
-    { to: "/analytics", labelKey: "nav.analytics", Icon: LuChartColumn },
-    { to: "/list", labelKey: "nav.list", Icon: LuClipboardList },
-    { to: "/settings", labelKey: "nav.settings", Icon: LuSettings },
+    { to: appPath(), labelKey: "nav.summary", Icon: LuHouse, end: true },
+    { to: appPath("/cycle"), labelKey: "nav.cycle", Icon: LuSprout },
+    { to: appPath("/analytics"), labelKey: "nav.analytics", Icon: LuChartColumn },
+    { to: appPath("/list"), labelKey: "nav.list", Icon: LuClipboardList },
+    { to: appPath("/settings"), labelKey: "nav.settings", Icon: LuSettings },
 ];
 
 function resolvePageTone(pathname: string): string {
-    if (pathname.startsWith("/list") || pathname.startsWith("/analytics") || pathname.startsWith("/prices")) return "green";
-    if (pathname.startsWith("/cycle") || pathname.startsWith("/government")) return "pink";
-    if (pathname.startsWith("/weather")) return "blue";
-    if (pathname.startsWith("/settings")) return "purple";
+    const p = pathname.startsWith(APP_BASE) ? pathname.slice(APP_BASE.length) || "/" : pathname;
+    if (p.startsWith("/list") || p.startsWith("/analytics") || p.startsWith("/prices")) return "green";
+    if (p.startsWith("/cycle") || p.startsWith("/government")) return "pink";
+    if (p.startsWith("/weather")) return "blue";
+    if (p.startsWith("/settings")) return "purple";
     return "neutral";
 }
 
