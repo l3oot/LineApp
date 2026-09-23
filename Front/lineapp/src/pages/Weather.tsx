@@ -28,7 +28,7 @@ export default function Weather() {
                         {status === "idle" && !hasBoard && (
                             <section className="weather-card">
                                 <p className="weather-empty">{t("weather.needLocation")}</p>
-                                <Link to="/settings" className="weather-settings-link">
+                                <Link to="/app/settings" className="weather-settings-link">
                                     {t("weather.setLocation")}
                                 </Link>
                             </section>

@@ -30,8 +30,8 @@ function triggerReauthRedirect(): void {
         window.location.pathname + window.location.search + window.location.hash;
     savePostLoginRedirect(currentPath);
 
-    // Redirect into protected root; RequireAuth will continue LINE login flow.
-    window.location.replace("/");
+    // Redirect into protected app root; RequireAuth will continue LINE login flow.
+    window.location.replace("/app");
 }
 
 export type ApiRes<T> = {

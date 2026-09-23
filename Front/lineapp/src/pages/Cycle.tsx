@@ -113,7 +113,7 @@ export default function CyclePage() {
 
     useEffect(() => {
         if (!auth.isAuthed()) {
-            navigate("/settings", { replace: true });
+            navigate("/app/settings", { replace: true });
             return;
         }
         let cancelled = false;
@@ -311,7 +311,7 @@ export default function CyclePage() {
                                 onEdit={() => openEditSheet(cycle)}
                                 onDelete={() => setCycleToDelete(cycle)}
                                 onSummarize={() => setCycleToSummarize(cycle)}
-                                onMore={() => navigate(`/cycle/${cycle.cycleId}`)}
+                                onMore={() => navigate(`/app/cycle/${cycle.cycleId}`)}
                             />
                         );
                     })}

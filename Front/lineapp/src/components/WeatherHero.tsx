@@ -174,7 +174,7 @@ export default function WeatherHero({ province, amphoe, weather, status }: Weath
 
     return (
         <Link
-            to="/weather"
+            to="/app/weather"
             className={`weather-hero weather-hero--${theme} weather-hero--${scene}`}
             aria-label={t("weather.openPageAria")}
         >
