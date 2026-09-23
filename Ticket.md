@@ -14,7 +14,9 @@
 
 - [x] **Fix:** \service\CoinService.java : REFERENCE_TYPE_TRANSACTION = "TRANSACTION";
 
-- [x] **ADD:** สำหรับผู้ประกอบการ
+- [ ] **ADD:** สำหรับผู้ประกอบการ
+
+- [ ] **ADD:** /about /contact /terms /privacy
 
 ## DevOps
 
