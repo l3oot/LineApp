@@ -22,6 +22,8 @@
 
 - [ ] **ADD:** สำหรับผู้ประกอบการ
 
+- [ ] **ADD:** pathumma thaillm
+
 ## DevOps
 
 - No ticket
