@@ -4,6 +4,12 @@
 
 - [x] **Fix:** สรุป AI ดึงต้นทุนมาคำนวนด้วย
 
+- [ ] **ADD:** ทำ web landing page ที่ base domain /about /contact /terms /privacy
+
+- [ ] **FIX:** แก้ part ของ /app เพื่อแยกจาก web landing page
+
+- [ ] **ADD:** สำหรับผู้ประกอบการ
+
 ## Backend
 
 - [x] **Fix:** Ai Service ตอบช้า
@@ -15,8 +21,6 @@
 - [x] **Fix:** \service\CoinService.java : REFERENCE_TYPE_TRANSACTION = "TRANSACTION";
 
 - [ ] **ADD:** สำหรับผู้ประกอบการ
-
-- [ ] **ADD:** /about /contact /terms /privacy
 
 ## DevOps
 
