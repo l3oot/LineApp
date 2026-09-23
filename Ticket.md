@@ -6,13 +6,15 @@
 
 ## Backend
 
-- [ ] **Fix:** Ai Service ตอบช้า
+- [x] **Fix:** Ai Service ตอบช้า
 
 - [x] **Fix:** สรุป AI ดึงต้นทุนมาคำนวนด้วย
 
 - [x] **ADD:** เพิ่ม Log File
 
 - [x] **Fix:** \service\CoinService.java : REFERENCE_TYPE_TRANSACTION = "TRANSACTION";
+
+- [x] **ADD:** สำหรับผู้ประกอบการ
 
 ## DevOps
 
