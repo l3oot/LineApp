@@ -17,7 +17,7 @@ def parse(
         default=None,
         description=(
             "UUID ผู้ใช้สำหรับ GET /api/cycle/user/{userId} — "
-            "ถ้าไม่ส่ง ใช้ค่าเริ่มต้น dev (LINEAPP_DEFAULT_USER_ID)"
+            "ถ้าไม่ส่ง จะไม่ดึง cycle/category (หรือใช้ LINEAPP_DEFAULT_USER_ID ถ้าตั้งใน env)"
         ),
     ),
 ) -> AiParseResponse:
