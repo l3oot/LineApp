@@ -43,7 +43,7 @@ public class LineFlexMessageBuilder {
     private static final String INCOME_COLOR = "#30793F";
     private static final String EXPENSE_COLOR = "#E36C64";
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String YAIPHAO_URI = "https://yaiphao.com";
+    private static final String YAIPHAO_URI = "https://yaiphao.com/app";
 
     /**
      * @param timestampMs LINE webhook event timestamp (epoch millis)
