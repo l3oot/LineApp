@@ -24,6 +24,10 @@
 
 - [ ] **ADD:** pathumma thaillm
 
+- [ ] **ADD:** JWT Filter
+
+- [ ] **ADD:** service\AgriPriceClientService.java
+
 ## DevOps
 
 - No ticket
