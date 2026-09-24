@@ -5,8 +5,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Configuration
 public class AppConfig {
+
+    /**
+     * Spring Boot 4 may not expose ObjectMapper as an injectable bean for early
+     * Security filters — register explicitly for JwtAuthFilter / SecurityConfig.
+     */
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper().findAndRegisterModules();
+    }
 
     /**
      * [Debug Step 3/4: Line Hook / Network] เดิม {@code new RestTemplate()} ไม่มี

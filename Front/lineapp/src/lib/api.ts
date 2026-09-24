@@ -74,7 +74,8 @@ async function request<T>(
 ): Promise<T> {
     const { query, headers: incomingHeaders, timeoutMs = DEFAULT_TIMEOUT_MS, ...rest } = init;
     const headers = new Headers(incomingHeaders);
-    if (!headers.has("Content-Type") && rest.body) {
+    const isFormData = typeof FormData !== "undefined" && rest.body instanceof FormData;
+    if (!isFormData && !headers.has("Content-Type") && rest.body) {
         headers.set("Content-Type", "application/json");
     }
     headers.set("Accept", "application/json");
@@ -149,6 +150,23 @@ export const api = {
             method: "PUT",
             query,
             body: payload === undefined ? undefined : JSON.stringify(payload),
+        }),
+    /** multipart/form-data — do not set Content-Type (browser sets boundary) */
+    postForm: <T>(path: string, formData: FormData, query?: Query, timeoutMs?: number) =>
+        request<T>(path, {
+            method: "POST",
+            query,
+            timeoutMs,
+            body: formData,
+            headers: {},
+        }),
+    putForm: <T>(path: string, formData: FormData, query?: Query, timeoutMs?: number) =>
+        request<T>(path, {
+            method: "PUT",
+            query,
+            timeoutMs,
+            body: formData,
+            headers: {},
         }),
     delete: <T>(path: string, query?: Query) => request<T>(path, { method: "DELETE", query }),
 };

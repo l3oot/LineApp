@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import SettingActionRow from "../components/SettingActionRow";
 import LanguageBottomSheet from "../components/LanguageBottomSheet";
@@ -12,13 +13,14 @@ import { transactionApi, userProfileApi, type UserProfile } from "../lib/userSer
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
 
 type SettingItem = {
-    key: "profile" | "category" | "language" | "invite" | "deleteAll";
+    key: "profile" | "category" | "entrepreneur" | "language" | "invite" | "deleteAll";
     value?: string;
     danger?: boolean;
 };
 
 export default function Setting() {
     const { t, i18n } = useTranslation();
+    const navigate = useNavigate();
     const inviteLink = "https://lin.ee/wwtM9K1";
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false);
@@ -86,6 +88,7 @@ export default function Setting() {
     const settingItems: SettingItem[] = [
         { key: "profile", value: profileSummary },
         { key: "category" },
+        { key: "entrepreneur" },
         { key: "language", value: languageValue },
         { key: "invite" },
         { key: "deleteAll", danger: true },
@@ -179,6 +182,8 @@ export default function Setting() {
                                 ? () => setIsProfileSheetOpen(true)
                                 : item.key === "category"
                                 ? () => setIsCategoryModalOpen(true)
+                                : item.key === "entrepreneur"
+                                ? () => navigate("/app/agri-products")
                                 : item.key === "language"
                                 ? () => setIsLanguageSheetOpen(true)
                                                                 : item.key === "invite"

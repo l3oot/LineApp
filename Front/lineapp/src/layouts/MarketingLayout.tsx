@@ -66,6 +66,9 @@ export default function MarketingLayout({ children }: MarketingLayoutProps) {
                     </nav>
 
                     <div className="mk-header__actions">
+                        <Link to="/entrepreneur" className="mk-btn mk-btn--ghost mk-btn--entrepreneur">
+                            สำหรับผู้ประกอบการ
+                        </Link>
                         <Link to={appPath()} className="mk-btn mk-btn--primary">
                             เข้าใช้งาน
                         </Link>
@@ -99,6 +102,14 @@ export default function MarketingLayout({ children }: MarketingLayoutProps) {
                                 </NavLink>
                             ),
                         )}
+                        <Link
+                            to="/entrepreneur"
+                            className="mk-btn mk-btn--ghost"
+                            style={{ marginTop: "0.35rem" }}
+                            onClick={closeMenu}
+                        >
+                            สำหรับผู้ประกอบการ
+                        </Link>
                         <Link to={appPath()} className="mk-btn mk-btn--primary" style={{ marginTop: "0.5rem" }} onClick={closeMenu}>
                             เข้าใช้งานแอป
                         </Link>
@@ -127,6 +138,9 @@ export default function MarketingLayout({ children }: MarketingLayoutProps) {
                             </li>
                             <li>
                                 <Link to="/contact">ติดต่อเรา</Link>
+                            </li>
+                            <li>
+                                <Link to="/entrepreneur">สำหรับผู้ประกอบการ</Link>
                             </li>
                             <li>
                                 <Link to={appPath()}>เข้าใช้งาน</Link>

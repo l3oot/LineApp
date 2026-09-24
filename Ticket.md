@@ -8,7 +8,7 @@
 
 - [x] **FIX:** แก้ part ของ /app เพื่อแยกจาก web landing page
 
-- [ ] **ADD:** สำหรับผู้ประกอบการ
+- [x] **ADD:** สำหรับผู้ประกอบการ
 
 ## Backend
 
@@ -20,7 +20,7 @@
 
 - [x] **Fix:** \service\CoinService.java : REFERENCE_TYPE_TRANSACTION = "TRANSACTION";
 
-- [ ] **ADD:** สำหรับผู้ประกอบการ
+- [x] **ADD:** สำหรับผู้ประกอบการ
 
 - [ ] **ADD:** pathumma thaillm
 
