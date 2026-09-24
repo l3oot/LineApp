@@ -26,7 +26,9 @@
 
 - [ ] **ADD:** JWT Filter
 
-- [ ] **ADD:** service\AgriPriceClientService.java
+- [ ] **ADD:** FALLBACK_COMMODs : service\AgriPriceClientService.java
+
+- [ ] **ADD:** _DEFAULT_CYCLE_USER_ID : ai-service\src\config\settings.py
 
 ## DevOps
 
