@@ -30,7 +30,7 @@
 
 - [x] **ADD:** _DEFAULT_CYCLE_USER_ID : ai-service\src\config\settings.py
 
-
+- [x] **Fix:** แก้ LINE Push เป็น LINE Reply
 
 ## DevOps
 
