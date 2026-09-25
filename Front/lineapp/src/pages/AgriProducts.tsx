@@ -58,7 +58,7 @@ export default function AgriProducts() {
 
     useEffect(() => {
         setSelectedImageIndex(0);
-    }, [selectedProduct?.id]);
+    }, [selectedProduct?.productId]);
 
     const filteredProducts = useMemo(() => {
         const needle = searchQuery.trim().toLowerCase();
