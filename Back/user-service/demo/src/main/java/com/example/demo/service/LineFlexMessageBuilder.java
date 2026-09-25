@@ -344,11 +344,15 @@ public class LineFlexMessageBuilder {
         return "#" + txId.substring(0, 8).toUpperCase();
     }
 
+    /**
+     * เปิดหน้าแก้ไขใน LIFF in-app (ไม่ใช้ openExternalBrowser) เพื่อให้
+     * {@code liff.sendMessages()} หลังบันทึกทำงานได้
+     */
     private static String buildEditUri(String liffBaseUrl, String txId) {
-        if (liffBaseUrl == null || liffBaseUrl.isBlank()) {
-            return null;
-        }
-        return YAIPHAO_URI.replaceAll("/+$", "") + "/list?openExternalBrowser=1&editTxId=" + txId;
+        String base = (liffBaseUrl != null && !liffBaseUrl.isBlank())
+                ? liffBaseUrl.replaceAll("/+$", "")
+                : YAIPHAO_URI.replaceAll("/+$", "");
+        return base + "/list?editTxId=" + txId;
     }
 
     private static String jsonEscape(String value) {

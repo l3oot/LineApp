@@ -36,6 +36,7 @@ import {
     toGregorianCalendarDate,
 } from "../utils/formatAppDate";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
+import { sendEditTransactionMessage } from "../lib/liff";
 
 const LINE_APP_ICON_URL =
     "https://upload.wikimedia.org/wikipedia/commons/2/2e/LINE_New_App_Icon_%282020-12%29.png";
@@ -513,6 +514,7 @@ export default function List() {
 
             if (editingTxId) {
                 await transactionApi.update({ txId: editingTxId, ...payload });
+                await sendEditTransactionMessage(editingTxId);
             } else {
                 await transactionApi.create(payload);
             }

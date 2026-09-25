@@ -128,3 +128,35 @@ export function getLiffTokens(): LiffTokens | null {
     }
     return { idToken, accessToken };
 }
+
+/** ข้อความที่ OA webhook จับได้แล้ว Reply Flex หลังแก้รายการ */
+export function buildEditTransactionMessage(txId: string): string {
+    return `Edit transaction: ${txId}`;
+}
+
+/**
+ * ส่งข้อความในนาม user เข้าแชท OA → webhook ได้ replyToken แล้ว Reply Flex
+ * ใช้ได้เฉพาะเมื่อเปิด LIFF จากแชท (in-client) และมี scope chat_message.write
+ */
+export async function sendEditTransactionMessage(txId: string): Promise<boolean> {
+    if (!txId?.trim()) {
+        return false;
+    }
+
+    const ready = await initLiff();
+    if (!ready || !isInLiffClient()) {
+        console.warn("[LIFF] sendEditTransactionMessage skipped: not in LIFF client");
+        return false;
+    }
+
+    const text = buildEditTransactionMessage(txId.trim());
+    try {
+        await liff.sendMessages([{ type: "text", text }]);
+        console.log("[LIFF] sendEditTransactionMessage ok", { txId });
+        return true;
+    } catch (err) {
+        console.warn("[LIFF] sendEditTransactionMessage failed:", err);
+        return false;
+    }
+}
+
