@@ -21,7 +21,6 @@ import com.example.demo.dto.req.TransactionCreateReq;
 import com.example.demo.dto.req.TransactionUpdateReq;
 import com.example.demo.dto.res.PageRes;
 import com.example.demo.dto.res.TransactionRes;
-import com.example.demo.service.LineTransactionNotifyService;
 import com.example.demo.service.TransactionService;
 
 @RestController
@@ -29,13 +28,9 @@ import com.example.demo.service.TransactionService;
 public class TransactionController {
 
     private final TransactionService transactionService;
-    private final LineTransactionNotifyService lineTransactionNotifyService;
 
-    public TransactionController(
-            TransactionService transactionService,
-            LineTransactionNotifyService lineTransactionNotifyService) {
+    public TransactionController(TransactionService transactionService) {
         this.transactionService = transactionService;
-        this.lineTransactionNotifyService = lineTransactionNotifyService;
     }
 
     @GetMapping("")
@@ -71,14 +66,12 @@ public class TransactionController {
     @PostMapping("")
     public ResponseEntity<ApiRes<TransactionRes>> createTransaction(@RequestBody TransactionCreateReq req) {
         TransactionRes data = transactionService.createTransaction(req);
-        lineTransactionNotifyService.pushCreatedTransactionCard(data);
         return ResponseEntity.ok(ApiRes.success(data, "Insert Success"));
     }
 
     @PutMapping("")
     public ResponseEntity<ApiRes<TransactionRes>> updateTransaction(@RequestBody TransactionUpdateReq req) {
         TransactionRes data = transactionService.updateTransaction(req);
-        lineTransactionNotifyService.pushUpdatedTransactionCard(data);
         return ResponseEntity.ok(ApiRes.success(data, "Update Success"));
     }
 

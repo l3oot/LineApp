@@ -11,7 +11,7 @@ import com.example.demo.entity.PlanEntity;
 import com.example.demo.entity.UserPlanEntity;
 import com.example.demo.enums.ErrorCode;
 import com.example.demo.exception.ApiException;
-import com.example.demo.repository.CycleRepository;
+import com.example.demo.repository.CropRepository;
 import com.example.demo.repository.PlanRepository;
 import com.example.demo.repository.UserPlanRepository;
 
@@ -21,20 +21,20 @@ public class UserPlanService {
     public static final String STATUS_ACTIVE = "active";
     public static final String STATUS_EXPIRED = "expired";
     public static final String STATUS_CANCELLED = "cancelled";
-    public static final String CYCLE_STATUS_ACTIVE = "active";
+    public static final String CROP_STATUS_ACTIVE = "active";
     public static final String FREE_PLAN_NAME = "free";
 
     private final UserPlanRepository userPlanRepository;
     private final PlanRepository planRepository;
-    private final CycleRepository cycleRepository;
+    private final CropRepository cropRepository;
 
     public UserPlanService(
             UserPlanRepository userPlanRepository,
             PlanRepository planRepository,
-            CycleRepository cycleRepository) {
+            CropRepository cropRepository) {
         this.userPlanRepository = userPlanRepository;
         this.planRepository = planRepository;
-        this.cycleRepository = cycleRepository;
+        this.cropRepository = cropRepository;
     }
 
     @Transactional(readOnly = true)
@@ -45,7 +45,7 @@ public class UserPlanService {
 
         UserPlanEntity userPlan = userPlanRepository.findByUserIdAndStatus(userId, STATUS_ACTIVE).orElse(null);
         PlanEntity plan = resolvePlanForQuota(userPlan);
-        long activeCount = cycleRepository.countByUserIdAndStatus(userId, CYCLE_STATUS_ACTIVE);
+        long activeCount = cropRepository.countByUserIdAndStatus(userId, CROP_STATUS_ACTIVE);
         int maxCycles = plan.getMaxCycles();
         boolean canCreate = maxCycles == -1 || activeCount < maxCycles;
         LocalDateTime expiresAt = userPlan != null && !isExpired(userPlan) ? userPlan.getExpiresAt() : null;
@@ -81,7 +81,7 @@ public class UserPlanService {
     }
 
     @Transactional
-    public void assertCanCreateCycle(UUID userId) {
+    public void assertCanCreateCrop(UUID userId) {
         UserPlanEntity userPlan = resolveActiveUserPlanForUpdate(userId);
         PlanEntity plan = planRepository.findById(userPlan.getPlanId())
                 .orElseThrow(() -> new ApiException(ErrorCode.INTERNAL_ERROR, "Plan not found"));
@@ -90,12 +90,18 @@ public class UserPlanService {
             return;
         }
 
-        long activeCount = cycleRepository.countByUserIdAndStatus(userId, CYCLE_STATUS_ACTIVE);
+        long activeCount = cropRepository.countByUserIdAndStatus(userId, CROP_STATUS_ACTIVE);
         if (activeCount >= plan.getMaxCycles()) {
             throw new ApiException(
-                    ErrorCode.CYCLE_QUOTA_EXCEEDED,
-                    "Active cycle limit reached (" + plan.getMaxCycles() + ")");
+                    ErrorCode.CROP_QUOTA_EXCEEDED,
+                    "Active crop limit reached (" + plan.getMaxCycles() + ")");
         }
+    }
+
+    /** @deprecated use {@link #assertCanCreateCrop(UUID)} */
+    @Transactional
+    public void assertCanCreateCycle(UUID userId) {
+        assertCanCreateCrop(userId);
     }
 
     private UserPlanEntity resolveActiveUserPlanForUpdate(UUID userId) {
@@ -120,7 +126,6 @@ public class UserPlanService {
     }
 
     private boolean isExpired(UserPlanEntity userPlan) {
-        LocalDateTime expiresAt = userPlan.getExpiresAt();
-        return expiresAt != null && !expiresAt.isAfter(LocalDateTime.now());
+        return userPlan.getExpiresAt() != null && userPlan.getExpiresAt().isBefore(LocalDateTime.now());
     }
 }

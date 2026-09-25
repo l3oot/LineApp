@@ -12,8 +12,8 @@ public class LineProperties {
     private String clientSecret;
     private String redirectUri;
 
-    // ===== Messaging API (Webhook + Reply/Push) =====
-    // channelAccessToken: ใช้ใน Authorization: Bearer ตอนเรียก /v2/bot/message/{reply,push}
+    // ===== Messaging API (Webhook + Reply) =====
+    // channelAccessToken: ใช้ใน Authorization: Bearer ตอนเรียก /v2/bot/message/reply
     // channelSecret: ใช้ verify x-line-signature ของ webhook request (HMAC-SHA256 ของ raw body)
     private String channelAccessToken;
     private String channelSecret;

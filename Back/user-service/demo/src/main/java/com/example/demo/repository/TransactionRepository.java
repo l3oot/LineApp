@@ -1,6 +1,7 @@
 package com.example.demo.repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,4 +28,8 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
             UUID userId, UUID cycleId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     void deleteByUserId(UUID userId);
+
+    boolean existsByCycleIdIn(Collection<UUID> cycleIds);
+
+    boolean existsByCycleId(UUID cycleId);
 }
