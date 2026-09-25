@@ -41,6 +41,8 @@ export const INCOME_PIE_COLORS = [
 
 export type TrendLineSeries = {
     labels: string[];
+    /** bucket keys ภายใน เช่น YYYY-MM / YYYY / YYYY-MM-DD */
+    keys: string[];
     income: number[];
     expense: number[];
 };
@@ -151,6 +153,7 @@ export function buildCategoryShareFromTransactions(
     txType: "expense" | "income",
     othersLabel: string,
     uncategorizedLabel: string,
+    range?: { startDate?: string | null; endDate?: string | null } | null,
 ): ExpenseShareSlice[] {
     const MIN_SLICE_PERCENT = 5;
     const MAX_NAMED_SLICES = 4;
@@ -159,10 +162,23 @@ export function buildCategoryShareFromTransactions(
     const byCategory = new Map<string, number>();
     let uncategorizedAmount = 0;
 
+    const rangeStart = range?.startDate ? dayjs(range.startDate).startOf("day") : null;
+    const rangeEnd = range?.endDate
+        ? dayjs(range.endDate).endOf("day")
+        : rangeStart?.isValid()
+          ? rangeStart.endOf("month")
+          : null;
+    const useRange = Boolean(rangeStart?.isValid());
+
     for (const tx of transactions) {
         if (tx.txType !== txType) continue;
         const d = txDayjs(tx.txDate);
-        if (!d.isValid() || d.year() !== year) continue;
+        if (!d.isValid()) continue;
+        if (useRange) {
+            if (d.isBefore(rangeStart!) || (rangeEnd?.isValid() && d.isAfter(rangeEnd))) continue;
+        } else if (d.year() !== year) {
+            continue;
+        }
         const amount = Number(tx.amount);
         if (Number.isNaN(amount) || amount <= 0) continue;
         if (!tx.categoryId || !nameById.has(tx.categoryId)) {
@@ -229,6 +245,7 @@ export function buildExpenseShareFromTransactions(
     year: number,
     othersLabel: string,
     uncategorizedLabel: string,
+    range?: { startDate?: string | null; endDate?: string | null } | null,
 ): ExpenseShareSlice[] {
     return buildCategoryShareFromTransactions(
         transactions,
@@ -237,6 +254,7 @@ export function buildExpenseShareFromTransactions(
         "expense",
         othersLabel,
         uncategorizedLabel,
+        range,
     );
 }
 
@@ -246,6 +264,7 @@ export function buildIncomeShareFromTransactions(
     year: number,
     othersLabel: string,
     uncategorizedLabel: string,
+    range?: { startDate?: string | null; endDate?: string | null } | null,
 ): ExpenseShareSlice[] {
     return buildCategoryShareFromTransactions(
         transactions,
@@ -254,6 +273,7 @@ export function buildIncomeShareFromTransactions(
         "income",
         othersLabel,
         uncategorizedLabel,
+        range,
     );
 }
 
@@ -281,8 +301,59 @@ export function buildYearlyBarFromTransactions(
         labels: months.map((m) =>
             formatAppMonthYear(dayjs().year(year).month(m).date(1).toDate(), lang),
         ),
+        keys: months.map((m) => dayjs().year(year).month(m).format("YYYY-MM")),
         income: months.map((m) => totals.get(m)?.income ?? 0),
         expense: months.map((m) => totals.get(m)?.expense ?? 0),
+    };
+}
+
+/** กราฟแท่งรายเดือนตามช่วงวันของรอบปลูก (รองรับข้ามปี) */
+export function buildSeasonBarFromTransactions(
+    transactions: Transaction[],
+    startDate: string | null | undefined,
+    endDate: string | null | undefined,
+    lang?: string,
+): TrendLineSeries {
+    const start = startDate ? dayjs(startDate).startOf("month") : null;
+    const end = endDate ? dayjs(endDate).startOf("month") : null;
+    if (!start?.isValid()) {
+        return { labels: [], keys: [], income: [], expense: [] };
+    }
+    const endMonth = end?.isValid() && !end.isBefore(start) ? end : start;
+
+    const keys: string[] = [];
+    let cursor = start;
+    // กัน loop ยาวเกิน (เช่นข้อมูลผิด)
+    for (let i = 0; i < 36 && !cursor.isAfter(endMonth); i++) {
+        keys.push(cursor.format("YYYY-MM"));
+        cursor = cursor.add(1, "month");
+    }
+
+    const totals = new Map<string, { income: number; expense: number }>();
+    const rangeStart = start.startOf("day");
+    const rangeEnd = (end?.isValid() ? dayjs(endDate) : endMonth).endOf(
+        endDate ? "day" : "month",
+    );
+
+    for (const tx of transactions) {
+        const d = txDayjs(tx.txDate);
+        if (!d.isValid()) continue;
+        if (d.isBefore(rangeStart) || d.isAfter(rangeEnd)) continue;
+        const key = d.format("YYYY-MM");
+        if (!keys.includes(key)) continue;
+        const bucket = totals.get(key) ?? { income: 0, expense: 0 };
+        const amount = Number(tx.amount);
+        if (Number.isNaN(amount)) continue;
+        if (tx.txType === "income") bucket.income += amount;
+        else if (tx.txType === "expense") bucket.expense += amount;
+        totals.set(key, bucket);
+    }
+
+    return {
+        labels: keys.map((key) => formatAppMonthYear(dayjs(`${key}-01`).toDate(), lang)),
+        keys,
+        income: keys.map((key) => totals.get(key)?.income ?? 0),
+        expense: keys.map((key) => totals.get(key)?.expense ?? 0),
     };
 }
 
@@ -337,14 +408,25 @@ export function buildTrendLineFromTransactions(
     const now = dayjs();
     const start = filterStart(filter, now);
     const end = now.endOf("day");
+    return buildTrendLineInRange(transactions, start, end, filter, lang);
+}
 
+/** กราฟแนวโน้มในช่วงวันที่กำหนด (ใช้กับรอบพืชรายเดือน) */
+export function buildTrendLineInRange(
+    transactions: Transaction[],
+    start: Dayjs,
+    end: Dayjs,
+    filter: AnalyticFilter,
+    lang?: string,
+): TrendLineSeries {
+    const rangeStart = start.startOf("day");
+    const rangeEnd = end.endOf("day");
     const totals = new Map<string, { income: number; expense: number }>();
 
     for (const tx of transactions) {
         const d = txDayjs(tx.txDate);
         if (!d.isValid()) continue;
-        if (filter !== "ALL" && d.isBefore(start)) continue;
-        if (d.isAfter(end)) continue;
+        if (d.isBefore(rangeStart) || d.isAfter(rangeEnd)) continue;
 
         const key = bucketKey(d, filter);
         const bucket = totals.get(key) ?? { income: 0, expense: 0 };
@@ -355,13 +437,12 @@ export function buildTrendLineFromTransactions(
         totals.set(key, bucket);
     }
 
-    const keysInRange = orderedBucketKeys(filter, start, end);
-    const keys = keysInRange.length > 0
-        ? keysInRange
-        : [...totals.keys()].sort();
+    const keysInRange = orderedBucketKeys(filter, rangeStart, rangeEnd);
+    const keys = keysInRange.length > 0 ? keysInRange : [...totals.keys()].sort();
 
     return {
         labels: keys.map((k) => formatLabel(k, filter, lang)),
+        keys,
         income: keys.map((k) => totals.get(k)?.income ?? 0),
         expense: keys.map((k) => totals.get(k)?.expense ?? 0),
     };

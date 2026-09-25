@@ -4,12 +4,17 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-public record CycleCreateReq(
+public record CropCreateReq(
         UUID userId,
-        UUID cropId,
+        String name,
         String note,
+        String farmType,
+        String icon,
+        String status,
+        Integer startMonth,
+        Integer endMonth,
         LocalDate startDate,
         LocalDate endDate,
-        String status,
+        String seasonNote,
         BigDecimal budgetAmount) {
 }

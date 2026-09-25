@@ -680,25 +680,50 @@
     gap: 1rem;
 }
 
-.cycle-detail-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
-    align-self: flex-start;
-    margin: 0;
-    padding: 0.25rem 0.15rem;
-    border: none;
-    background: transparent;
-    color: var(--text);
-    font-size: 0.875rem;
-    font-weight: 700;
-    cursor: pointer;
-}
-
 .cycle-detail-header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+}
+
+.cycle-detail-finance {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.cycle-detail-finance-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--radius-control, 0.75rem);
+    background: var(--surface-soft, transparent);
+}
+
+.cycle-detail-finance-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--text-soft);
+}
+
+.cycle-detail-finance-value {
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: var(--text);
+    word-break: break-word;
+}
+
+.cycle-detail-finance-value--capital {
+    color: #2d6fbe;
+}
+
+.cycle-detail-finance-value--flow {
+    color: var(--danger);
+}
+
+.cycle-detail-finance-value--remaining {
+    color: var(--balance);
 }
 
 .cycle-detail-icon {
@@ -748,6 +773,27 @@
 
 .cycle-detail-list.list-page {
     gap: 0.75rem;
+}
+
+.cycle-detail-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.cycle-detail-pagination-label {
+    min-width: 4.5rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-soft);
+}
+
+.cycle-detail-pagination .pill-control:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 @media (max-width: 380px) {

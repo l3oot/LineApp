@@ -93,6 +93,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**", "/webhook", "/api/health", "/api/health/**").permitAll()
                 // ai-service ดึง context ก่อน LLM โดยยังไม่ส่ง JWT
                 .requestMatchers(HttpMethod.GET, "/api/cycle/user/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/crop/user/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/category", "/api/category/").permitAll()
                 .anyRequest().authenticated())
             .exceptionHandling(ex -> ex

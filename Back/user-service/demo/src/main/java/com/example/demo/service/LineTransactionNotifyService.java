@@ -11,8 +11,10 @@ import org.springframework.stereotype.Service;
 import com.example.demo.config.LineProperties;
 import com.example.demo.dto.res.TransactionRes;
 import com.example.demo.entity.CategoryEntity;
+import com.example.demo.entity.CropEntity;
 import com.example.demo.entity.CycleEntity;
 import com.example.demo.repository.CategoryRepository;
+import com.example.demo.repository.CropRepository;
 import com.example.demo.repository.CycleRepository;
 
 /**
@@ -24,6 +26,7 @@ public class LineTransactionNotifyService {
     private static final Logger log = LoggerFactory.getLogger(LineTransactionNotifyService.class);
 
     private final CycleRepository cycleRepository;
+    private final CropRepository cropRepository;
     private final CategoryRepository categoryRepository;
     private final LineFlexMessageBuilder lineFlexMessageBuilder;
     private final LineMessagingService lineMessagingService;
@@ -31,11 +34,13 @@ public class LineTransactionNotifyService {
 
     public LineTransactionNotifyService(
             CycleRepository cycleRepository,
+            CropRepository cropRepository,
             CategoryRepository categoryRepository,
             LineFlexMessageBuilder lineFlexMessageBuilder,
             LineMessagingService lineMessagingService,
             LineProperties lineProperties) {
         this.cycleRepository = cycleRepository;
+        this.cropRepository = cropRepository;
         this.categoryRepository = categoryRepository;
         this.lineFlexMessageBuilder = lineFlexMessageBuilder;
         this.lineMessagingService = lineMessagingService;
@@ -66,10 +71,14 @@ public class LineTransactionNotifyService {
             return "-";
         }
         Optional<CycleEntity> cycle = cycleRepository.findById(cycleId);
-        if (cycle.isEmpty() || cycle.get().getName() == null || cycle.get().getName().isBlank()) {
+        if (cycle.isEmpty()) {
             return "-";
         }
-        return cycle.get().getName();
+        Optional<CropEntity> crop = cropRepository.findById(cycle.get().getCropId());
+        if (crop.isEmpty() || crop.get().getName() == null || crop.get().getName().isBlank()) {
+            return "-";
+        }
+        return crop.get().getName();
     }
 
     private String resolveCategoryName(UUID categoryId) {

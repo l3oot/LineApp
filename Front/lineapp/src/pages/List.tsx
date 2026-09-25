@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import "../styles/list.css";
 import { buildExportRows, exportTransactionsToExcel, exportTransactionsToPdf } from "../utils/exportTransactions";
 import { groupTransactionsByDate } from "../utils/groupTransactionsByDate";
+import { formatCycleMonthRange } from "../utils/formatMonthYear";
 import {
     categoryApi,
     cycleApi,
@@ -52,6 +53,12 @@ function categoryNameForTx(
     fallbackCategory: string,
 ): string {
     return tx.categoryId ? (categoryById[tx.categoryId] ?? fallbackCategory) : fallbackCategory;
+}
+
+function cyclePickerLabel(cycle: Cycle, lang: string): string {
+    const range = formatCycleMonthRange(cycle.startDate, cycle.endDate, lang);
+    if (!range) return cycle.name;
+    return `${cycle.name} · ${range}`;
 }
 
 export default function List() {
@@ -829,7 +836,9 @@ export default function List() {
                                     className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm text-[var(--text)] transition-all hover:border-[var(--primary)]"
                                 >
                                     <span className={selectedCycle ? "text-[var(--text)]" : "text-[var(--text-soft)]"}>
-                                        {selectedCycle ? selectedCycle.name : t("list.cycleNone")}
+                                        {selectedCycle
+                                            ? cyclePickerLabel(selectedCycle, i18n.language)
+                                            : t("list.cycleNone")}
                                     </span>
                                     <FiChevronDown
                                         size={18}
@@ -877,7 +886,7 @@ export default function List() {
                                                         {isIconName(cycle.icon) && (
                                                             <span className="text-base leading-none">{icons[cycle.icon]}</span>
                                                         )}
-                                                        <span>{cycle.name}</span>
+                                                        <span>{cyclePickerLabel(cycle, i18n.language)}</span>
                                                     </span>
                                                     {isSelected && <FiCheck size={18} className="text-[var(--text-soft)]" />}
                                                 </button>

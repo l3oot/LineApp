@@ -132,6 +132,22 @@ export function formatAppMonthYear(
     return formatIntlDate(date, { month: "short", year: "numeric" }, lang);
 }
 
+/** เดือนอย่างเดียว เช่น ส.ค. / Aug (ไม่มีปี) */
+export function formatAppMonth(
+    value: Date | string | number | null | undefined,
+    lang?: string,
+): string {
+    if (value == null || value === "") return "";
+    if (typeof value === "number") {
+        if (value < 1 || value > 12) return "";
+        const date = new Date(Date.UTC(2020, value - 1, 1, 12, 0, 0));
+        return formatIntlDate(date, { month: "short" }, lang);
+    }
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return formatIntlDate(date, { month: "short" }, lang);
+}
+
 export function formatCalendarDate(cd: DateValue, lang?: string): string {
     const gregorian = toGregorianCalendarDate(cd);
     return formatAppDate(

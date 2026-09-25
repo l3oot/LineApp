@@ -71,15 +71,16 @@ function requireUserId(): string {
     return user.userId;
 }
 
-// ============ Cycle ============
+// ============ Crop (พืช) + Cycle/Season (ฤดูกาล) ============
 
 export type Cycle = {
     cycleId: string;
+    cropId: string;
     userId: string;
     name: string;
     note: string | null;
     farmType: string | null;
-    startDate: string;       // ISO yyyy-mm-dd
+    startDate: string; // ISO yyyy-mm-dd
     endDate: string;
     status: string | null;
     icon: string | null;
@@ -88,26 +89,88 @@ export type Cycle = {
     dateComeIn?: number | null;
 };
 
-export type CycleCreatePayload = {
+export type Crop = {
+    cropId: string;
+    userId: string;
+    name: string;
+    note: string | null;
+    farmType: string | null;
+    icon: string | null;
+    status: string | null;
+    startMonth: number | null;
+    endMonth: number | null;
+    createdAt: string;
+    currentSeason: Cycle | null;
+};
+
+export type CropCreatePayload = {
     name: string;
     note?: string | null;
     farmType: string;
+    icon: string;
+    status?: string;
+    startMonth?: number | null;
+    endMonth?: number | null;
     startDate: string;
     endDate: string;
-    status: string;
-    icon: string;
+    seasonNote?: string | null;
     budgetAmount?: number | null;
 };
 
-export type CycleUpdatePayload = CycleCreatePayload & { cycleId: string };
+export type CropUpdatePayload = {
+    cropId: string;
+    name: string;
+    note?: string | null;
+    farmType: string;
+    icon: string;
+    status: string;
+    startMonth?: number | null;
+    endMonth?: number | null;
+};
+
+export type CycleCreatePayload = {
+    cropId: string;
+    note?: string | null;
+    startDate: string;
+    endDate: string;
+    status: string;
+    budgetAmount?: number | null;
+};
+
+export type CycleUpdatePayload = {
+    cycleId: string;
+    note?: string | null;
+    startDate: string;
+    endDate: string;
+    status: string;
+};
 
 export type CycleSummary = {
     cycleName: string;
     summary: string;
 };
 
+export const cropApi = {
+    list: () => api.get<Crop[]>(`/api/crop/user/${requireUserId()}`),
+
+    get: (cropId: string) =>
+        api.get<Crop>(`/api/crop/${cropId}`, { userId: requireUserId() }),
+
+    create: (payload: CropCreatePayload) =>
+        api.post<Crop>("/api/crop", { ...payload, userId: requireUserId() }),
+
+    update: (payload: CropUpdatePayload) =>
+        api.put<Crop>("/api/crop", payload),
+
+    delete: (cropId: string) =>
+        api.delete<void>("/api/crop", { cropId, userId: requireUserId() }),
+};
+
 export const cycleApi = {
     list: () => api.get<Cycle[]>(`/api/cycle/user/${requireUserId()}`),
+
+    listByCrop: (cropId: string) =>
+        api.get<Cycle[]>(`/api/cycle/crop/${cropId}`, { userId: requireUserId() }),
 
     create: (payload: CycleCreatePayload) =>
         api.post<Cycle>("/api/cycle", { ...payload, userId: requireUserId() }),

@@ -1,4 +1,5 @@
-import { Navigate, Outlet, createBrowserRouter, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, Outlet, createBrowserRouter, useNavigate, useParams } from "react-router-dom";
 import Sum from "../pages/Sum";
 import Cycle from "../pages/Cycle";
 import CycleDetail from "../pages/CycleDetail";
@@ -19,6 +20,47 @@ import PrivacyPage from "../pages/marketing/Privacy";
 import Entrepreneur from "../pages/Entrepreneur";
 import AgriProducts from "../pages/AgriProducts";
 import { APP_BASE, appPath } from "../lib/appPaths";
+import { cycleApi } from "../lib/userService";
+
+/** bookmark เก่า /app/cycle/:cycleId → หน้าพืช + ?season= */
+function LegacyCycleIdToCropRedirect() {
+    const { cycleId = "" } = useParams();
+    const navigate = useNavigate();
+    const [failed, setFailed] = useState(false);
+
+    useEffect(() => {
+        if (!cycleId) {
+            setFailed(true);
+            return;
+        }
+        let cancelled = false;
+        cycleApi
+            .list()
+            .then((rows) => {
+                if (cancelled) return;
+                const found = (rows ?? []).find((c) => c.cycleId === cycleId);
+                if (found?.cropId) {
+                    navigate(
+                        appPath(`/cycle/crop/${found.cropId}?season=${encodeURIComponent(cycleId)}`),
+                        { replace: true },
+                    );
+                    return;
+                }
+                setFailed(true);
+            })
+            .catch(() => {
+                if (!cancelled) setFailed(true);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [cycleId, navigate]);
+
+    if (failed) {
+        return <Navigate to={appPath("/cycle")} replace />;
+    }
+    return null;
+}
 
 function LegacyCycleDetailRedirect() {
     const { cycleId } = useParams();
@@ -55,7 +97,8 @@ export const router = createBrowserRouter([
         children: [
             { index: true, element: <Sum /> },
             { path: "cycle", element: <Cycle /> },
-            { path: "cycle/:cycleId", element: <CycleDetail /> },
+            { path: "cycle/crop/:cropId", element: <CycleDetail /> },
+            { path: "cycle/:cycleId", element: <LegacyCycleIdToCropRedirect /> },
             { path: "analytics", element: <Analytic /> },
             { path: "list", element: <List /> },
             { path: "settings", element: <Setting /> },
