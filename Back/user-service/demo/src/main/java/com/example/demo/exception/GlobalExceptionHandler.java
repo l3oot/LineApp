@@ -12,6 +12,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.example.demo.dto.ApiRes;
@@ -42,6 +43,14 @@ public class GlobalExceptionHandler {
                 TypeError.VALIDATION_ERROR,
                 ErrorCode.VALIDATION_ERROR.name());
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiRes<Object>> handleMaxUpload(MaxUploadSizeExceededException ex) {
+        ApiRes<Object> body = ApiRes.failure(
+                ErrorCode.PRODUCT_IMAGE_TOO_LARGE,
+                "ไฟล์รูปใหญ่เกินไป กรุณาเลือกรูปที่เล็กกว่า 10 MB");
+        return ResponseEntity.status(ErrorCode.PRODUCT_IMAGE_TOO_LARGE.getHttpStatus()).body(body);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

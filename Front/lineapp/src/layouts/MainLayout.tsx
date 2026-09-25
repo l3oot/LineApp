@@ -37,7 +37,7 @@ const navItems: NavItem[] = [
 function resolvePageTone(pathname: string): string {
     const p = pathname.startsWith(APP_BASE) ? pathname.slice(APP_BASE.length) || "/" : pathname;
     if (p.startsWith("/list") || p.startsWith("/analytics") || p.startsWith("/prices")) return "green";
-    if (p.startsWith("/cycle") || p.startsWith("/government")) return "pink";
+    if (p.startsWith("/cycle") || p.startsWith("/government") || p.startsWith("/entrepreneur") || p.startsWith("/agri-products")) return "pink";
     if (p.startsWith("/weather")) return "blue";
     if (p.startsWith("/settings")) return "purple";
     return "neutral";

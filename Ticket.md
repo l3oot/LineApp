@@ -8,7 +8,7 @@
 
 - [x] **FIX:** แก้ part ของ /app เพื่อแยกจาก web landing page
 
-- [ ] **ADD:** สำหรับผู้ประกอบการ
+- [x] **ADD:** สำหรับผู้ประกอบการ
 
 ## Backend
 
@@ -20,23 +20,29 @@
 
 - [x] **Fix:** \service\CoinService.java : REFERENCE_TYPE_TRANSACTION = "TRANSACTION";
 
-- [ ] **ADD:** สำหรับผู้ประกอบการ
+- [x] **ADD:** สำหรับผู้ประกอบการ
 
 - [ ] **ADD:** pathumma thaillm
 
-- [ ] **ADD:** JWT Filter
+- [x] **ADD:** JWT Filter
 
-- [ ] **ADD:** FALLBACK_COMMODs : service\AgriPriceClientService.java
+- [x] **ADD:** FALLBACK_COMMODs : service\AgriPriceClientService.java
 
-- [ ] **ADD:** _DEFAULT_CYCLE_USER_ID : ai-service\src\config\settings.py
+- [x] **ADD:** _DEFAULT_CYCLE_USER_ID : ai-service\src\config\settings.py
+
+
 
 ## DevOps
 
 - No ticket
 
+
+
 ## Database
 
 - No ticket
+
+
 
 ## Security
 

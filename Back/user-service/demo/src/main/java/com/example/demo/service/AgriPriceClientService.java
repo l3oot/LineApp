@@ -41,10 +41,6 @@ public class AgriPriceClientService {
     private static final Logger log = LoggerFactory.getLogger(AgriPriceClientService.class);
     private static final Duration PRODUCT_CACHE_TTL = Duration.ofHours(1);
     private static final ZoneId BANGKOK = ZoneId.of("Asia/Bangkok");
-    private static final List<String> FALLBACK_COMMODs = List.of(
-            "กระบือ", "กุ้ง", "ไก่เนื้อ", "ข้าว", "ข้าวโพดเลี้ยงสัตว์", "ไข่เป็ด", "ไข่ไก่",
-            "โคเนื้อ", "เงาะ", "ทุเรียน", "ปาล์มน้ำมัน", "พริกไทย", "มะพร้าว", "มันสำปะหลัง",
-            "ยางพารา", "ลำไย", "สับปะรด", "สุกร");
 
     private final AgriPriceProperties props;
     private final RestTemplate restTemplate;
@@ -343,9 +339,6 @@ public class AgriPriceClientService {
         Set<String> types = new LinkedHashSet<>();
         dailyCategories.forEach(name -> addUnique(types, name));
         periodCatalog.commods().forEach(name -> addUnique(types, name));
-        if (types.isEmpty()) {
-            FALLBACK_COMMODs.forEach(name -> addUnique(types, name));
-        }
 
         cachedDailyProductNames = List.copyOf(dailyProducts);
         cachedPeriodProductNames = List.copyOf(periodCatalog.products());
@@ -437,7 +430,7 @@ public class AgriPriceClientService {
 
     private List<String> loadCommodsSafe() {
         loadProductNamesSafe();
-        return cachedCommods.isEmpty() ? FALLBACK_COMMODs : cachedCommods;
+        return cachedCommods;
     }
 
     private List<String> loadMatchNamesSafe() {
@@ -462,7 +455,7 @@ public class AgriPriceClientService {
                 return weekly;
             }
         }
-        return new PeriodCatalog(FALLBACK_COMMODs, List.of());
+        return new PeriodCatalog(List.of(), List.of());
     }
 
     private PeriodCatalog fetchPeriodCatalog(String path, YearMonth target) {

@@ -47,7 +47,20 @@ function mapTypeErrorToFriendlyMessage(typeError: string | undefined, t: TFuncti
         case "USER_NOT_FOUND":
         case "CATEGORY_NOT_FOUND":
         case "CYCLE_NOT_FOUND":
+        case "PRODUCT_NOT_FOUND":
             return t("errors.notFound");
+        case "PRODUCT_IMAGE_REQUIRED":
+        case "PRODUCT_IMAGE_INVALID":
+        case "PRODUCT_IMAGE_TOO_LARGE":
+        case "PRODUCT_IMAGE_RESIZE_FAILED":
+        case "PRODUCT_NAME_REQUIRED":
+        case "PRODUCT_PROPERTIES_REQUIRED":
+        case "PRODUCT_PRICE_INVALID":
+        case "PRODUCT_CONTACT_REQUIRED":
+            return t("errors.validation");
+        case "FILE_STORAGE_NOT_CONFIGURED":
+        case "FILE_STORAGE_UPLOAD_FAILED":
+            return t("errors.server");
         case "CONFLICT":
             return t("errors.conflict");
         case "RATE_LIMIT":
@@ -64,6 +77,20 @@ function mapTypeErrorToFriendlyMessage(typeError: string | undefined, t: TFuncti
 
 export function getFriendlyApiErrorMessage(error: unknown, t: TFunction): string {
     if (error instanceof ApiError) {
+        // Prefer backend message for image/validation so user sees resize/size guidance
+        const type = (error.typeError ?? "").toUpperCase();
+        if (
+            error.message &&
+            (type.startsWith("PRODUCT_IMAGE_") ||
+                type === "PRODUCT_NAME_REQUIRED" ||
+                type === "PRODUCT_PROPERTIES_REQUIRED" ||
+                type === "PRODUCT_PRICE_INVALID" ||
+                type === "PRODUCT_CONTACT_REQUIRED" ||
+                type === "FILE_STORAGE_UPLOAD_FAILED" ||
+                type === "FILE_STORAGE_NOT_CONFIGURED")
+        ) {
+            return error.message;
+        }
         return (
             mapTypeErrorToFriendlyMessage(error.typeError ?? undefined, t) ??
             mapStatusToFriendlyMessage(error.status, t) ??

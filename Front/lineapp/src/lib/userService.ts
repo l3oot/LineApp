@@ -327,3 +327,111 @@ export const thaiAdminApi = {
     listSubdistricts: (districtCode: string) =>
         api.get<ThaiAdminOption[]>("/api/thai-admin/subdistricts", { districtCode }),
 };
+
+// ============ Entrepreneur products ============
+
+export type EntrepreneurProduct = {
+    productId: string;
+    userId: string;
+    productTypeId: string;
+    productTypeName: string | null;
+    name: string;
+    properties: string;
+    price: number;
+    address: string;
+    phone: string;
+    tiktok: string | null;
+    facebook: string | null;
+    lineId: string | null;
+    imagePaths: string[];
+    imageUrls: string[];
+    imageUrl: string | null;
+    createdAt: string | null;
+    updatedAt: string | null;
+};
+
+export type ProductType = {
+    productTypeId: string;
+    name: string;
+    sortOrder: number;
+};
+
+export type EntrepreneurProductPayload = {
+    productTypeId: string;
+    name: string;
+    properties: string;
+    price: string | number;
+    address: string;
+    phone: string;
+    tiktok?: string;
+    facebook?: string;
+    lineId?: string;
+    images?: File[];
+    keepImagePaths?: string[];
+};
+
+function toProductFormData(payload: EntrepreneurProductPayload): FormData {
+    const form = new FormData();
+    form.append("productTypeId", payload.productTypeId);
+    form.append("name", payload.name.trim());
+    form.append("properties", payload.properties.trim());
+    form.append("price", String(payload.price));
+    form.append("address", payload.address.trim());
+    form.append("phone", payload.phone.trim());
+    form.append("tiktok", (payload.tiktok ?? "").trim());
+    form.append("facebook", (payload.facebook ?? "").trim());
+    form.append("lineId", (payload.lineId ?? "").trim());
+    if (payload.keepImagePaths) {
+        form.append("keepImagePaths", JSON.stringify(payload.keepImagePaths));
+    }
+    for (const image of payload.images ?? []) {
+        form.append("images", image);
+    }
+    return form;
+}
+
+export const productTypeApi = {
+    list: () => api.get<ProductType[]>("/api/product-types"),
+};
+
+export const entrepreneurProductApi = {
+    listMine: () =>
+        api.get<EntrepreneurProduct[]>("/api/entrepreneur/products", { userId: requireUserId() }),
+
+    listCatalog: () => api.get<EntrepreneurProduct[]>("/api/entrepreneur/products/catalog"),
+
+    get: (productId: string) =>
+        api.get<EntrepreneurProduct>(`/api/entrepreneur/products/${productId}`, {
+            userId: requireUserId(),
+        }),
+
+    create: (payload: EntrepreneurProductPayload) => {
+        const images = payload.images ?? [];
+        if (images.length === 0) {
+            throw new ApiError(400, "PRODUCT_IMAGE_REQUIRED", "ต้องแนบรูปสินค้าอย่างน้อย 1 รูป");
+        }
+        if (images.length > 3) {
+            throw new ApiError(400, "PRODUCT_IMAGES_TOO_MANY", "อัปโหลดรูปได้สูงสุด 3 รูป");
+        }
+        return api.postForm<EntrepreneurProduct>(
+            "/api/entrepreneur/products",
+            toProductFormData(payload),
+            { userId: requireUserId() },
+            60_000,
+        );
+    },
+
+    update: (productId: string, payload: EntrepreneurProductPayload) =>
+        api.putForm<EntrepreneurProduct>(
+            `/api/entrepreneur/products/${productId}`,
+            toProductFormData(payload),
+            { userId: requireUserId() },
+            60_000,
+        ),
+
+    delete: (productId: string) =>
+        api.delete<void>("/api/entrepreneur/products", {
+            productId,
+            userId: requireUserId(),
+        }),
+};

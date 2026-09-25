@@ -1,0 +1,833 @@
+.entrepreneur-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.entrepreneur-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.entrepreneur-subtitle {
+    margin: -0.25rem 0 0;
+    color: var(--text-muted, #6b7280);
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.entrepreneur-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.entrepreneur-form-main {
+    display: grid;
+    grid-template-columns: 148px minmax(0, 1fr);
+    gap: 0.85rem;
+    align-items: start;
+}
+
+.entrepreneur-form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.entrepreneur-field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+}
+
+.entrepreneur-image-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.entrepreneur-image-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+}
+
+.entrepreneur-image-thumb,
+.entrepreneur-image-add {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: var(--radius-card, 16px);
+    background: var(--surface-soft, #f8fafc);
+}
+
+.entrepreneur-image-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.entrepreneur-image-remove {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.72);
+    color: #fff;
+}
+
+.entrepreneur-image-add {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.5rem;
+    border: 1.5px dashed var(--border, #d1d5db);
+    border-radius: var(--radius-card, 16px);
+    background: var(--surface-soft, #f8fafc);
+    color: var(--text-muted, #6b7280);
+    text-align: center;
+    font: inherit;
+    font-size: 0.74rem;
+    font-weight: 600;
+    line-height: 1.25;
+    cursor: pointer;
+}
+
+.entrepreneur-image-hint {
+    font-size: 0.68rem;
+    font-weight: 500;
+    opacity: 0.85;
+}
+
+.entrepreneur-image-panel-hint {
+    margin: 0;
+    color: var(--text-muted, #6b7280);
+    font-size: 0.72rem;
+    line-height: 1.35;
+}
+
+.entrepreneur-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text, #111827);
+}
+
+.entrepreneur-field input,
+.entrepreneur-field textarea,
+.entrepreneur-field select {
+    width: 100%;
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: var(--radius-control, 12px);
+    background: var(--surface, #fff);
+    padding: 0.7rem 0.85rem;
+    font: inherit;
+    font-weight: 500;
+    color: var(--text, #111827);
+}
+
+.entrepreneur-field select {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%),
+        linear-gradient(135deg, #6b7280 50%, transparent 50%);
+    background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 2rem;
+}
+
+.entrepreneur-field textarea {
+    resize: vertical;
+    min-height: 88px;
+}
+
+.entrepreneur-error {
+    margin: 0;
+    color: var(--danger, #b91c1c);
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.entrepreneur-submit {
+    flex: 0 0 auto;
+    min-width: 140px;
+    min-height: 48px;
+    padding: 0 1.25rem;
+    border: none;
+    border-radius: var(--radius-control, 12px);
+    background: var(--primary, #16a34a);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.entrepreneur-submit:disabled {
+    opacity: 0.55;
+}
+
+.entrepreneur-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.entrepreneur-cancel {
+    flex: 0 0 auto;
+    min-height: 48px;
+    padding: 0 1rem;
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: var(--radius-control, 12px);
+    background: var(--surface, #fff);
+    color: var(--text, #111827);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.entrepreneur-empty,
+.entrepreneur-empty-state {
+    color: var(--text-muted, #6b7280);
+    font-size: 0.9rem;
+}
+
+.entrepreneur-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem 1rem;
+    text-align: center;
+}
+
+.entrepreneur-product-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.entrepreneur-product-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    align-items: stretch;
+    gap: 0;
+    min-height: 140px;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-card, 16px);
+    background: var(--surface, #fff);
+}
+
+.entrepreneur-product-card--editing {
+    border-color: var(--primary, #16a34a);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary, #16a34a) 35%, transparent);
+}
+
+.entrepreneur-product-image {
+    width: 100%;
+    height: 100%;
+    min-height: 140px;
+    border-radius: 0;
+    object-fit: cover;
+    background: var(--surface-soft, #f3f4f6);
+}
+
+.entrepreneur-product-image--empty {
+    background: var(--surface-soft, #f3f4f6);
+}
+
+.entrepreneur-product-body {
+    padding: 0.85rem 3.5rem 0.85rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.2rem;
+    min-width: 0;
+    min-height: 100%;
+}
+
+.entrepreneur-product-body h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.entrepreneur-product-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.35rem 0.75rem;
+}
+
+.entrepreneur-product-heading .entrepreneur-product-price {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.entrepreneur-product-type {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary, #15803d);
+}
+
+.entrepreneur-product-card--catalog {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-card, 16px);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+    background: var(--surface, #fff);
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.entrepreneur-product-card--catalog:hover {
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+}
+
+.entrepreneur-product-card--catalog:active {
+    transform: scale(0.985);
+}
+
+.entrepreneur-product-card--catalog .entrepreneur-product-image-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: var(--surface-soft, #f3f4f6);
+}
+
+.entrepreneur-product-card--catalog .entrepreneur-product-image,
+.entrepreneur-product-card--catalog .entrepreneur-product-image--empty {
+    position: static;
+    inset: auto;
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    object-fit: cover;
+}
+
+.entrepreneur-product-card--catalog .entrepreneur-product-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0.3rem;
+    grid-column: auto;
+    min-height: 0;
+    padding: 0.65rem 0.7rem 0.8rem;
+}
+
+.entrepreneur-product-card--catalog .entrepreneur-product-type {
+    display: inline-flex;
+    align-self: flex-start;
+    margin: 0;
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary, #16a34a) 12%, #fff);
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.entrepreneur-product-card--catalog .entrepreneur-product-body h3 {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.entrepreneur-product-card--catalog .entrepreneur-product-price {
+    margin: 0.1rem 0 0;
+    color: #e11d48;
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.entrepreneur-product-list--catalog {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+@media (min-width: 900px) {
+    .entrepreneur-product-list--catalog {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.85rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .entrepreneur-product-list--catalog {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.agri-product-detail {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 85vh;
+}
+
+.agri-product-detail__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem 0.65rem;
+}
+
+.agri-product-detail__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text, #111827);
+}
+
+.agri-product-detail__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-soft, #6b7280);
+}
+
+.agri-product-detail__close:hover {
+    background: var(--surface-soft, #f3f4f6);
+}
+
+.agri-product-detail__scroll {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: 1.25rem;
+}
+
+.agri-product-detail__gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.agri-product-detail__image-wrap {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: var(--surface-soft, #f3f4f6);
+}
+
+.agri-product-detail__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.agri-product-detail__image--empty {
+    background: var(--surface-soft, #f3f4f6);
+}
+
+.agri-product-detail__thumbs {
+    display: flex;
+    gap: 0.45rem;
+    padding: 0 0.75rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.agri-product-detail__thumb {
+    flex: 0 0 auto;
+    width: 3.25rem;
+    height: 3.25rem;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 0.55rem;
+    overflow: hidden;
+    background: var(--surface-soft, #f3f4f6);
+    cursor: pointer;
+}
+
+.agri-product-detail__thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.agri-product-detail__thumb--active {
+    border-color: var(--primary, #2563eb);
+}
+
+.agri-product-detail__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.9rem 1rem 0;
+}
+
+.agri-product-detail__name {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: var(--text, #111827);
+}
+
+.agri-product-detail__price {
+    margin: 0;
+    color: #e11d48;
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.agri-product-detail__block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-top: 0.35rem;
+}
+
+.agri-product-detail__label {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted, #6b7280);
+}
+
+.agri-product-detail__text {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--text, #374151);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.agri-product-detail__text--contact {
+    font-weight: 600;
+}
+
+.agri-product-detail__phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: fit-content;
+    margin: 0;
+    padding: 0.35rem 0.65rem;
+    border: 1px solid color-mix(in srgb, var(--primary, #16a34a) 28%, #fff);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary, #16a34a) 8%, #fff);
+    color: var(--primary, #15803d);
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.agri-product-detail__phone:hover {
+    background: color-mix(in srgb, var(--primary, #16a34a) 14%, #fff);
+}
+
+.agri-product-detail__text a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.agri-product-detail__socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.agri-product-detail__social {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 40px;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 999px;
+    background: var(--surface, #fff);
+    color: var(--text, #111827);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.agri-product-detail__social img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.entrepreneur-social {
+    margin: 0;
+    padding: 0.75rem 0.85rem 0.85rem;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-card, 16px);
+    background: var(--surface-soft, #f8fafc);
+}
+
+.entrepreneur-social legend {
+    float: left;
+    width: 100%;
+    margin: 0 0 0.2rem;
+    padding: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text, #111827);
+}
+
+.entrepreneur-social-hint {
+    clear: both;
+    margin: 0 0 0.65rem;
+    color: var(--text-muted, #6b7280);
+    font-size: 0.8rem;
+}
+
+.entrepreneur-social-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.entrepreneur-social-field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+}
+
+.entrepreneur-social-brand {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+}
+
+.entrepreneur-social-brand img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
+
+.entrepreneur-social-field input {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: var(--radius-control, 12px);
+    background: var(--surface, #fff);
+    padding: 0.55rem 0.7rem;
+    font: inherit;
+    font-weight: 500;
+    color: var(--text, #111827);
+}
+
+@media (max-width: 720px) {
+    .entrepreneur-form-main {
+        grid-template-columns: 120px minmax(0, 1fr);
+        gap: 0.7rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .entrepreneur-form-main {
+        grid-template-columns: 1fr;
+    }
+
+    .entrepreneur-image-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .entrepreneur-image-panel-hint {
+        grid-column: 1 / -1;
+    }
+
+    .entrepreneur-field-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.entrepreneur-product-properties,
+.entrepreneur-product-price,
+.entrepreneur-product-contact {
+    margin: 0.15rem 0 0;
+    font-size: 0.84rem;
+    line-height: 1.4;
+    color: var(--text-muted, #4b5563);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.entrepreneur-product-price {
+    color: var(--primary, #15803d);
+    font-weight: 700;
+}
+
+.entrepreneur-product-actions {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    display: inline-flex;
+    gap: 0.35rem;
+}
+
+.entrepreneur-edit,
+.entrepreneur-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 999px;
+    background: #fff;
+}
+
+.entrepreneur-edit {
+    color: #1d4ed8;
+}
+
+.entrepreneur-delete {
+    color: #b91c1c;
+}
+
+@media (max-width: 480px) {
+    .entrepreneur-product-card {
+        grid-template-columns: 110px 1fr;
+        min-height: 120px;
+    }
+
+    .entrepreneur-product-image {
+        min-height: 120px;
+    }
+
+    .entrepreneur-product-list--catalog {
+        gap: 0.55rem;
+    }
+
+    .entrepreneur-product-card--catalog {
+        min-height: 0;
+    }
+
+    .entrepreneur-product-card--catalog .entrepreneur-product-image,
+    .entrepreneur-product-card--catalog .entrepreneur-product-image--empty {
+        width: 100%;
+        min-height: 0;
+    }
+
+    .entrepreneur-product-card--catalog .entrepreneur-product-body {
+        padding: 0.55rem 0.6rem 0.7rem;
+    }
+
+    .entrepreneur-product-card--catalog .entrepreneur-product-price {
+        font-size: 1.05rem;
+    }
+}
+
+.agri-products-filters {
+    display: grid;
+    grid-template-columns: 1fr minmax(140px, 200px);
+    gap: 0.65rem;
+}
+
+.agri-products-search {
+    position: relative;
+    display: block;
+}
+
+.agri-products-search-icon {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted, #6b7280);
+    pointer-events: none;
+}
+
+.agri-products-search input {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: var(--radius-control, 12px);
+    background: var(--surface, #fff);
+    padding: 0.7rem 0.85rem 0.7rem 2.5rem;
+    font: inherit;
+    font-weight: 500;
+    color: var(--text, #111827);
+}
+
+.agri-products-type-filter select {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: var(--radius-control, 12px);
+    background: var(--surface, #fff);
+    padding: 0.7rem 2rem 0.7rem 0.85rem;
+    font: inherit;
+    font-weight: 500;
+    color: var(--text, #111827);
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%),
+        linear-gradient(135deg, #6b7280 50%, transparent 50%);
+    background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+}
+
+@media (max-width: 640px) {
+    .agri-products-filters {
+        grid-template-columns: 1fr;
+    }
+}

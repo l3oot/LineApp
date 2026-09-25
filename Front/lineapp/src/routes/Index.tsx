@@ -16,6 +16,8 @@ import AboutPage from "../pages/marketing/About";
 import ContactPage from "../pages/marketing/Contact";
 import TermsPage from "../pages/marketing/Terms";
 import PrivacyPage from "../pages/marketing/Privacy";
+import Entrepreneur from "../pages/Entrepreneur";
+import AgriProducts from "../pages/AgriProducts";
 import { APP_BASE, appPath } from "../lib/appPaths";
 
 function LegacyCycleDetailRedirect() {
@@ -60,6 +62,8 @@ export const router = createBrowserRouter([
             { path: "government", element: <Government /> },
             { path: "prices", element: <Prices /> },
             { path: "weather", element: <Weather /> },
+            { path: "entrepreneur", element: <Entrepreneur /> },
+            { path: "agri-products", element: <AgriProducts /> },
         ],
     },
 
@@ -72,4 +76,6 @@ export const router = createBrowserRouter([
     { path: "/government", element: <Navigate to={appPath("/government")} replace /> },
     { path: "/prices", element: <Navigate to={appPath("/prices")} replace /> },
     { path: "/weather", element: <Navigate to={appPath("/weather")} replace /> },
+    { path: "/entrepreneur", element: <Navigate to={appPath("/entrepreneur")} replace /> },
+    { path: "/agri-products", element: <Navigate to={appPath("/agri-products")} replace /> },
 ]);
