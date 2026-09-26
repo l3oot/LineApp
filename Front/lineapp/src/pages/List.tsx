@@ -17,7 +17,6 @@ import { useTranslation } from "react-i18next";
 import "../styles/list.css";
 import { buildExportRows, exportTransactionsToExcel, exportTransactionsToPdf } from "../utils/exportTransactions";
 import { groupTransactionsByDate } from "../utils/groupTransactionsByDate";
-import { formatCycleMonthRange } from "../utils/formatMonthYear";
 import {
     categoryApi,
     cycleApi,
@@ -55,10 +54,8 @@ function categoryNameForTx(
     return tx.categoryId ? (categoryById[tx.categoryId] ?? fallbackCategory) : fallbackCategory;
 }
 
-function cyclePickerLabel(cycle: Cycle, lang: string): string {
-    const range = formatCycleMonthRange(cycle.startDate, cycle.endDate, lang);
-    if (!range) return cycle.name;
-    return `${cycle.name} · ${range}`;
+function cyclePickerLabel(cycle: Cycle): string {
+    return cycle.name;
 }
 
 export default function List() {
@@ -837,7 +834,7 @@ export default function List() {
                                 >
                                     <span className={selectedCycle ? "text-[var(--text)]" : "text-[var(--text-soft)]"}>
                                         {selectedCycle
-                                            ? cyclePickerLabel(selectedCycle, i18n.language)
+                                            ? cyclePickerLabel(selectedCycle)
                                             : t("list.cycleNone")}
                                     </span>
                                     <FiChevronDown
@@ -886,7 +883,7 @@ export default function List() {
                                                         {isIconName(cycle.icon) && (
                                                             <span className="text-base leading-none">{icons[cycle.icon]}</span>
                                                         )}
-                                                        <span>{cyclePickerLabel(cycle, i18n.language)}</span>
+                                                        <span>{cyclePickerLabel(cycle)}</span>
                                                     </span>
                                                     {isSelected && <FiCheck size={18} className="text-[var(--text-soft)]" />}
                                                 </button>

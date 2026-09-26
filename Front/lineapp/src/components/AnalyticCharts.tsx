@@ -598,7 +598,7 @@ export default function AnalyticCharts({
                                     data={seasonBarOptions}
                                     value={trendSeasonId || seasonBarOptions[0]?.value}
                                     onValueChange={setTrendSeasonId}
-                                    minWidth={160}
+                                    minWidth={96}
                                 />
                             </div>
                         ) : null}
@@ -687,7 +687,7 @@ export default function AnalyticCharts({
                                     data={seasonBarOptions}
                                     value={barSeasonId || seasonBarOptions[0]?.value}
                                     onValueChange={setBarSeasonId}
-                                    minWidth={160}
+                                    minWidth={96}
                                 />
                             ) : (
                                 <Dropdown
@@ -762,7 +762,7 @@ export default function AnalyticCharts({
                                     data={seasonBarOptions}
                                     value={card.seasonId || seasonBarOptions[0]?.value}
                                     onValueChange={card.setSeasonId}
-                                    minWidth={160}
+                                    minWidth={96}
                                 />
                             ) : (
                                 <Dropdown

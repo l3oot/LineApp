@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet, createBrowserRouter, useNavigate, useParams } from "react-router-dom";
+import { Navigate, Outlet, createBrowserRouter, useLocation, useNavigate, useParams } from "react-router-dom";
 import Sum from "../pages/Sum";
 import Cycle from "../pages/Cycle";
 import CycleDetail from "../pages/CycleDetail";
@@ -21,6 +21,12 @@ import Entrepreneur from "../pages/Entrepreneur";
 import AgriProducts from "../pages/AgriProducts";
 import { APP_BASE, appPath } from "../lib/appPaths";
 import { cycleApi } from "../lib/userService";
+
+/** redirect เก่า → /app/... โดยคง query/hash (สำคัญต่อ ?editTxId=) */
+function LegacyAppRedirect({ to }: { to: string }) {
+    const location = useLocation();
+    return <Navigate to={`${to}${location.search}${location.hash}`} replace />;
+}
 
 /** bookmark เก่า /app/cycle/:cycleId → หน้าพืช + ?season= */
 function LegacyCycleIdToCropRedirect() {
@@ -64,7 +70,13 @@ function LegacyCycleIdToCropRedirect() {
 
 function LegacyCycleDetailRedirect() {
     const { cycleId } = useParams();
-    return <Navigate to={appPath(`/cycle/${cycleId ?? ""}`)} replace />;
+    const location = useLocation();
+    return (
+        <Navigate
+            to={`${appPath(`/cycle/${cycleId ?? ""}`)}${location.search}${location.hash}`}
+            replace
+        />
+    );
 }
 
 export const router = createBrowserRouter([
@@ -111,14 +123,14 @@ export const router = createBrowserRouter([
     },
 
     // Legacy redirects (pre-/app split) — keep old bookmarks / LIFF links working
-    { path: "/cycle", element: <Navigate to={appPath("/cycle")} replace /> },
+    { path: "/cycle", element: <LegacyAppRedirect to={appPath("/cycle")} /> },
     { path: "/cycle/:cycleId", element: <LegacyCycleDetailRedirect /> },
-    { path: "/analytics", element: <Navigate to={appPath("/analytics")} replace /> },
-    { path: "/list", element: <Navigate to={appPath("/list")} replace /> },
-    { path: "/settings", element: <Navigate to={appPath("/settings")} replace /> },
-    { path: "/government", element: <Navigate to={appPath("/government")} replace /> },
-    { path: "/prices", element: <Navigate to={appPath("/prices")} replace /> },
-    { path: "/weather", element: <Navigate to={appPath("/weather")} replace /> },
-    { path: "/entrepreneur", element: <Navigate to={appPath("/entrepreneur")} replace /> },
-    { path: "/agri-products", element: <Navigate to={appPath("/agri-products")} replace /> },
+    { path: "/analytics", element: <LegacyAppRedirect to={appPath("/analytics")} /> },
+    { path: "/list", element: <LegacyAppRedirect to={appPath("/list")} /> },
+    { path: "/settings", element: <LegacyAppRedirect to={appPath("/settings")} /> },
+    { path: "/government", element: <LegacyAppRedirect to={appPath("/government")} /> },
+    { path: "/prices", element: <LegacyAppRedirect to={appPath("/prices")} /> },
+    { path: "/weather", element: <LegacyAppRedirect to={appPath("/weather")} /> },
+    { path: "/entrepreneur", element: <LegacyAppRedirect to={appPath("/entrepreneur")} /> },
+    { path: "/agri-products", element: <LegacyAppRedirect to={appPath("/agri-products")} /> },
 ]);

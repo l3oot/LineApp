@@ -20,9 +20,9 @@ import {
 } from "../lib/userService";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
 import { groupTransactionsByDate } from "../utils/groupTransactionsByDate";
-import { formatMonthRange, formatSeasonTabLabel } from "../utils/formatMonthYear";
+import { displayYearFromGregorian } from "../utils/formatAppDate";
+import { formatMonthRange } from "../utils/formatMonthYear";
 import { parseTxDateTime } from "../utils/parseTxDateTime";
-import { seasonRemaining, statsForSeason } from "../utils/cycleStats";
 import "../styles/analytic.css";
 import "../styles/list.css";
 import "../styles/Cycle.css";
@@ -40,19 +40,8 @@ function seasonStartYear(cycle: Cycle): number {
     return Number.isFinite(year) ? year : new Date().getFullYear();
 }
 
-function seasonTabLabel(
-    cycle: Cycle,
-    crop: Crop | null,
-    lang: string,
-): string {
-    return formatSeasonTabLabel({
-        startYear: seasonStartYear(cycle),
-        startMonth: crop?.startMonth,
-        endMonth: crop?.endMonth,
-        startDate: cycle.startDate,
-        endDate: cycle.endDate,
-        lang,
-    });
+function seasonTabLabel(cycle: Cycle, lang: string): string {
+    return displayYearFromGregorian(seasonStartYear(cycle), lang);
 }
 
 function pickDefaultSeasonId(seasons: Cycle[], preferredId: string | null): string {
@@ -245,43 +234,22 @@ export default function CycleDetail() {
             { value: ALL_SEASONS, label: t("cycle.seasonAllYears") },
             ...seasons.map((s) => ({
                 value: s.cycleId,
-                label: seasonTabLabel(s, crop, i18n.language),
+                label: seasonTabLabel(s, i18n.language),
             })),
         ],
-        [seasons, crop, i18n.language, t],
+        [seasons, i18n.language, t],
     );
 
     const chartSeasons = useMemo(
         () =>
             seasons.map((s) => ({
                 cycleId: s.cycleId,
-                label: seasonTabLabel(s, crop, i18n.language),
+                label: seasonTabLabel(s, i18n.language),
                 startDate: s.startDate,
                 endDate: s.endDate,
             })),
-        [seasons, crop, i18n.language],
+        [seasons, i18n.language],
     );
-
-    const currentYearSeason = useMemo(() => {
-        const active = seasons.find((s) => (s.status ?? "active") === "active");
-        if (active) return active;
-        if (preferredSeasonId) {
-            const preferred = seasons.find((s) => s.cycleId === preferredSeasonId);
-            if (preferred) return preferred;
-        }
-        return seasons[0] ?? null;
-    }, [seasons, preferredSeasonId]);
-
-    const seasonFinance = useMemo(() => {
-        const stats = statsForSeason(transactions, currentYearSeason);
-        const capital = Number(currentYearSeason?.budgetAmount) || 0;
-        return {
-            capital,
-            income: stats.income,
-            expense: stats.expense,
-            remaining: seasonRemaining(capital, stats.income, stats.expense),
-        };
-    }, [transactions, currentYearSeason]);
 
     return (
         <MainLayout>
@@ -305,34 +273,6 @@ export default function CycleDetail() {
                                         ) : null}
                                     </div>
                                 </header>
-
-                                <div className="cycle-detail-finance" aria-label={t("cycle.detailFinanceAria")}>
-                                    <div className="cycle-detail-finance-item">
-                                        <span className="cycle-detail-finance-label">
-                                            {t("addcycle.capital")}
-                                        </span>
-                                        <span className="cycle-detail-finance-value cycle-detail-finance-value--capital">
-                                            {seasonFinance.capital.toLocaleString()}
-                                        </span>
-                                    </div>
-                                    <div className="cycle-detail-finance-item">
-                                        <span className="cycle-detail-finance-label">
-                                            {t("addcycle.incomeExpense")}
-                                        </span>
-                                        <span className="cycle-detail-finance-value cycle-detail-finance-value--flow">
-                                            {seasonFinance.income.toLocaleString()} /{" "}
-                                            {seasonFinance.expense.toLocaleString()}
-                                        </span>
-                                    </div>
-                                    <div className="cycle-detail-finance-item">
-                                        <span className="cycle-detail-finance-label">
-                                            {t("addcycle.remaining")}
-                                        </span>
-                                        <span className="cycle-detail-finance-value cycle-detail-finance-value--remaining">
-                                            {seasonFinance.remaining.toLocaleString()}
-                                        </span>
-                                    </div>
-                                </div>
 
                                 {showNewSeasonCta && (
                                     <button
@@ -394,7 +334,7 @@ export default function CycleDetail() {
                                                     data={seasonFilterOptions}
                                                     value={listSeasonId}
                                                     onValueChange={selectListSeason}
-                                                    minWidth={160}
+                                                    minWidth={96}
                                                 />
                                             ) : null}
                                         </div>
