@@ -68,13 +68,22 @@ public class LineProperties {
         this.liffUrl = liffUrl;
     }
 
-    /** คืน base URL ของแอป — ใช้ liff-url ก่อน ถ้าไม่ตั้งจะ derive จาก redirect-uri */
+    /**
+     * คืน base URL ของปุ่มแก้ไขใน Flex
+     * แนะนำตั้ง {@code LINE_LIFF_URL=https://liff.line.me/{liffId}} เพื่อเปิดเป็น LIFF
+     * (sendMessages ได้) — Endpoint URL ใน Console ควรเป็น {@code https://yaiphao.com/app}
+     * ถ้าว่างและ derive จาก redirect-uri จะต่อ {@code /app} ให้เอง
+     */
     public String resolveLiffBaseUrl() {
         if (liffUrl != null && !liffUrl.isBlank()) {
             return liffUrl.replaceAll("/+$", "");
         }
         if (redirectUri != null && redirectUri.contains("/callback")) {
-            return redirectUri.replaceAll("/callback/?$", "");
+            String origin = redirectUri.replaceAll("/callback/?$", "");
+            if (origin.endsWith("/app")) {
+                return origin;
+            }
+            return origin + "/app";
         }
         return null;
     }
