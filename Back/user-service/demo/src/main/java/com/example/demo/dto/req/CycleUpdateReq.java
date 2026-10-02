@@ -5,11 +5,8 @@ import java.util.UUID;
 
 public record CycleUpdateReq(
         UUID cycleId,
-        String name,
         String note,
-        String farmType,
         LocalDate startDate,
         LocalDate endDate,
-        String status,
-        String icon) {
+        String status) {
 }

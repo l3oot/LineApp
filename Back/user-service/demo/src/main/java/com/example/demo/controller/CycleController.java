@@ -40,6 +40,14 @@ public class CycleController {
         return ResponseEntity.ok(ApiRes.success(data, "OK"));
     }
 
+    @GetMapping("/crop/{cropId}")
+    public ResponseEntity<ApiRes<List<CycleRes>>> getCyclesByCrop(
+            @PathVariable UUID cropId,
+            @RequestParam UUID userId) {
+        List<CycleRes> data = cycleService.getCyclesByCropId(cropId, userId);
+        return ResponseEntity.ok(ApiRes.success(data, "OK"));
+    }
+
     @GetMapping("/{cycleId}")
     public ResponseEntity<ApiRes<CycleRes>> getCycle(
             @PathVariable UUID cycleId,

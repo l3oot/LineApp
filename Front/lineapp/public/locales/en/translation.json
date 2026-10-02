@@ -145,6 +145,7 @@
     "expense": "Expense",
     "incomeExpenseTitle": "Income/Expense",
     "expenseShare": "Expense share",
-    "year": "Year"
+    "year": "Year",
+    "season": "Season"
   }
 }

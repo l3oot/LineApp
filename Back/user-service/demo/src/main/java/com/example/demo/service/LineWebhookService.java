@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,11 +58,17 @@ public class LineWebhookService {
 
     private static final Logger log = LoggerFactory.getLogger(LineWebhookService.class);
 
+    /** จาก liff.sendMessages หลังแก้รายการในแอป — เช่น "Edit transaction: {uuid}" */
+    private static final Pattern EDIT_TRANSACTION_PATTERN = Pattern.compile(
+            "^Edit transaction:\\s*([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+            Pattern.CASE_INSENSITIVE);
+
     private final UserRepository userRepository;
     private final AiClientService aiClientService;
     private final LineMessagingService lineMessagingService;
     private final LineFlexMessageBuilder lineFlexMessageBuilder;
     private final TransactionService transactionService;
+    private final LineTransactionNotifyService lineTransactionNotifyService;
     private final LineProperties lineProperties;
     private final LineWeatherBriefService lineWeatherBriefService;
     private final LineAgriPriceService lineAgriPriceService;
@@ -72,6 +80,7 @@ public class LineWebhookService {
             LineMessagingService lineMessagingService,
             LineFlexMessageBuilder lineFlexMessageBuilder,
             TransactionService transactionService,
+            LineTransactionNotifyService lineTransactionNotifyService,
             LineProperties lineProperties,
             LineWeatherBriefService lineWeatherBriefService,
             LineAgriPriceService lineAgriPriceService,
@@ -81,6 +90,7 @@ public class LineWebhookService {
         this.lineMessagingService = lineMessagingService;
         this.lineFlexMessageBuilder = lineFlexMessageBuilder;
         this.transactionService = transactionService;
+        this.lineTransactionNotifyService = lineTransactionNotifyService;
         this.lineProperties = lineProperties;
         this.lineWeatherBriefService = lineWeatherBriefService;
         this.lineAgriPriceService = lineAgriPriceService;
@@ -131,6 +141,14 @@ public class LineWebhookService {
             String userText = msg.text();
             log.info("[ai-latency] hop=user reqId={} action=start intent=line lineUser={} queueMs={} textLen={}",
                     reqId, userSub, queueMs, userText.length());
+
+            Matcher editMatch = EDIT_TRANSACTION_PATTERN.matcher(userText.trim());
+            if (editMatch.find()) {
+                handleEditTransactionCommand(userSub, editMatch.group(1), replyToken);
+                log.info("[ai-latency] hop=user reqId={} action=done intent=edit-tx lineUser={} totalMs={}",
+                        reqId, userSub, System.currentTimeMillis() - t0);
+                return;
+            }
 
             if ("แนะนำ".equals(userText.trim())) {
                 long tReply0 = System.currentTimeMillis();
@@ -242,6 +260,26 @@ public class LineWebhookService {
         } catch (Exception e) {
             log.error("[ai-latency] hop=user reqId={} action=fail intent=parse lineUser={} elapsedMs={} error={}",
                     reqId, userSub, System.currentTimeMillis() - t0, e.getMessage(), e);
+            lineMessagingService.reply(replyToken, "ยายขอโทษน้า ระบบขัดข้องชั่วคราว ลองใหม่อีกครั้งนะจ๊ะ");
+        }
+    }
+
+    /**
+     * รับข้อความจาก liff.sendMessages หลังแก้ในแอป → Reply Flex card (ไม่ใช้ Push)
+     */
+    private void handleEditTransactionCommand(String userSub, String txIdRaw, String replyToken) {
+        try {
+            UserEntity user = upsertUserBySub(userSub);
+            UUID txId = UUID.fromString(txIdRaw);
+            TransactionRes tx = transactionService.getTransaction(txId, user.getUserId());
+            lineTransactionNotifyService.replyUpdatedTransactionCard(replyToken, tx);
+        } catch (ApiException e) {
+            log.warn("edit-tx reply failed for user={}: {}", userSub, e.getMessage());
+            lineMessagingService.reply(replyToken, "หาไม่เจอรายการที่แก้จ้า ลองเปิดจากแอปอีกครั้งนะจ๊ะ");
+        } catch (IllegalArgumentException e) {
+            lineMessagingService.reply(replyToken, "รหัสรายการไม่ถูกต้อง ลองใหม่อีกครั้งนะจ๊ะ");
+        } catch (Exception e) {
+            log.error("edit-tx reply failed for user={}: {}", userSub, e.getMessage(), e);
             lineMessagingService.reply(replyToken, "ยายขอโทษน้า ระบบขัดข้องชั่วคราว ลองใหม่อีกครั้งนะจ๊ะ");
         }
     }

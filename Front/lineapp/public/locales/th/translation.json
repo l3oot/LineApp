@@ -145,6 +145,7 @@
     "expense": "รายจ่าย",
     "incomeExpenseTitle": "รายรับ/รายจ่าย",
     "expenseShare": "สัดส่วนรายจ่าย",
-    "year": "ปี"
+    "year": "ปี",
+    "season": "รอบ"
   }
 }

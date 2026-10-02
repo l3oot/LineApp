@@ -20,17 +20,15 @@ import com.example.demo.dto.res.LineProfileRes;
 import com.example.demo.util.AiLatency;
 
 /**
- * เรียก LINE Messaging API — Reply (ใช้ replyToken จาก webhook) และ Push (ใช้ userId)
+ * เรียก LINE Messaging API — Reply (ใช้ replyToken จาก webhook)
  *
- * <p>Reply API: ตอบกลับเมื่อ user ทักมา ฟรี ไม่จำกัด
- * <p>Push API : ส่ง proactive ทุกเมื่อ มี free quota รายเดือน
+ * <p>Reply API: ตอบกลับเมื่อ user ทักมา / หลัง liff.sendMessages — ฟรี ไม่จำกัด
  */
 @Service
 public class LineMessagingService {
 
     private static final Logger log = LoggerFactory.getLogger(LineMessagingService.class);
     private static final String REPLY_URL = "https://api.line.me/v2/bot/message/reply";
-    private static final String PUSH_URL = "https://api.line.me/v2/bot/message/push";
 
     private final LineProperties lineProperties;
     private final RestTemplate restTemplate;
@@ -120,39 +118,6 @@ public class LineMessagingService {
                     AiLatency.currentOrDash(), System.currentTimeMillis() - t0, e.getMessage());
             return null;
         }
-    }
-
-    /**
-     * Push message หา user โดยตรง (ใช้ userId จาก source.userId / userSub)
-     */
-    public void push(String userId, String text) {
-        if (userId == null || userId.isBlank()) {
-            log.warn("push skipped: empty userId");
-            return;
-        }
-        Map<String, Object> body = Map.of(
-                "to", userId,
-                "messages", List.of(Map.of("type", "text", "text", truncate(text)))
-        );
-        post(PUSH_URL, body);
-    }
-
-    /** Push Flex Message bubble หา user โดยตรง */
-    public void pushFlex(String userId, String altText, Map<String, Object> contents) {
-        if (userId == null || userId.isBlank()) {
-            log.warn("pushFlex skipped: empty userId");
-            return;
-        }
-        Map<String, Object> flexMessage = Map.of(
-                "type", "flex",
-                "altText", truncate(altText),
-                "contents", contents
-        );
-        Map<String, Object> body = Map.of(
-                "to", userId,
-                "messages", List.of(flexMessage)
-        );
-        post(PUSH_URL, body);
     }
 
     private boolean post(String url, Map<String, Object> body) {

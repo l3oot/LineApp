@@ -36,6 +36,7 @@ import {
     toGregorianCalendarDate,
 } from "../utils/formatAppDate";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
+import { sendEditTransactionMessage } from "../lib/liff";
 
 const LINE_APP_ICON_URL =
     "https://upload.wikimedia.org/wikipedia/commons/2/2e/LINE_New_App_Icon_%282020-12%29.png";
@@ -51,6 +52,10 @@ function categoryNameForTx(
     fallbackCategory: string,
 ): string {
     return tx.categoryId ? (categoryById[tx.categoryId] ?? fallbackCategory) : fallbackCategory;
+}
+
+function cyclePickerLabel(cycle: Cycle): string {
+    return cycle.name;
 }
 
 export default function List() {
@@ -513,6 +518,7 @@ export default function List() {
 
             if (editingTxId) {
                 await transactionApi.update({ txId: editingTxId, ...payload });
+                await sendEditTransactionMessage(editingTxId);
             } else {
                 await transactionApi.create(payload);
             }
@@ -827,7 +833,9 @@ export default function List() {
                                     className="mt-2 flex w-full items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left text-sm text-[var(--text)] transition-all hover:border-[var(--primary)]"
                                 >
                                     <span className={selectedCycle ? "text-[var(--text)]" : "text-[var(--text-soft)]"}>
-                                        {selectedCycle ? selectedCycle.name : t("list.cycleNone")}
+                                        {selectedCycle
+                                            ? cyclePickerLabel(selectedCycle)
+                                            : t("list.cycleNone")}
                                     </span>
                                     <FiChevronDown
                                         size={18}
@@ -875,7 +883,7 @@ export default function List() {
                                                         {isIconName(cycle.icon) && (
                                                             <span className="text-base leading-none">{icons[cycle.icon]}</span>
                                                         )}
-                                                        <span>{cycle.name}</span>
+                                                        <span>{cyclePickerLabel(cycle)}</span>
                                                     </span>
                                                     {isSelected && <FiCheck size={18} className="text-[var(--text-soft)]" />}
                                                 </button>

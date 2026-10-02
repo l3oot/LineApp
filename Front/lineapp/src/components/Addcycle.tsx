@@ -18,6 +18,7 @@ type AddcycleProps = {
     onDelete?: () => void;
     onMore?: () => void;
     onSummarize?: () => void;
+    onNewSeason?: () => void;
     deleting?: boolean;
 };
 
@@ -33,6 +34,7 @@ export default function Addcycle({
     onDelete,
     onMore,
     onSummarize,
+    onNewSeason,
     deleting = false,
 }: AddcycleProps) {
     const { t } = useTranslation();
@@ -116,7 +118,7 @@ export default function Addcycle({
                     </span>
                     <span className="cycle-stat-label">{t("addcycle.incomeExpense")}</span>
                     <span className="cycle-stat-value cycle-stat-value--flow">
-                        {income.toLocaleString()}-{expense.toLocaleString()}
+                        {income.toLocaleString()} / {expense.toLocaleString()}
                     </span>
                 </div>
 
@@ -172,8 +174,24 @@ export default function Addcycle({
                 </div>
             </div>
 
-            {(onSummarize || onMore) && (
-                <div className={`cycle-card-footer${onSummarize && onMore ? "" : " cycle-card-footer--single"}`}>
+            {(onSummarize || onMore || onNewSeason) && (
+                <div
+                    className={`cycle-card-footer${
+                        [onSummarize, onMore, onNewSeason].filter(Boolean).length > 1
+                            ? ""
+                            : " cycle-card-footer--single"
+                    }`}
+                >
+                    {onNewSeason && (
+                        <button
+                            type="button"
+                            className="cycle-card-summary-btn"
+                            onClick={onNewSeason}
+                            disabled={deleting}
+                        >
+                            {t("addcycle.newSeason")}
+                        </button>
+                    )}
                     {onSummarize && (
                         <button
                             type="button"

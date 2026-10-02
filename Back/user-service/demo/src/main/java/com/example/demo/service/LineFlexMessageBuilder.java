@@ -344,11 +344,25 @@ public class LineFlexMessageBuilder {
         return "#" + txId.substring(0, 8).toUpperCase();
     }
 
+    /**
+     * เปิดหน้าแก้ไขใน LIFF (ไม่ใช้ openExternalBrowser)
+     * <ul>
+     * <li>{@code https://liff.line.me/{id}/list?editTxId=} — เปิด LIFF browser →
+     * {@code sendMessages} ได้ (Endpoint URL = {@code .../app})</li>
+     * <li>{@code https://yaiphao.com/app/list?editTxId=} — deep link ตรง แต่ถ้าไม่ผ่าน
+     * liff.line.me จะเป็น in-app browser ธรรมดา → sendMessages ใช้ไม่ได้</li>
+     * </ul>
+     */
     private static String buildEditUri(String liffBaseUrl, String txId) {
-        if (liffBaseUrl == null || liffBaseUrl.isBlank()) {
-            return null;
+        String base = (liffBaseUrl != null && !liffBaseUrl.isBlank())
+                ? liffBaseUrl.replaceAll("/+$", "")
+                : YAIPHAO_URI.replaceAll("/+$", "");
+        String encodedId = txId != null ? txId : "";
+        // base เป็น origin เปล่า (ไม่มี /app และไม่ใช่ liff.line.me) → เติม /app
+        if (!base.contains("liff.line.me") && !base.endsWith("/app")) {
+            return base + "/app/list?editTxId=" + encodedId;
         }
-        return YAIPHAO_URI.replaceAll("/+$", "") + "/list?openExternalBrowser=1&editTxId=" + txId;
+        return base + "/list?editTxId=" + encodedId;
     }
 
     private static String jsonEscape(String value) {

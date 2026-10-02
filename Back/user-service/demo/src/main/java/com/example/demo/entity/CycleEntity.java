@@ -22,6 +22,9 @@ public class CycleEntity {
     @Column(name = "cycle_id")
     private UUID cycleId;
 
+    @Column(name = "crop_id", nullable = false)
+    private UUID cropId;
+
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
@@ -35,119 +38,88 @@ public class CycleEntity {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "icon")
-    private String icon;
-
-    @Column(name = "name")
-    private String name;
-
     @Column(name = "note")
     private String note;
-
-    @Column(name = "farm_type")
-    private String farmType;
 
     @Column(name = "status")
     private String status;
 
-    // ===== constructor =====
     public CycleEntity() {
     }
 
-    public CycleEntity(UUID userId,
+    public CycleEntity(
+            UUID cropId,
+            UUID userId,
             LocalDate startDate,
             LocalDate endDate,
-            String icon,
-            String name,
             String note,
-            String farmType,
             String status) {
+        this.cropId = cropId;
         this.userId = userId;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.icon = icon;
-        this.name = name;
         this.note = note;
-        this.farmType = farmType;
         this.status = status;
     }
 
-    // ===== getters =====
     public UUID getCycleId() {
         return cycleId;
+    }
+
+    public void setCycleId(UUID cycleId) {
+        this.cycleId = cycleId;
+    }
+
+    public UUID getCropId() {
+        return cropId;
+    }
+
+    public void setCropId(UUID cropId) {
+        this.cropId = cropId;
     }
 
     public UUID getUserId() {
         return userId;
     }
 
-    public LocalDate getStartDate() {
-        return startDate;
-    }
-
-    public LocalDate getEndDate() {
-        return endDate;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public String getIcon() {
-        return icon;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getNote() {
-        return note;
-    }
-
-    public String getFarmType() {
-        return farmType;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    // ===== setters =====
-    public void setCycleId(UUID cycleId) {
-        this.cycleId = cycleId;
-    }
-
     public void setUserId(UUID userId) {
         this.userId = userId;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
     }
 
     public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
     }
 
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public void setIcon(String icon) {
-        this.icon = icon;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public String getNote() {
+        return note;
     }
 
     public void setNote(String note) {
         this.note = note;
     }
 
-    public void setFarmType(String farmType) {
-        this.farmType = farmType;
+    public String getStatus() {
+        return status;
     }
 
     public void setStatus(String status) {

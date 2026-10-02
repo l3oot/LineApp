@@ -47,8 +47,14 @@ function mapTypeErrorToFriendlyMessage(typeError: string | undefined, t: TFuncti
         case "USER_NOT_FOUND":
         case "CATEGORY_NOT_FOUND":
         case "CYCLE_NOT_FOUND":
+        case "CROP_NOT_FOUND":
         case "PRODUCT_NOT_FOUND":
             return t("errors.notFound");
+        case "CROP_NAME_EXISTS":
+        case "CROP_QUOTA_EXCEEDED":
+        case "CROP_HAS_TRANSACTIONS":
+        case "CYCLE_QUOTA_EXCEEDED":
+            return t("errors.conflict");
         case "PRODUCT_IMAGE_REQUIRED":
         case "PRODUCT_IMAGE_INVALID":
         case "PRODUCT_IMAGE_TOO_LARGE":

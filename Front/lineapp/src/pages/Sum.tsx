@@ -17,10 +17,10 @@ import { auth } from "../lib/auth";
 import { useWeatherForecast } from "../lib/useWeatherForecast";
 import {
   categoryApi,
-  cycleApi,
+  cropApi,
   transactionApi,
   type Category,
-  type Cycle,
+  type Crop,
   type Transaction,
 } from "../lib/userService";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
@@ -31,8 +31,8 @@ import {
   sumTransactionTotals,
 } from "../utils/transactionDateRange";
 import { resolveTxIconEmoji } from "../utils/resolveTxIcon";
-import { aggregateTransactionsByCycle } from "../utils/cycleStats";
-import { formatCycleDateRange } from "../utils/formatMonthYear";
+import { seasonRemaining, statsForSeason } from "../utils/cycleStats";
+import { formatCycleMonthRange, formatMonthRange } from "../utils/formatMonthYear";
 
 type IconName = keyof typeof icons;
 
@@ -63,9 +63,9 @@ function formatRelativeTxDate(
   });
 }
 
-function cycleRemaining(cycle: Cycle, income: number, expense: number): number {
-  const capital = cycle.budgetAmount ?? 0;
-  return capital - (expense - income);
+function cropRemaining(crop: Crop, income: number, expense: number): number {
+  const capital = crop.currentSeason?.budgetAmount ?? 0;
+  return seasonRemaining(capital, income, expense);
 }
 
 export default function Sum() {
@@ -78,7 +78,7 @@ export default function Sum() {
   const [endDate, setEndDate] = useState<CalendarDate>(initialEnd);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [crops, setCrops] = useState<Crop[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const weather = useWeatherForecast();
@@ -94,19 +94,19 @@ export default function Sum() {
     Promise.all([
       transactionApi.list(),
       categoryApi.list(),
-      cycleApi.list().catch(() => [] as Cycle[]),
+      cropApi.list().catch(() => [] as Crop[]),
     ])
-      .then(([txRows, categoryRows, cycleRows]) => {
+      .then(([txRows, categoryRows, cropRows]) => {
         if (cancelled) return;
         setTransactions(txRows ?? []);
         setCategories(categoryRows ?? []);
-        setCycles(cycleRows ?? []);
+        setCrops(cropRows ?? []);
       })
       .catch((err) => {
         if (cancelled) return;
         setTransactions([]);
         setCategories([]);
-        setCycles([]);
+        setCrops([]);
         setError(getFriendlyApiErrorMessage(err, t));
       })
       .finally(() => {
@@ -129,12 +129,7 @@ export default function Sum() {
 
   const overviewTotals = useMemo(() => sumTransactionTotals(txsInRange), [txsInRange]);
 
-  const statsByCycleId = useMemo(
-    () => aggregateTransactionsByCycle(transactions),
-    [transactions],
-  );
-
-  const homeCycles = useMemo(() => cycles.slice(0, 3), [cycles]);
+  const homeCrops = useMemo(() => crops.slice(0, 3), [crops]);
 
   const recentTransactions = useMemo(() => {
     return [...transactions]
@@ -198,23 +193,28 @@ export default function Sum() {
             </Link>
           </div>
 
-          {homeCycles.length === 0 ? (
+          {homeCrops.length === 0 ? (
             <p className="home-empty-text">{t("sum.noCycles")}</p>
           ) : (
             <div className="home-cycle-list">
-              {homeCycles.map((cycle) => {
-                const stats = statsByCycleId[cycle.cycleId] ?? { income: 0, expense: 0 };
-                const remaining = cycleRemaining(cycle, stats.income, stats.expense);
-                const iconName = isIconName(cycle.icon) ? cycle.icon : "corn";
+              {homeCrops.map((crop) => {
+                const season = crop.currentSeason;
+                const stats = statsForSeason(transactions, season);
+                const remaining = cropRemaining(crop, stats.income, stats.expense);
+                const iconName = isIconName(crop.icon) ? crop.icon : "corn";
                 return (
-                  <Link key={cycle.cycleId} to="/app/cycle" className="home-cycle-row">
+                  <Link key={crop.cropId} to="/app/cycle" className="home-cycle-row">
                     <span className="home-cycle-icon" aria-hidden>
                       {icons[iconName]}
                     </span>
                     <div className="home-cycle-body">
-                      <p className="home-cycle-name">{cycle.name}</p>
+                      <p className="home-cycle-name">{crop.name}</p>
                       <p className="home-cycle-meta">
-                        {formatCycleDateRange(cycle.startDate, cycle.endDate, i18n.language)}
+                        {crop.startMonth != null && crop.endMonth != null
+                          ? formatMonthRange(crop.startMonth, crop.endMonth, i18n.language)
+                          : season
+                            ? formatCycleMonthRange(season.startDate, season.endDate, i18n.language)
+                            : t("cycle.noSeason")}
                       </p>
                     </div>
                     <div className="home-cycle-value">
