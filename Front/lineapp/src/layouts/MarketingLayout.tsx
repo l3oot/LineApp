@@ -1,8 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { LuMenu, LuX } from "react-icons/lu";
+import PageMeta from "../components/PageMeta";
 import { appPath } from "../lib/appPaths";
 import { LINE_ADD_FRIEND_URL } from "../lib/lineOfficial";
+import { resolveMarketingSeo } from "../lib/seo";
 import "../styles/marketing.css";
 
 function LineMark() {
@@ -26,6 +28,8 @@ type MarketingLayoutProps = {
 };
 
 export default function MarketingLayout({ children }: MarketingLayoutProps) {
+    const location = useLocation();
+    const pageSeo = resolveMarketingSeo(location.pathname);
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
@@ -49,6 +53,7 @@ export default function MarketingLayout({ children }: MarketingLayoutProps) {
 
     return (
         <div className="mk-page">
+            <PageMeta {...pageSeo} />
             <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2">
                 ข้ามไปยังเนื้อหาหลัก
             </a>
@@ -57,7 +62,7 @@ export default function MarketingLayout({ children }: MarketingLayoutProps) {
                 <div className="mk-shell mk-header__float">
                     <div className="mk-header__inner">
                         <Link to="/" className="mk-brand" onClick={closeMenu}>
-                            <img src="/yaiphao.png" alt="" className="mk-brand__mark" width={36} height={36} />
+                            <img src="/yaiphao.png" alt="ยายเภา" className="mk-brand__mark" width={36} height={36} />
                             <span className="mk-brand__text">
                                 <span className="mk-brand__name">ยายเภา</span>
                                 <span className="mk-brand__status">พร้อมจดรอบปลูก</span>
@@ -154,7 +159,7 @@ export default function MarketingLayout({ children }: MarketingLayoutProps) {
                     <div>
                         <p className="mk-footer__brand">ยายเภา</p>
                         <p className="mk-footer__blurb">
-                            จดรายรับ-รายจ่ายการเกษตรง่าย ๆ ผ่าน LINE และเว็บ — รู้กำไรต่อรอบปลูกจริง
+                            ยายเภา แอปจดรายรับรายจ่ายเกษตรง่าย ๆ ผ่าน LINE และเว็บ — รู้กำไรต่อรอบปลูกจริง
                         </p>
                     </div>
                     <div>

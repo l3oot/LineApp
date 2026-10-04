@@ -10,13 +10,15 @@ export default function AboutPage() {
             <div className="mk-shell">
                 <Reveal as="header" className="mk-content__mast">
                     <h1 className="mk-content__title">เกี่ยวกับยายเภา</h1>
-                    <p className="mk-content__meta">บัญชีฟาร์มที่คุยด้วยภาษาคน — ไม่ต้องเป็นนักบัญชี</p>
+                    <p className="mk-content__meta">
+                        แอปจดรายรับรายจ่ายเกษตรที่คุยด้วยภาษาคน — ไม่ต้องเป็นนักบัญชี
+                    </p>
                 </Reveal>
 
                 <Reveal className="mk-split mk-split--about" delay={60}>
                     <div className="mk-prose mk-ledger-paper">
                         <p>
-                            <strong>ยายเภา</strong> คือระบบจดรายรับ-รายจ่ายสำหรับการเกษตร
+                            <strong>ยายเภา</strong> คือแอปจดรายรับรายจ่ายเกษตร
                             ที่ออกแบบมาให้ใช้งานง่ายทั้งบน LINE และบนเว็บ
                             เป้าหมายคือให้เกษตรกรเห็นกำไรจริงต่อรอบปลูก ไม่ใช่แค่ตัวเลขรายวัน
                         </p>

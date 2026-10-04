@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import PageMeta from "../components/PageMeta";
 import {
     clearLineOAuthState,
     collectLineCallbackDebug,
@@ -12,6 +13,13 @@ import {
 import { auth, exchangeLineCode, tryCompleteLiffSession, type AuthUser } from "../lib/auth";
 import { collectLiffStatus, dumpLiffStatus, hasPendingLiffLogin } from "../lib/liff";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
+
+const CALLBACK_SEO = {
+    path: "/callback",
+    title: "ยายเภา | เข้าสู่ระบบ",
+    description: "กำลังเข้าสู่ระบบยายเภา",
+    robots: "noindex, nofollow",
+} as const;
 
 type CallbackStatus =
     | { kind: "loading" }
@@ -144,6 +152,7 @@ export function LineCallback() {
 
     return (
         <main className="flex min-h-screen items-center justify-center p-6">
+            <PageMeta {...CALLBACK_SEO} />
             <section className="w-full max-w-md rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-soft)]">
                 <h1 className="text-lg font-semibold text-[var(--text)]">LINE Callback</h1>
 

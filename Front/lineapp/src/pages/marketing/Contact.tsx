@@ -29,8 +29,10 @@ export default function ContactPage() {
         <div className="mk-content">
             <div className="mk-shell">
                 <Reveal as="header" className="mk-content__mast">
-                    <h1 className="mk-content__title">ติดต่อเรา</h1>
-                    <p className="mk-content__meta">มีคำถาม ข้อเสนอแนะ หรืออยากร่วมงาน — บอกยายมาได้เลย</p>
+                    <h1 className="mk-content__title">ติดต่อยายเภา</h1>
+                    <p className="mk-content__meta">
+                        มีคำถามเรื่องจดรายรับรายจ่ายเกษตร ข้อเสนอแนะ หรืออยากร่วมงาน — บอกยายมาได้เลย
+                    </p>
                 </Reveal>
 
                 <Reveal delay={60}>

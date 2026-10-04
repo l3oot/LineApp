@@ -1,0 +1,23 @@
+# ยายเภา — https://yaiphao.com
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /terms
+Allow: /privacy
+
+# แอปที่ต้องล็อกอิน / OAuth — ไม่ให้ index
+Disallow: /app
+Disallow: /app/
+Disallow: /callback
+Disallow: /cycle
+Disallow: /analytics
+Disallow: /list
+Disallow: /settings
+Disallow: /government
+Disallow: /prices
+Disallow: /weather
+Disallow: /entrepreneur
+Disallow: /agri-products
+
+Sitemap: https://yaiphao.com/sitemap.xml

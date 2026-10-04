@@ -32,14 +32,14 @@ export default function MarketingHome() {
                             className="mk-hero__offer mk-rise"
                             style={{ ["--mk-rise-delay" as string]: "0.2s" }}
                         >
-                            จดรายรับรายจ่ายง่าย ๆ รู้กำไรต่อรอบปลูก
+                            จดรายรับรายจ่ายเกษตรง่าย ๆ รู้กำไรต่อรอบปลูก
                         </p>
                         <p
                             className="mk-hero__lead mk-rise"
                             style={{ ["--mk-rise-delay" as string]: "0.32s" }}
                         >
-                            พิมพ์บอกยายเหมือนแชทเพื่อน หรือเปิดเว็บดูสรุป — แยกหมวด ติดตามต้นทุน
-                            และเห็นผลกำไรจริงของแต่ละรอบการเกษตร
+                            ยายเภาช่วยจดรายรับรายจ่ายเกษตรผ่าน LINE หรือเปิดเว็บดูสรุป — แยกหมวด
+                            ติดตามต้นทุน และเห็นผลกำไรจริงของแต่ละรอบปลูก
                         </p>
                         <div
                             className="mk-hero__cta mk-rise"
@@ -81,9 +81,9 @@ export default function MarketingHome() {
             <section id="features" className="mk-section mk-stage mk-stage--paper mk-anchor">
                 <div className="mk-shell mk-stack mk-stack--section">
                     <Reveal className="mk-section__head mk-section__head--center">
-                        <h2>จดบัญชีฟาร์มได้หลายทาง</h2>
+                        <h2>จดรายรับรายจ่ายเกษตรได้หลายทาง</h2>
                         <p>
-                            เลือกวิธีที่เข้ากับงานในแปลง — พิมพ์บน LINE เปิดเว็บดูสรุป
+                            เลือกวิธีที่เข้ากับงานในแปลง — พิมพ์บน LINE ให้ยายเภาจดให้ เปิดเว็บดูสรุป
                             หรือดูราคาและอากาศประกอบการตัดสินใจ
                         </p>
                     </Reveal>
@@ -175,7 +175,7 @@ export default function MarketingHome() {
                 <div className="mk-shell">
                     <Reveal>
                         <div className="mk-cta-band">
-                            <h2>เริ่มจดกับยายเภาวันนี้</h2>
+                            <h2>เริ่มจดรายรับรายจ่ายเกษตรกับยายเภาวันนี้</h2>
                             <p>เห็นว่าเงินในฟาร์มไปไหน และกำไรต่อรอบปลูกเป็นเท่าไร</p>
                             <div className="mk-hero__cta mk-cta-band__actions">
                                 <Link to={appPath()} className="mk-btn mk-btn--primary mk-btn--lg">
