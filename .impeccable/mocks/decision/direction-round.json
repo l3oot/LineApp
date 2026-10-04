@@ -1,0 +1,119 @@
+{
+  "title": "เลือกโลกภาพของยายเภา",
+  "question": "ทิศทางไหนที่ควรเป็นธีมสมุดบัญชี/แอปธนาคารของหน้าแรก — เลือกใบหนึ่ง หรือรีโรล",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "ปฏิทินเกษตรติดผนัง",
+      "kicker": "THE ROLL",
+      "lineage": "ปฏิทินฤดูกาลติดผนังบ้านเกษตรกร",
+      "thesis": "เงินคงเหลือคือตัวเลขหลักของเดือนนี้ และแถบช่วงวันที่ทำงานเหมือนแถบฤดูกาลบนปฏิทิน — รายรับ/รายจ่ายเป็นสองคอลัมน์ที่แยกขาด",
+      "palette": ["#1F6B42", "#F7FAF7", "#FFFFFF", "#E57373", "#3BB273"],
+      "materials": ["ปฏิทินกริด", "หมึกประทับเขียว", "กระดาษขาวงานบัญชี"],
+      "viewport": "เชลล์มือถือ: ทักทายด้านบน, ยอดเงินคงเหลือขนาดใหญ่กลางจอ, แถบวันที่เป็นแถบฤดูกาล, คู่รายรับ/รายจ่ายสองคอลัมน์, ฟุตเตอร์นำทางด้านล่าง",
+      "risk": "ถ้าแถบวันที่ดูเป็นปฏิทินจริงเกินไป จะกลายเป็นเครื่องแต่งกาย ไม่ใช่แอปทำงาน",
+      "raised": [
+        { "from": "challenger-jcard", "raise": "รายรับและรายจ่ายเป็นสองฝั่งที่แยกขาด — ไม่ผสมเป็นชิปอ่อน" },
+        { "from": "challenger-saville", "raise": "ยอดคงเหลือเป็นตัวเลขเดียวที่ครองพื้นที่หลักของจอ" },
+        { "from": "challenger-airport", "raise": "ตัวเลขนั้นอยู่ระดับเกตสนามบิน — อ่านได้ก่อนทุกอย่าง" },
+        { "from": "challenger-rail", "raise": "คั่นคอลัมน์เงินด้วยเส้นบางคมชัด ไม่ใช้เงาเทา" },
+        { "from": "challenger-ikeda", "raise": "ตัวเลขเงินใช้ tabular figures หนาแน่น อ่านเปรียบเทียบได้ทันที" }
+      ]
+    },
+    {
+      "id": "model-pick",
+      "label": "สมุดฝากเงิน",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "สมุดฝาก/สมุดบัญชีธนาคารไทย",
+      "thesis": "หน้าแรกคือหน้าประทับยอด: เงินคงเหลือเหมือนยอดที่ประทับในสมุด และรายการด้านล่างอ่านเหมือนแถวฝาก-ถอน",
+      "palette": ["#0B3D2E", "#F4F1E8", "#FFFFFF", "#C45C5C", "#2F9A5F"],
+      "materials": ["ปกสมุดเขียวเข้ม", "กระดาษครีมในเล่ม", "หมึกประทับ"],
+      "viewport": "เฮดเดอร์เข้มแบบปกสมุด, ยอดคงเหลือใหญ่กลางแผ่น, ช่วงวันที่เป็นแถบประทับ, รายรับเขียว/รายจ่ายแดง, รายการล่าสุดเป็นแถวบัญชี",
+      "risk": "ทิศทางที่คุ้นที่สุดของบรีฟนี้ — อาจใกล้แอปธนาคารทั่วไปถ้าไม่เก็บกลิ่นยายเภาไว้"
+    },
+    {
+      "id": "challenger-warm-app",
+      "label": "แอปผู้ใช้โทนอุ่น",
+      "verdict": "wins",
+      "lineage": "digital-design-canon-warm-consumer-app-surface",
+      "thesis": "เชลล์แอปมือถือมาตรฐานที่เกษตรกรคุ้นจากแอปธนาคาร: การ์ดนุ่ม พื้นอุ่น สีแอคชันเดียวที่ปุ่มจริงเท่านั้น",
+      "palette": ["#F3F0E8", "#FFFFFF", "#1F6B42", "#E57373"],
+      "materials": ["การ์ดมุมโค้ง", "พื้นโทนอุ่น", "ปุ่มสัมผัสใหญ่"],
+      "viewport": "คอลัมน์เดียวเลื่อนได้, การ์ดยอดเงินนำ, ฟิลเตอร์วันที่, สรุปรายรับรายจ่าย, แถบล่างคงที่",
+      "case": "ชนะทั้งการระบุตัวตนของผู้ใช้และความชัดของงาน — ใกล้แอปธนาคารที่ขอไว้โดยตรง",
+      "risk": "ถ้าไม่ใส่ signature move จะกลายเป็นแอปฟินเทคทั่วไป",
+      "hero": "https://impeccable.style/worlds/cards/digital-design-canon-warm-consumer-app-surface-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/digital-design-canon-warm-consumer-app-surface.webp"
+    },
+    {
+      "id": "challenger-airport",
+      "label": "ป้ายสนามบินเหลือง",
+      "verdict": "competitive",
+      "lineage": "wayfinding-cartography-signage-terminal-yellow-wayfinding",
+      "thesis": "ยอดเงินคือหมายเลขเกต: แถบตัดสินใจสั้น ๆ บอกว่าดูอะไรต่อ — คงเหลือ รายรับ รายจ่าย",
+      "palette": ["#F5C400", "#111111", "#FFFFFF", "#1F6B42"],
+      "materials": ["แผ่นป้ายเหลือง", "พictogram ขาวดำ", "ตัวเลขมหึมา"],
+      "viewport": "แถบเหลืองคงที่บนสุดพร้อมยอด, แล้วโซนงานขาวด้านล่าง",
+      "case": "ชัดเรื่องลำดับการอ่าน แต่เกษตรกรไม่ผูกพันกับป้ายสนามบิน",
+      "risk": "เหลืองครองจอจนกลายเป็น wayfinding ไม่ใช่บัญชี",
+      "hero": "https://impeccable.style/worlds/cards/wayfinding-cartography-signage-terminal-yellow-wayfinding-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/wayfinding-cartography-signage-terminal-yellow-wayfinding.webp"
+    },
+    {
+      "id": "challenger-jcard",
+      "label": "การ์ดเทปคาสเซ็ต",
+      "verdict": "declined",
+      "lineage": "vernacular-ephemera-cassette-j-card",
+      "palette": ["#FFFFFF", "#1A4B8C", "#C41230"],
+      "materials": ["กระดาษในเลย์", "ปากกาลูกลื่น"],
+      "case": "เกษตรกรไม่ผูกพันกับเทป และฝั่ง A/B บังคับพลิกจนมองเงินไม่ครบ",
+      "kept": "สองฝั่งที่แยกขาดสำหรับรายรับ/รายจ่าย",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-cassette-j-card-hero.webp"
+    },
+    {
+      "id": "challenger-saville",
+      "label": "ปกแคตตาล็อก Factory",
+      "verdict": "declined",
+      "lineage": "brand-identity-canon-saville-catalog-sleeve",
+      "palette": ["#0A0A0A", "#FFFFFF"],
+      "materials": ["พื้นดำด้าน", "เส้นพัลซาร์ขาว"],
+      "case": "เย็นและต้องถอดรหัสสี — ขัดกับความชัดของยอดเงิน",
+      "kept": "ตัวเลขเดียวครองทั้งพื้นที่",
+      "hero": "https://impeccable.style/worlds/cards/brand-identity-canon-saville-catalog-sleeve-hero.webp"
+    },
+    {
+      "id": "challenger-rail",
+      "label": "หน้าอ้างอิงเส้นกลาง",
+      "verdict": "declined",
+      "lineage": "rw-centre-rail-reference-setting",
+      "palette": ["#E8E0D0", "#1A1A1A", "#A33B2B"],
+      "materials": ["กระดาษกระดูก", "เส้น hairline"],
+      "case": "โทนตำรา — ไม่ใช่ฉากใช้งานของเกษตรกรบนมือถือ",
+      "kept": "เส้นคั่นคมชัดระหว่างคอลัมน์เงิน",
+      "hero": "https://impeccable.style/worlds/cards/rw-centre-rail-reference-setting-hero.webp"
+    },
+    {
+      "id": "challenger-ikeda",
+      "label": "สนามข้อมูลขาวดำ",
+      "verdict": "declined",
+      "lineage": "ikeda-datamatics",
+      "palette": ["#000000", "#FFFFFF"],
+      "materials": ["บาร์โค้ด", "โมโนสเปซหนาแน่น"],
+      "case": "อ่านยากและห่างจากโลกเกษตร",
+      "kept": "ความหนาแน่นแบบตารางของตัวเลขเงิน",
+      "hero": "https://impeccable.style/worlds/cards/ikeda-datamatics-hero.webp"
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "code", "toggle": false },
+  "canon": true,
+  "canonCard": {
+    "label": "มาตรฐานหมวด (แอปธนาคาร/บัญชีมือถือ)",
+    "thesis": "หน้าสรุปเงินแบบแอปธนาคารทั่วไป: ยอดใหญ่ การ์ดสรุป รายการล่าสุด แถบล่าง — ทำเต็มฝีมือโดยไม่ใส่ quirk",
+    "palette": ["#F5F7FA", "#FFFFFF", "#0B3D2E", "#D64545"],
+    "materials": ["การ์ดขาว", "กริดสะอาด", "ตัวเลข tabular"],
+    "viewport": "ยอดคงเหลือบนสุด, การ์ดรายรับ/รายจ่าย, รายการ, นำทางล่าง",
+    "risk": "ตั้งใจให้เหมือนคู่แข่งในหมวด — ไม่มีลายเซ็นเฉพาะยายเภา"
+  },
+  "steer": true
+}

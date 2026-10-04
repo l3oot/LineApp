@@ -1,0 +1,34 @@
+"""Entry point ของ chat orchestrator"""
+
+from __future__ import annotations
+
+import logging
+import time
+
+from src.dto.chat import ChatRequest, ChatResponse
+from src.orchestrator.tool_loop import run_tool_loop
+from src.utils.request_id import get_request_id
+
+logger = logging.getLogger(__name__)
+
+
+def handle_chat(req: ChatRequest) -> ChatResponse:
+    t0 = time.monotonic()
+    req_id = get_request_id()
+    message = (req.message or "").strip()
+    user_id = (req.user_id or "").strip() or None
+    logger.info(
+        "[ai-orchestrator] hop=ai reqId=%s action=start userId=%s textLen=%d",
+        req_id,
+        user_id,
+        len(message),
+    )
+    response = run_tool_loop(message, user_id)
+    logger.info(
+        "[ai-orchestrator] hop=ai reqId=%s action=done tools=%s actions=%d elapsed_ms=%d",
+        req_id,
+        response.tools_used,
+        len(response.actions),
+        (time.monotonic() - t0) * 1000,
+    )
+    return response

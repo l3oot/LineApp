@@ -14,6 +14,7 @@ from src.controller.weather_warning_controller import router as weather_warning_
 from src.controller.weather_brief_controller import router as weather_brief_router
 from src.controller.agri_price_controller import router as agri_price_router
 from src.controller.cycle_summary_controller import router as cycle_summary_router
+from src.controller.chat_controller import router as chat_router
 from src.utils.logging_setup import setup_logging
 from src.utils.request_id import REQUEST_ID_HEADER, get_request_id, set_request_id
 
@@ -66,3 +67,4 @@ app.include_router(weather_warning_router)
 app.include_router(weather_brief_router)
 app.include_router(agri_price_router)
 app.include_router(cycle_summary_router)
+app.include_router(chat_router)

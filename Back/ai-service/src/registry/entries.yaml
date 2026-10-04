@@ -1,0 +1,215 @@
+# Whitelist API tools สำหรับ AI Gateway (Approach B) — ไม่ dump ทั้ง OpenAPI
+tools:
+  - id: get_weather_forecast
+    description: ดึงพยากรณ์อากาศรายชั่วโมงของจังหวัด/อำเภอ/ตำบล (เช่น พรุ่งนี้ฝนตกไหม)
+    keywords:
+      - อากาศ
+      - พยากรณ์
+      - ฝน
+      - อุณหภูมิ
+      - ลม
+      - ชื้น
+      - weather
+      - forecast
+      - บุรีรัมย์
+      - จังหวัด
+    permission: read
+    method: GET
+    path: /api/weather/forecast
+    executor: http
+    parameters:
+      province:
+        type: string
+        description: ชื่อจังหวัดภาษาไทย เช่น บุรีรัมย์
+        required: false
+      amphoe:
+        type: string
+        description: ชื่ออำเภอ
+        required: false
+      tambon:
+        type: string
+        description: ชื่อตำบล
+        required: false
+      date:
+        type: string
+        description: วันที่ YYYY-MM-DD
+        required: false
+      hour:
+        type: integer
+        description: ชั่วโมงเริ่มต้น 0-23
+        required: false
+      duration:
+        type: integer
+        description: จำนวนชั่วโมงที่ต้องการ
+        required: false
+
+  - id: get_weather_daily
+    description: ดึงพยากรณ์อากาศรายวันของจังหวัด/พื้นที่
+    keywords:
+      - อากาศ
+      - พยากรณ์
+      - รายวัน
+      - ทั้งสัปดาห์
+      - daily
+      - ฝน
+    permission: read
+    method: GET
+    path: /api/weather/forecast/daily
+    executor: http
+    parameters:
+      province:
+        type: string
+        description: ชื่อจังหวัดภาษาไทย
+        required: false
+      amphoe:
+        type: string
+        description: ชื่ออำเภอ
+        required: false
+      tambon:
+        type: string
+        description: ชื่อตำบล
+        required: false
+      date:
+        type: string
+        description: วันที่เริ่มต้น YYYY-MM-DD
+        required: false
+      duration:
+        type: integer
+        description: จำนวนวัน
+        required: false
+
+  - id: get_weather_warning
+    description: ดึงประกาศเตือนภัยอากาศจากกรมอุตุ
+    keywords:
+      - เตือนภัย
+      - ประกาศ
+      - พายุ
+      - น้ำท่วม
+      - warning
+      - อากาศ
+    permission: read
+    method: GET
+    path: /api/weather/warning
+    executor: http
+    parameters: {}
+
+  - id: search_agri_prices
+    description: ค้นหาราคาสินค้าเกษตรล่าสุด เช่น ข้าว มะนาว ปาล์ม
+    keywords:
+      - ราคา
+      - สินค้าเกษตร
+      - ข้าว
+      - มะนาว
+      - ปาล์ม
+      - พริก
+      - มันสำปะหลัง
+      - agri
+      - price
+    permission: read
+    method: GET
+    path: /api/agri-prices/search
+    executor: http
+    parameters:
+      q:
+        type: string
+        description: ชื่อสินค้าที่ต้องการค้นหาราคา
+        required: true
+      period:
+        type: string
+        description: ช่วงเวลา auto | daily | weekly ฯลฯ
+        required: false
+
+  - id: list_transactions
+    description: ดูรายการรับ-จ่ายของเกษตรกร (กรองตามรอบหรือช่วงวันที่ได้)
+    keywords:
+      - จ่าย
+      - รายจ่าย
+      - รายรับ
+      - ธุรกรรม
+      - ปุ๋ย
+      - ค่าแรง
+      - บัญชี
+      - transaction
+      - เดือนนี้
+      - เท่าไหร่
+    permission: read_own
+    method: GET
+    path: /api/transaction/user/{user_id}
+    executor: http
+    parameters:
+      cycle_id:
+        type: string
+        description: UUID ของรอบปลูก (ถ้ามี)
+        required: false
+      start_date:
+        type: string
+        description: วันเริ่มต้น ISO datetime
+        required: false
+      end_date:
+        type: string
+        description: วันสิ้นสุด ISO datetime
+        required: false
+      page:
+        type: integer
+        description: หน้าข้อมูล เริ่มที่ 0
+        required: false
+      size:
+        type: integer
+        description: จำนวนต่อหน้า (สูงสุดแนะนำ 20)
+        required: false
+
+  - id: list_cycles
+    description: ดูรายการรอบปลูก/เลี้ยงของเกษตรกร
+    keywords:
+      - รอบ
+      - รอบปลูก
+      - cycle
+      - แปลง
+      - พืช
+      - สัตว์
+    permission: read_own
+    method: GET
+    path: /api/cycle/user/{user_id}
+    executor: http
+    parameters: {}
+
+  - id: get_cycle_summary
+    description: สรุปงบ/กำไรของรอบปลูกหนึ่งรอบ
+    keywords:
+      - สรุป
+      - กำไร
+      - งบ
+      - รอบ
+      - วิเคราะห์
+      - summary
+    permission: read_own
+    method: POST
+    path: /api/cycle/{cycle_id}/summarize
+    executor: http
+    parameters:
+      cycle_id:
+        type: string
+        description: UUID ของรอบปลูกที่ต้องการสรุป
+        required: true
+
+  - id: parse_expense
+    description: แยกข้อความบันทึกรายรับ-รายจ่ายเป็นโครงสร้าง (ยังไม่บันทึกลงฐานข้อมูล)
+    keywords:
+      - บันทึก
+      - จ่าย
+      - ได้
+      - ซื้อ
+      - ขาย
+      - บาท
+      - รายจ่าย
+      - รายรับ
+      - ค่า
+    permission: parse_only
+    method: LOCAL
+    executor: local
+    handler: parse_expense
+    parameters:
+      text:
+        type: string
+        description: ข้อความต้นฉบับจากผู้ใช้
+        required: true

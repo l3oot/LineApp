@@ -24,6 +24,9 @@ class LlmSettings:
 class Settings:
     lineapp_default_user_id: str
     extract_max_retries: int
+    ai_internal_key: str
+    gateway_http_timeout_seconds: float
+    orchestrator_max_tool_rounds: int
     llm: LlmSettings
 
 
@@ -33,6 +36,9 @@ def _load_settings() -> Settings:
     return Settings(
         lineapp_default_user_id=os.getenv("LINEAPP_DEFAULT_USER_ID", "").strip(),
         extract_max_retries=int(os.getenv("EXTRACT_MAX_RETRIES", "2")),
+        ai_internal_key=os.getenv("AI_INTERNAL_KEY", "").strip(),
+        gateway_http_timeout_seconds=float(os.getenv("GATEWAY_HTTP_TIMEOUT_SECONDS", "20")),
+        orchestrator_max_tool_rounds=int(os.getenv("ORCHESTRATOR_MAX_TOOL_ROUNDS", "3")),
         llm=LlmSettings(
             openai_api_key=openai_api_key,
             thaillm_api_key=thaillm_api_key,
