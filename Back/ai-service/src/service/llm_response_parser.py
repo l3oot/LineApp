@@ -28,6 +28,10 @@ _PRICE_PATTERN = re.compile(
     r"(?<!\d)(\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?\s*(?:บาท|฿)?(?!\d)",
     re.IGNORECASE,
 )
+# ตัวเลขที่ตามด้วยหน่วยปริมาณไม่ใช่ราคา — เช่น 50 กิโลกรัม
+_QTY_UNIT_AFTER = re.compile(
+    r"^(?:กิโลกรัม|กิโล|กก\.?|ลิตร|ตัน|กระสอบ|ถุง|ขีด|ไร่|เมตร|ฟอง|ตัว|ลูก)"
+)
 _INCOME_HINT = re.compile(r"(?:ขาย|ได้|รับ)", re.IGNORECASE)
 _EXPENSE_HINT = re.compile(r"(?:ซื้อ|จ่าย)", re.IGNORECASE)
 
@@ -143,12 +147,23 @@ def is_grandma_reply(message: str | None) -> bool:
     return any(stripped.endswith(ending) for ending in _GRANDMA_ENDINGS)
 
 
+def _money_matches(text: str) -> list[re.Match[str]]:
+    found: list[re.Match[str]] = []
+    for match in _PRICE_PATTERN.finditer(text):
+        # \s* ในแพทเทิร์นกลืนช่องว่างหน้าหน่วยไปแล้ว เลยดูคำถัดไปตรง ๆ
+        tail = text[match.end() :].lstrip()
+        if _QTY_UNIT_AFTER.match(tail):
+            continue
+        found.append(match)
+    return found
+
+
 def looks_like_complete_transaction(text: str | None) -> bool:
     """ข้อความหลานน่าจะมีรายการและราคาครบ — ต้องได้ JSON ไม่ใช่ยายทวนคำ"""
     if not text or not text.strip():
         return False
     raw = text.strip()
-    matches = list(_PRICE_PATTERN.finditer(raw))
+    matches = _money_matches(raw)
     if not matches:
         return False
     m = matches[-1]
@@ -166,7 +181,7 @@ def fallback_extract_from_text(text: str) -> AiExtractStructured | None:
     if not looks_like_complete_transaction(raw):
         return None
 
-    matches = list(_PRICE_PATTERN.finditer(raw))
+    matches = _money_matches(raw)
     m = matches[-1]
     price_str = m.group(1).replace(",", "")
     try:

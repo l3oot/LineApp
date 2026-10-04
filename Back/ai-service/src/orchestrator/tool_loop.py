@@ -1,4 +1,4 @@
-"""Registry shortlist → LLM pick tool → Gateway execute → summarize"""
+"""กฎบันทึกรายการก่อน → ถ้าไม่เข้าเกณฑ์ LLM เลือก tool → Gateway execute → summarize"""
 
 from __future__ import annotations
 
@@ -8,22 +8,53 @@ from typing import Any
 from src.config import settings
 from src.dto.chat import ChatAction, ChatResponse
 from src.gateway.api_gateway import GatewayError, execute_tool
+from src.orchestrator.intent_rules import (
+    RouteDecision,
+    classify_record_intent,
+    sanitize_unverified_save,
+)
 from src.prompts.orchestrator import (
     SYSTEM_PERSONA,
+    TOOL_ROUTER_RULES,
     build_summarize_prompt,
     build_tool_select_prompt,
 )
 from src.registry.api_registry import search_tools
 from src.registry.models import RegistryEntry
 from src.service.llm_service import run_llm, run_llm_tool_select
+from src.utils.request_id import get_request_id
 
 logger = logging.getLogger(__name__)
 
 _FALLBACK_REPLY = "ยายขอโทษน้า ยายยังไม่เข้าใจ ช่วยพิมพ์ใหม่อีกครั้งนะจ๊ะ"
+_REPLY_CHAT = "reply_chat"
+
+_ROUTER_SYSTEM = f"{SYSTEM_PERSONA}\n\n{TOOL_ROUTER_RULES}"
+
+_REPLY_CHAT_TOOL: dict[str, Any] = {
+    "type": "function",
+    "function": {
+        "name": _REPLY_CHAT,
+        "description": (
+            "ตอบหลานเป็นข้อความเมื่อไม่ต้องบันทึกรายการและไม่ต้องดึงข้อมูลจากเครื่องมืออื่น "
+            "ห้ามใช้เมื่อข้อความเป็นคำสั่งซื้อ จ่าย ขาย ได้ หรือรับที่ตามด้วยตัวเลขเงิน"
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "reply": {
+                    "type": "string",
+                    "description": "ข้อความตอบหลาน ห้ามบอกว่าบันทึกแล้ว จดแล้ว หรือลงรายการแล้ว",
+                }
+            },
+            "required": ["reply"],
+        },
+    },
+}
 
 
 def _tools_for_openai(entries: list[RegistryEntry]) -> list[dict[str, Any]]:
-    return [e.openai_tool() for e in entries]
+    return [e.openai_tool() for e in entries] + [_REPLY_CHAT_TOOL]
 
 
 def _tools_for_prompt(entries: list[RegistryEntry]) -> list[dict[str, Any]]:
@@ -43,6 +74,19 @@ def _tools_for_prompt(entries: list[RegistryEntry]) -> list[dict[str, Any]]:
                 },
             }
         )
+    out.append(
+        {
+            "id": _REPLY_CHAT,
+            "description": _REPLY_CHAT_TOOL["function"]["description"],
+            "parameters": {
+                "reply": {
+                    "type": "string",
+                    "description": "ข้อความตอบหลาน ห้ามบอกว่าบันทึกแล้ว",
+                    "required": True,
+                }
+            },
+        }
+    )
     return out
 
 
@@ -66,7 +110,148 @@ def _ensure_parse_text(args: dict[str, Any], user_message: str) -> dict[str, Any
     return cleaned
 
 
+def _log_route(decision: RouteDecision, user_message: str) -> None:
+    preview = " ".join((user_message or "").split())[:80]
+    logger.info(
+        "[ai-route] hop=ai reqId=%s intent=%s tool=%s confidence=%.2f source=%s "
+        "reason=%s context_msgs=1 preview=%s",
+        get_request_id(),
+        decision.intent,
+        decision.tool_name,
+        decision.confidence,
+        decision.source,
+        decision.reason,
+        preview,
+    )
+
+
+def _with_route(response: ChatResponse, decision: RouteDecision) -> ChatResponse:
+    return response.model_copy(
+        update={
+            "route_intent": decision.intent,
+            "route_confidence": decision.confidence,
+            "route_source": decision.source,
+        }
+    )
+
+
+def _chat_reply(text: str, decision: RouteDecision, tools_used: list[str], source_model: str | None) -> ChatResponse:
+    cleaned, blocked = sanitize_unverified_save(text)
+    if blocked:
+        logger.info(
+            "[ai-route] hop=ai reqId=%s action=block-unverified-save intent=%s source=%s",
+            get_request_id(),
+            decision.intent,
+            decision.source,
+        )
+    return _with_route(
+        ChatResponse(
+            reply_text=cleaned or _FALLBACK_REPLY,
+            actions=[],
+            tools_used=tools_used,
+            source_model=source_model,
+        ),
+        decision,
+    )
+
+
+def _decision_from_selection(tool_name: str | None) -> RouteDecision:
+    if tool_name == "parse_expense":
+        return RouteDecision("record", tool_name, 0.7, "llm", "tool_call")
+    if not tool_name or tool_name == _REPLY_CHAT:
+        return RouteDecision("chat", tool_name, 0.4, "llm", "reply")
+    return RouteDecision("lookup", tool_name, 0.6, "llm", "tool_call")
+
+
+def _finish_tool(
+    tool_name: str,
+    arguments: dict[str, Any],
+    user_message: str,
+    user_id: str | None,
+    decision: RouteDecision,
+    tools_used: list[str],
+    source_model: str | None,
+) -> ChatResponse:
+    if tool_name == _REPLY_CHAT:
+        reply = arguments.get("reply") if isinstance(arguments, dict) else None
+        return _chat_reply(str(reply or ""), decision, tools_used, source_model)
+
+    if tool_name == "parse_expense":
+        arguments = _ensure_parse_text(arguments, user_message)
+
+    tools_used.append(tool_name)
+    try:
+        result = execute_tool(tool_name, arguments, user_id)
+    except GatewayError as exc:
+        logger.warning("gateway error tool=%s: %s", tool_name, exc.message)
+        return _with_route(
+            ChatResponse(
+                reply_text="ยายดึงข้อมูลไม่สำเร็จตอนนี้นะจ๊ะ ลองถามใหม่อีกครั้งหรือเปลี่ยนวัน/จังหวัดดูนะจ๊ะ",
+                actions=[],
+                tools_used=tools_used,
+                source_model=source_model,
+            ),
+            decision,
+        )
+    data = result.get("data")
+
+    if tool_name == "parse_expense":
+        action = _extract_create_action(data)
+        if action is not None:
+            return _with_route(
+                ChatResponse(
+                    reply_text="",
+                    actions=[action],
+                    tools_used=tools_used,
+                    source_model=source_model,
+                ),
+                decision,
+            )
+        if isinstance(data, dict) and data.get("message"):
+            return _chat_reply(str(data["message"]), decision, tools_used, source_model)
+
+    summarize_prompt = build_summarize_prompt(user_message, tool_name, data)
+    try:
+        summarized = run_llm(summarize_prompt)
+        source_model = summarized.get("source_model") or source_model
+        result_payload = summarized.get("result")
+        if isinstance(result_payload, str) and result_payload.strip():
+            reply = result_payload.strip()
+        elif isinstance(result_payload, dict):
+            reply = str(result_payload.get("reply") or result_payload.get("message") or "").strip()
+            if not reply:
+                reply = "ยายดูข้อมูลให้นะจ๊ะ แต่สรุปไม่ชัด ลองถามใหม่อีกครั้งนะจ๊ะ"
+        else:
+            reply = "ยายดูข้อมูลให้นะจ๊ะ แต่สรุปไม่ชัด ลองถามใหม่อีกครั้งนะจ๊ะ"
+        return _chat_reply(reply, decision, tools_used, source_model)
+    except Exception as exc:
+        logger.warning("summarize failed tool=%s: %s", tool_name, exc)
+        return _with_route(
+            ChatResponse(
+                reply_text="ยายดึงข้อมูลได้แล้วนะจ๊ะ แต่สรุปไม่ทัน ลองถามใหม่อีกครั้งนะจ๊ะ",
+                actions=[],
+                tools_used=tools_used,
+                source_model=source_model,
+            ),
+            decision,
+        )
+
+
 def run_tool_loop(user_message: str, user_id: str | None) -> ChatResponse:
+    # ส่งเฉพาะข้อความล่าสุด — ไม่แนบประวัติแชทตอนเลือกทาง
+    rule = classify_record_intent(user_message)
+    if rule is not None:
+        _log_route(rule, user_message)
+        return _finish_tool(
+            "parse_expense",
+            {"text": user_message},
+            user_message,
+            user_id,
+            rule,
+            [],
+            "rule",
+        )
+
     shortlist = search_tools(user_message, limit=6)
     openai_tools = _tools_for_openai(shortlist)
     fallback_prompt = build_tool_select_prompt(user_message, _tools_for_prompt(shortlist))
@@ -77,90 +262,47 @@ def run_tool_loop(user_message: str, user_id: str | None) -> ChatResponse:
 
     for round_i in range(max_rounds):
         selection = run_llm_tool_select(
-            system_prompt=SYSTEM_PERSONA,
+            system_prompt=_ROUTER_SYSTEM,
             user_message=user_message,
             tools=openai_tools,
             fallback_prompt=fallback_prompt,
+            tool_choice="required",
         )
         source_model = selection.get("source_model") or source_model
         tool_name = selection.get("tool_name")
         arguments = selection.get("arguments") or {}
         direct_reply = selection.get("reply")
+        decision = _decision_from_selection(tool_name)
+        _log_route(decision, user_message)
 
-        if not tool_name:
-            text = (direct_reply or "").strip() or _FALLBACK_REPLY
-            return ChatResponse(
-                reply_text=text,
-                actions=[],
-                tools_used=tools_used,
-                source_model=source_model,
-            )
+        if not tool_name or tool_name == _REPLY_CHAT:
+            text = direct_reply or ""
+            if tool_name == _REPLY_CHAT:
+                text = str(arguments.get("reply") or direct_reply or "")
+            return _chat_reply(text, decision, tools_used, source_model)
 
-        if tool_name == "parse_expense":
-            arguments = _ensure_parse_text(arguments, user_message)
+        logger.info(
+            "[ai-route] hop=ai reqId=%s action=execute round=%d tool=%s",
+            get_request_id(),
+            round_i,
+            tool_name,
+        )
+        return _finish_tool(
+            tool_name,
+            arguments,
+            user_message,
+            user_id,
+            decision,
+            tools_used,
+            source_model,
+        )
 
-        tools_used.append(tool_name)
-        try:
-            result = execute_tool(tool_name, arguments, user_id)
-        except GatewayError as exc:
-            logger.warning("gateway error tool=%s round=%s: %s", tool_name, round_i, exc.message)
-            return ChatResponse(
-                reply_text="ยายดึงข้อมูลไม่สำเร็จตอนนี้นะจ๊ะ ลองถามใหม่อีกครั้งหรือเปลี่ยนวัน/จังหวัดดูนะจ๊ะ",
-                actions=[],
-                tools_used=tools_used,
-                source_model=source_model,
-            )
-        data = result.get("data")
-
-        if tool_name == "parse_expense":
-            action = _extract_create_action(data)
-            if action is not None:
-                return ChatResponse(
-                    reply_text="",
-                    actions=[action],
-                    tools_used=tools_used,
-                    source_model=source_model,
-                )
-            # structured ไม่ครบ — ใช้ message จาก parse ถ้ามี
-            if isinstance(data, dict) and data.get("message"):
-                return ChatResponse(
-                    reply_text=str(data["message"]),
-                    actions=[],
-                    tools_used=tools_used,
-                    source_model=source_model,
-                )
-
-        summarize_prompt = build_summarize_prompt(user_message, tool_name, data)
-        try:
-            summarized = run_llm(summarize_prompt)
-            source_model = summarized.get("source_model") or source_model
-            result_payload = summarized.get("result")
-            if isinstance(result_payload, str) and result_payload.strip():
-                reply = result_payload.strip()
-            elif isinstance(result_payload, dict):
-                reply = str(result_payload.get("reply") or result_payload.get("message") or "").strip()
-                if not reply:
-                    reply = "ยายดูข้อมูลให้นะจ๊ะ แต่สรุปไม่ชัด ลองถามใหม่อีกครั้งนะจ๊ะ"
-            else:
-                reply = "ยายดูข้อมูลให้นะจ๊ะ แต่สรุปไม่ชัด ลองถามใหม่อีกครั้งนะจ๊ะ"
-            return ChatResponse(
-                reply_text=reply,
-                actions=[],
-                tools_used=tools_used,
-                source_model=source_model,
-            )
-        except Exception as exc:
-            logger.warning("summarize failed tool=%s: %s", tool_name, exc)
-            return ChatResponse(
-                reply_text="ยายดึงข้อมูลได้แล้วนะจ๊ะ แต่สรุปไม่ทัน ลองถามใหม่อีกครั้งนะจ๊ะ",
-                actions=[],
-                tools_used=tools_used,
-                source_model=source_model,
-            )
-
-    return ChatResponse(
-        reply_text=_FALLBACK_REPLY,
-        actions=[],
-        tools_used=tools_used,
-        source_model=source_model,
+    return _with_route(
+        ChatResponse(
+            reply_text=_FALLBACK_REPLY,
+            actions=[],
+            tools_used=tools_used,
+            source_model=source_model,
+        ),
+        RouteDecision("chat", None, 0.2, "llm", "max_rounds"),
     )
