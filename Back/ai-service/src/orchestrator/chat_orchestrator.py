@@ -25,10 +25,14 @@ def handle_chat(req: ChatRequest) -> ChatResponse:
     )
     response = run_tool_loop(message, user_id)
     logger.info(
-        "[ai-orchestrator] hop=ai reqId=%s action=done tools=%s actions=%d elapsed_ms=%d",
+        "[ai-orchestrator] hop=ai reqId=%s action=done tools=%s actions=%d "
+        "intent=%s confidence=%s source=%s elapsed_ms=%d",
         req_id,
         response.tools_used,
         len(response.actions),
+        response.route_intent,
+        response.route_confidence,
+        response.route_source,
         (time.monotonic() - t0) * 1000,
     )
     return response

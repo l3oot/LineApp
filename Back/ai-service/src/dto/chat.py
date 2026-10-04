@@ -23,3 +23,6 @@ class ChatResponse(BaseModel):
     actions: list[ChatAction] = Field(default_factory=list)
     tools_used: list[str] = Field(default_factory=list)
     source_model: str | None = None
+    route_intent: str | None = None
+    route_confidence: float | None = None
+    route_source: str | None = None

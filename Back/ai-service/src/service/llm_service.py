@@ -70,13 +70,19 @@ def _call_opentyphoon(prompt: str) -> str:
 def _call_opentyphoon_tools(
     messages: list[dict[str, Any]],
     tools: list[dict[str, Any]],
+    *,
+    tool_choice: str = "required",
 ) -> dict[str, Any]:
-    """เรียก Typhoon แบบ OpenAI tools — คืน {content, tool_calls, raw_message}"""
+    """เรียก Typhoon แบบ OpenAI tools — คืน {content, tool_calls, raw_message}
+
+    tool_choice=required บังคับให้เลือกเครื่องมือ (รวม reply_chat)
+    ห้ามตอบข้อความลอยที่อ้างว่าบันทึกแล้ว
+    """
     completion = _get_opentyphoon_client().chat.completions.create(
         model=_LLM.opentyphoon_model,
         messages=messages,
         tools=tools,
-        tool_choice="auto",
+        tool_choice=tool_choice,
         temperature=0.2,
         max_completion_tokens=1024,
         top_p=0.5,
@@ -279,6 +285,7 @@ def run_llm_tool_select(
     user_message: str,
     tools: list[dict[str, Any]],
     fallback_prompt: str,
+    tool_choice: str = "required",
 ) -> dict[str, Any]:
     """
     เลือก tool ผ่าน OpenAI-compatible tools บน Typhoon ก่อน
@@ -295,7 +302,7 @@ def run_llm_tool_select(
     ]
     t0 = time.monotonic()
     try:
-        result = _call_opentyphoon_tools(messages, tools)
+        result = _call_opentyphoon_tools(messages, tools, tool_choice=tool_choice)
         llm_ms = int((time.monotonic() - t0) * 1000)
         logger.info(
             "[ai-latency] hop=ai-llm reqId=%s action=done provider=opentyphoon-tools "
