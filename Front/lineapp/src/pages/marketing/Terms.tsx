@@ -1,13 +1,16 @@
 import { Link } from "react-router-dom";
+import Reveal from "../../components/marketing/Reveal";
 
 export default function TermsPage() {
     return (
-        <div className="mk-content">
+        <div className="mk-content mk-content--legal">
             <div className="mk-shell">
-                <h1 className="mk-content__title">ข้อกำหนดการใช้บริการ</h1>
-                <p className="mk-content__meta">อัปเดตล่าสุด: 23 กันยายน 2569 — เอกสารฉบับร่างสำหรับหน้าเว็บ</p>
+                <Reveal as="header" className="mk-content__mast">
+                    <h1 className="mk-content__title">ข้อกำหนดการใช้บริการ</h1>
+                    <p className="mk-content__meta">อัปเดตล่าสุด: 23 กันยายน 2569 — เอกสารฉบับร่างสำหรับหน้าเว็บ</p>
+                </Reveal>
 
-                <article className="mk-prose">
+                <Reveal as="article" className="mk-prose mk-ledger-paper" delay={60}>
                     <p>
                         ยินดีต้อนรับสู่ <strong>ยายเภา</strong> การเข้าใช้งานเว็บไซต์ แอป
                         หรือบริการผ่าน LINE ของเรา หมายความว่าคุณยอมรับข้อกำหนดฉบับนี้
@@ -56,7 +59,7 @@ export default function TermsPage() {
                         หากมีข้อสงสัยเกี่ยวกับข้อกำหนดนี้ ติดต่อเราได้ที่หน้า{" "}
                         <Link to="/contact">ติดต่อเรา</Link>
                     </p>
-                </article>
+                </Reveal>
             </div>
         </div>
     );

@@ -18,6 +18,7 @@ public class AiServiceProperties {
 
     private String baseUrl = "http://localhost:8000";
     private String parsePath = "/parse";
+    private String chatPath = "/chat";
     private String weatherWarningPath = "/weather-warning/summarize";
     private String weatherBriefPath = "/weather-brief/summarize";
     private String agriPriceExtractPath = "/agri-price/extract";
@@ -40,6 +41,14 @@ public class AiServiceProperties {
 
     public void setParsePath(String parsePath) {
         this.parsePath = parsePath;
+    }
+
+    public String getChatPath() {
+        return chatPath;
+    }
+
+    public void setChatPath(String chatPath) {
+        this.chatPath = chatPath;
     }
 
     public String getWeatherWarningPath() {

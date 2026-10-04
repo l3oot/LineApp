@@ -83,6 +83,7 @@ public class SecurityConfig {
     SecurityFilterChain appSecurityFilterChain(
             HttpSecurity http,
             JwtAuthFilter jwtAuthFilter,
+            InternalApiKeyFilter internalApiKeyFilter,
             ObjectMapper objectMapper) throws Exception {
         http
             .cors(Customizer.withDefaults())
@@ -99,6 +100,7 @@ public class SecurityConfig {
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(jsonAuthenticationEntryPoint(objectMapper))
                 .accessDeniedHandler(jsonAccessDeniedHandler(objectMapper)))
+            .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
@@ -109,6 +111,13 @@ public class SecurityConfig {
     @Bean
     FilterRegistrationBean<JwtAuthFilter> jwtAuthFilterRegistration(JwtAuthFilter filter) {
         FilterRegistrationBean<JwtAuthFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    FilterRegistrationBean<InternalApiKeyFilter> internalApiKeyFilterRegistration(InternalApiKeyFilter filter) {
+        FilterRegistrationBean<InternalApiKeyFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setEnabled(false);
         return registration;
     }

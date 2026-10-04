@@ -13,7 +13,7 @@
 - [ ] **API ข่าวเกษตร**
 - [ ] **เชื่อม ai เกษตร**
 - [ ] **เชื่อม api ด้านเกษตร**
-- [ ] **ทำ ai api gateway**
+- [x] **ทำ ai api gateway** — Approach B (API Registry + Tool Calling) ใน ai-service `POST /chat`
 - [ ] **แก้หน้าโปรโมทให้สวยขึ้น พร้อม SEO**
 - [ ] **แก้ Rich เมนูให้ไม่ AI**
 - [ ] **แก้มาสคอสยายเภาให้ไม่ AI และเหมือนยายเภากว่านี้**

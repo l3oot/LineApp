@@ -22,6 +22,7 @@ import com.example.demo.config.AiServiceProperties;
 import com.example.demo.dto.req.AiAgriPriceBriefReq;
 import com.example.demo.dto.req.AiAgriPriceExtractReq;
 import com.example.demo.dto.req.AiAgriPriceMatchReq;
+import com.example.demo.dto.req.AiChatReq;
 import com.example.demo.dto.req.AiCycleSummaryReq;
 import com.example.demo.dto.req.AiWeatherBriefReq;
 import com.example.demo.dto.req.AiWeatherWarningReq;
@@ -29,6 +30,7 @@ import com.example.demo.dto.res.AgriPriceLatestQuoteRes;
 import com.example.demo.dto.res.AiAgriPriceBriefRes;
 import com.example.demo.dto.res.AiAgriPriceExtractRes;
 import com.example.demo.dto.res.AiAgriPriceMatchRes;
+import com.example.demo.dto.res.AiChatRes;
 import com.example.demo.dto.res.AiCycleSummaryRes;
 import com.example.demo.dto.res.AiParseRes;
 import com.example.demo.dto.res.AiWeatherBriefRes;
@@ -56,6 +58,18 @@ public class AiClientService {
         factory.setConnectTimeout(millis);
         factory.setReadTimeout(millis);
         this.restTemplate = new RestTemplate(factory);
+    }
+
+    /**
+     * เรียก ai-service POST /chat (API Registry + tool calling) — return null ถ้าพังหรือ timeout
+     */
+    public AiChatRes chat(String message, UUID userId) {
+        URI uri = aiUri(props.getChatPath());
+        String uid = userId == null ? null : userId.toString();
+        HttpEntity<AiChatReq> entity = new HttpEntity<>(
+                new AiChatReq(uid, message, "th"),
+                latencyHeaders(MediaType.APPLICATION_JSON));
+        return callAi(props.getChatPath(), uri, HttpMethod.POST, entity, AiChatRes.class);
     }
 
     /**

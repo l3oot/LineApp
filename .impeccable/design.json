@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-04T04:40:00.000Z",
+  "title": "Design System: ยายเภา",
+  "extensions": {
+    "colorMeta": {
+      "young-rice": {
+        "role": "primary",
+        "displayName": "Young Rice",
+        "canonical": "oklch(68.2% 0.141 156.0)",
+        "tonalRamp": ["#001a00", "#003700", "#00561e", "#007a3f", "#1f9e61", "#51c585", "#7becaa", "#9affc7"]
+      },
+      "young-rice-soft": {
+        "role": "primary",
+        "displayName": "Young Rice Soft",
+        "canonical": "oklch(96.5% 0.021 158.6)",
+        "tonalRamp": ["#06100a", "#1e2a23", "#39463e", "#5a675f", "#7c8a81", "#a0afa6", "#c6d5cc", "#e3f3e9"]
+      },
+      "young-rice-edge": {
+        "role": "primary",
+        "displayName": "Young Rice Edge",
+        "canonical": "oklch(61.1% 0.132 154.8)",
+        "tonalRamp": ["#001900", "#003600", "#00551f", "#00783f", "#329d62", "#5dc385", "#85ebaa", "#a3ffc7"]
+      },
+      "canopy-deep": {
+        "role": "primary",
+        "displayName": "Canopy Deep",
+        "canonical": "oklch(47.6% 0.078 162.2)",
+        "tonalRamp": ["#001603", "#00311a", "#0b4f35", "#347156", "#589578", "#7dbb9c", "#a2e2c2", "#c0ffdf"]
+      },
+      "washed-cloth": {
+        "role": "neutral",
+        "displayName": "Washed Cloth",
+        "canonical": "oklch(97.5% 0.006 153.8)",
+        "tonalRamp": ["#0b0e0c", "#242725", "#404341", "#616462", "#838784", "#a8aca9", "#ced2cf", "#ebf0ed"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "#FFFFFF",
+        "tonalRamp": ["#0d0d0d", "#262626", "#424242", "#636363", "#868686", "#ababab", "#d1d1d1", "#eeeeee"]
+      },
+      "surface-soft": {
+        "role": "neutral",
+        "displayName": "Surface Soft",
+        "canonical": "oklch(96.5% 0.012 153.7)",
+        "tonalRamp": ["#090f0b", "#222824", "#3e443f", "#5e6560", "#818883", "#a5ada7", "#cbd3cd", "#e9f1eb"]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "canonical": "oklch(92.0% 0.017 156.9)",
+        "tonalRamp": ["#070f0a", "#202923", "#3b453f", "#5c665f", "#7e8982", "#a3aea6", "#c8d5cc", "#e6f2ea"]
+      },
+      "charcoal": {
+        "role": "neutral",
+        "displayName": "Charcoal",
+        "canonical": "oklch(25.9% 0.031 260.4)",
+        "tonalRamp": ["#060d1a", "#1e2736", "#394353", "#596475", "#7c8799", "#a0acbf", "#c6d2e6", "#e3efff"]
+      },
+      "moss-mute": {
+        "role": "neutral",
+        "displayName": "Moss Mute",
+        "canonical": "oklch(56.7% 0.019 156.6)",
+        "tonalRamp": ["#07100a", "#1f2923", "#3a463e", "#5b675f", "#7d8a81", "#a2afa6", "#c8d5cc", "#e5f3e9"]
+      },
+      "chili": {
+        "role": "secondary",
+        "displayName": "Chili",
+        "canonical": "oklch(69.0% 0.165 22.4)",
+        "tonalRamp": ["#3b0000", "#5f0000", "#850013", "#ae2d35", "#d75556", "#ff7b7a", "#ffa29f", "#ffbfbb"]
+      },
+      "chili-action": {
+        "role": "secondary",
+        "displayName": "Chili Action",
+        "canonical": "oklch(68.8% 0.142 21.5)",
+        "tonalRamp": ["#350000", "#590001", "#7d0e1d", "#a5393e", "#ce5e5f", "#f78383", "#ffaaa8", "#ffc7c4"]
+      },
+      "chili-edge": {
+        "role": "secondary",
+        "displayName": "Chili Edge",
+        "canonical": "oklch(60.5% 0.141 22.2)",
+        "tonalRamp": ["#350000", "#590000", "#7c101c", "#a43a3d", "#cd5f5e", "#f78482", "#ffaaa7", "#ffc8c3"]
+      },
+      "chili-wash": {
+        "role": "secondary",
+        "displayName": "Chili Wash",
+        "canonical": "oklch(97.8% 0.011 17.3)",
+        "tonalRamp": ["#120b0c", "#2c2424", "#484040", "#696161", "#8d8484", "#b2a8a8", "#d8cece", "#f6ecec"]
+      },
+      "mk-leaf-deep": {
+        "role": "tertiary",
+        "displayName": "Marketing Leaf Deep",
+        "canonical": "oklch(47.1% 0.099 155.5)",
+        "tonalRamp": ["#001700", "#00330e", "#00512a", "#2a744a", "#50986c", "#75be90", "#9be5b5", "#b8ffd2"]
+      },
+      "mk-ink": {
+        "role": "tertiary",
+        "displayName": "Marketing Ink",
+        "canonical": "oklch(28.0% 0.032 161.6)",
+        "tonalRamp": ["#011109", "#172b21", "#33483d", "#53695e", "#768c80", "#9ab1a5", "#bfd8ca", "#ddf6e8"]
+      },
+      "mk-cream": {
+        "role": "tertiary",
+        "displayName": "Marketing Cream",
+        "canonical": "oklch(98.2% 0.005 145.5)",
+        "tonalRamp": ["#0c0e0c", "#252725", "#414341", "#616461", "#848784", "#a9aca9", "#cfd2cf", "#ecefec"]
+      },
+      "page-pink": {
+        "role": "tertiary",
+        "displayName": "Page Pink",
+        "canonical": "oklch(70.2% 0.131 1.0)",
+        "tonalRamp": ["#30000a", "#520023", "#75173e", "#9c3d5f", "#c46181", "#ed86a6", "#ffaccc", "#ffc9e9"]
+      },
+      "page-blue": {
+        "role": "tertiary",
+        "displayName": "Page Blue",
+        "canonical": "oklch(69.4% 0.164 254.6)",
+        "tonalRamp": ["#000051", "#001973", "#003d96", "#0061bd", "#3486e6", "#5cadff", "#82d4ff", "#9ff3ff"]
+      },
+      "page-purple": {
+        "role": "tertiary",
+        "displayName": "Page Purple",
+        "canonical": "oklch(62.9% 0.115 292.3)",
+        "tonalRamp": ["#130038", "#2b1458", "#463379", "#66559f", "#8878c5", "#ad9ded", "#d3c3ff", "#f0e1ff"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Marketing heroes and Persuade statements in Mali." },
+      "headline": { "displayName": "Headline", "purpose": "App subpage titles in Sarabun 800." },
+      "title": { "displayName": "Title", "purpose": "Greeting name and card titles." },
+      "body": { "displayName": "Body", "purpose": "Default reading and form copy. 17px, 16px below 1024px." },
+      "label": { "displayName": "Label", "purpose": "Nav, chips, captions, amount badges." }
+    },
+    "shadows": [
+      { "name": "canopy-rest", "value": "0 10px 28px rgba(59, 178, 115, 0.10)", "purpose": "Default tray, popover, and icon-button atmosphere." },
+      { "name": "footer-lift", "value": "0 -10px 30px rgba(59, 178, 115, 0.10)", "purpose": "Fixed tab bar rising off the field." },
+      { "name": "commit-bead", "value": "0 8px 18px rgba(59, 178, 115, 0.28)", "purpose": "Primary pill lift; hover steps to 0 10px 22px at 0.34 alpha." },
+      { "name": "chip-bead", "value": "0 6px 14px rgba(59, 178, 115, 0.22)", "purpose": "Active filters and pill controls." },
+      { "name": "spend-bead", "value": "0 2px 8px rgba(200, 90, 90, 0.22)", "purpose": "Expense pills only." },
+      { "name": "avatar-bead", "value": "0 4px 12px rgba(59, 178, 115, 0.14)", "purpose": "Greeting portrait ring." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "180ms ease", "purpose": "Default state transitions on pills, chips, and nav." },
+      { "name": "sheet-enter", "value": "220ms ease-out", "purpose": "Bottom sheet rise." },
+      { "name": "sheet-spring", "value": "240ms cubic-bezier(0.32, 0.72, 0, 1)", "purpose": "Bottom sheet drag-release and close." },
+      { "name": "tap-commit", "value": "scale(0.99)", "purpose": "Primary and expense pill press." },
+      { "name": "tap-icon", "value": "scale(0.96)", "purpose": "Icon buttons and nav items." }
+    ],
+    "breakpoints": [
+      { "name": "sheet", "value": "420px" },
+      { "name": "feature-grid", "value": "720px" },
+      { "name": "home-dvh", "value": "768px" },
+      { "name": "split", "value": "800px" },
+      { "name": "marketing-nav", "value": "860px" },
+      { "name": "type-step", "value": "1024px" },
+      { "name": "app-shell", "value": "1080px" },
+      { "name": "marketing-shell", "value": "1120px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Pill",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Full-width commit action for add-cycle and add-transaction.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\"><span class=\"ds-btn-primary-icon\" aria-hidden=\"true\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\"><path d=\"M8 3v10M3 8h10\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg></span><span>เพิ่มรายการ</span></button>",
+      "css": ".ds-btn-primary { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; height: 3.25rem; padding: 0.625rem 1.25rem; border: 1.5px solid #2F9A5F; border-radius: 9999px; background: #3BB273; color: #fff; font-size: 0.9375rem; font-weight: 700; font-family: Sarabun, \"Noto Sans Thai\", \"Segoe UI\", sans-serif; cursor: pointer; box-shadow: 0 8px 18px rgba(59, 178, 115, 0.28); transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease; } .ds-btn-primary:hover { filter: brightness(1.03); box-shadow: 0 10px 22px rgba(59, 178, 115, 0.34); } .ds-btn-primary:focus-visible { outline: 2px solid #2F9A5F; outline-offset: 3px; } .ds-btn-primary:active { transform: scale(0.99); filter: brightness(0.98); } .ds-btn-primary-icon { display: flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 9999px; background: #fff; color: #3BB273; }"
+    },
+    {
+      "name": "Expense Pill",
+      "kind": "button",
+      "refersTo": "button-expense",
+      "description": "Spend commit — warmer chili fill when the action records a cost.",
+      "html": "<button class=\"ds-btn-expense\" type=\"button\">บันทึกค่าใช้จ่าย</button>",
+      "css": ".ds-btn-expense { display: flex; align-items: center; justify-content: center; width: 100%; height: 3.25rem; padding: 0.625rem 1.25rem; border: 1.5px solid #C85A5A; border-radius: 9999px; background: #E57373; color: #fff; font-size: 0.9375rem; font-weight: 700; font-family: Sarabun, \"Noto Sans Thai\", \"Segoe UI\", sans-serif; cursor: pointer; box-shadow: 0 2px 8px rgba(200, 90, 90, 0.22); text-shadow: 0 1px 2px rgba(120, 40, 40, 0.28); transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease; } .ds-btn-expense:hover { filter: brightness(1.03); box-shadow: 0 3px 10px rgba(200, 90, 90, 0.28); } .ds-btn-expense:focus-visible { outline: 2px solid #C85A5A; outline-offset: 3px; } .ds-btn-expense:active { transform: scale(0.99); filter: brightness(0.98); }"
+    },
+    {
+      "name": "Cancel Pill",
+      "kind": "button",
+      "refersTo": "button-cancel",
+      "description": "Destructive-adjacent dismiss. Pink paper, no canopy glow.",
+      "html": "<button class=\"ds-btn-cancel\" type=\"button\">ยกเลิก</button>",
+      "css": ".ds-btn-cancel { display: flex; align-items: center; justify-content: center; min-height: 2.375rem; padding: 0.5rem 0.75rem; border: 1.5px solid #F5C6C6; border-radius: 9999px; background: #FFF5F5; color: #C85A5A; font-size: 0.875rem; font-weight: 600; font-family: Sarabun, \"Noto Sans Thai\", \"Segoe UI\", sans-serif; cursor: pointer; box-shadow: none; transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease; } .ds-btn-cancel:hover { background: #ffecec; border-color: #efb4b4; } .ds-btn-cancel:focus-visible { outline: 2px solid #C85A5A; outline-offset: 3px; } .ds-btn-cancel:active { transform: scale(0.99); }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Ledger filter. Idle is a soft well; active fills Young Rice.",
+      "html": "<div class=\"ds-chip-row\"><button class=\"ds-chip\" type=\"button\">ทั้งหมด</button><button class=\"ds-chip ds-chip--active\" type=\"button\">รายรับ</button><button class=\"ds-chip\" type=\"button\">รายจ่าย</button></div>",
+      "css": ".ds-chip-row { display: flex; flex-wrap: wrap; gap: 0.375rem; } .ds-chip { padding: 0.4375rem 1rem; border: none; border-radius: 9999px; background: #EEF6F0; color: #6E7A72; font-size: 0.8125rem; font-weight: 700; font-family: Sarabun, \"Noto Sans Thai\", \"Segoe UI\", sans-serif; cursor: pointer; transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease; } .ds-chip:hover { background: #FFFFFF; color: #1B2433; } .ds-chip:focus-visible { outline: 2px solid #3BB273; outline-offset: 2px; } .ds-chip--active { background: #3BB273; color: #fff; box-shadow: 0 6px 14px rgba(59, 178, 115, 0.24); } .ds-chip--active:hover { background: #3BB273; color: #fff; filter: brightness(1.03); }"
+    },
+    {
+      "name": "Surface Card",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "White tray over Washed Cloth — the default work surface.",
+      "html": "<article class=\"ds-card\"><p class=\"ds-card-caption\">รอบนี้</p><h3 class=\"ds-card-title\">ข้าวหอมมะลิ</h3><p class=\"ds-card-meta\">รายรับ <span class=\"ds-card-in\">+12,400</span> · รายจ่าย <span class=\"ds-card-out\">-4,850</span></p></article>",
+      "css": ".ds-card { background: #FFFFFF; color: #1B2433; border-radius: 22px; padding: 16px 18px; box-shadow: 0 10px 28px rgba(59, 178, 115, 0.10); font-family: Sarabun, \"Noto Sans Thai\", \"Segoe UI\", sans-serif; } .ds-card-caption { margin: 0 0 4px; font-size: 0.6875rem; font-weight: 600; color: #6E7A72; } .ds-card-title { margin: 0 0 8px; font-size: 1.0625rem; font-weight: 800; line-height: 1.3; } .ds-card-meta { margin: 0; font-size: 0.8125rem; font-weight: 600; color: #6E7A72; } .ds-card-in { color: #3BB273; } .ds-card-out { color: #F06B6B; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Surface bed, 16px control radius, Young Rice border on focus.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">จำนวนเงิน</span><input class=\"ds-input\" type=\"text\" value=\"1,200\" /></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 0.375rem; font-family: Sarabun, \"Noto Sans Thai\", \"Segoe UI\", sans-serif; } .ds-field-label { font-size: 0.6875rem; font-weight: 600; color: #6E7A72; } .ds-input { width: 100%; padding: 8px 12px; border: 1px solid #DCE8E0; border-radius: 16px; background: #FFFFFF; color: #1B2433; font-size: 15px; font-weight: 500; font-family: inherit; outline: none; transition: border-color 160ms ease; } .ds-input:hover { border-color: #3BB273; } .ds-input:focus { border-color: #3BB273; } .ds-input:focus-visible { border-color: #3BB273; box-shadow: none; }"
+    },
+    {
+      "name": "Bottom Nav",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Five-tab farm footer. Active label is Young Rice; icon well fills Soft.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Main\"><a class=\"ds-nav-item ds-nav-item--active\" href=\"#\"><span class=\"ds-nav-icon\" aria-hidden=\"true\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/></svg></span><span>สรุป</span></a><a class=\"ds-nav-item\" href=\"#\"><span class=\"ds-nav-icon\" aria-hidden=\"true\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M12 20c4-3 7-6.2 7-10a7 7 0 1 0-14 0c0 3.8 3 7 7 10Z\" stroke=\"currentColor\" stroke-width=\"1.8\"/><circle cx=\"12\" cy=\"10\" r=\"2.2\" fill=\"currentColor\"/></svg></span><span>รอบ</span></a><a class=\"ds-nav-item\" href=\"#\"><span class=\"ds-nav-icon\" aria-hidden=\"true\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M4 19V5M4 19h16M8 15v4M12 11v8M16 8v11\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg></span><span>วิเคราะห์</span></a></nav>",
+      "css": ".ds-nav { display: flex; align-items: center; justify-content: space-between; gap: 0.25rem; padding: 0.5rem 0.75rem; border-radius: 24px 24px 0 0; background: #FFFFFF; box-shadow: 0 -10px 30px rgba(59, 178, 115, 0.10); font-family: Sarabun, \"Noto Sans Thai\", \"Segoe UI\", sans-serif; } .ds-nav-item { display: flex; flex: 1; flex-direction: column; align-items: center; gap: 0.1875rem; padding: 0.25rem; border-radius: 16px; color: #9AA3B2; text-decoration: none; font-size: 0.6875rem; font-weight: 600; transition: color 180ms ease, transform 180ms ease; } .ds-nav-icon { display: flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px; } .ds-nav-item:hover { color: #3BB273; } .ds-nav-item:focus-visible { outline: 2px solid #3BB273; outline-offset: 2px; } .ds-nav-item:active { transform: scale(0.96); } .ds-nav-item--active { color: #3BB273; } .ds-nav-item--active .ds-nav-icon { background: #E8F8EE; color: #3BB273; }"
+    },
+    {
+      "name": "Bottom Sheet",
+      "kind": "custom",
+      "refersTo": "card-surface",
+      "description": "Signature mobile editor. Tray-top radius, drag handle, 420 column.",
+      "html": "<div class=\"ds-sheet\" role=\"dialog\" aria-modal=\"true\"><div class=\"ds-sheet-handle\" aria-hidden=\"true\"></div><h2 class=\"ds-sheet-title\">เพิ่มรายการ</h2><p class=\"ds-sheet-copy\">พิมพ์จำนวน แล้วเลือกหมวดให้ยายจด</p><button class=\"ds-sheet-commit\" type=\"button\">บันทึก</button></div>",
+      "css": ".ds-sheet { width: min(100%, 420px); margin: 0 auto; padding: 0.5rem 1rem 1.25rem; border-radius: 22px 22px 0 0; background: #FFFFFF; box-shadow: 0 10px 28px rgba(59, 178, 115, 0.10); font-family: Sarabun, \"Noto Sans Thai\", \"Segoe UI\", sans-serif; } .ds-sheet-handle { width: 3rem; height: 0.25rem; margin: 0.25rem auto 0.75rem; border-radius: 9999px; background: #DCE8E0; } .ds-sheet-title { margin: 0 0 0.35rem; font-size: 1.125rem; font-weight: 800; color: #1B2433; } .ds-sheet-copy { margin: 0 0 1rem; font-size: 0.875rem; color: #6E7A72; } .ds-sheet-commit { width: 100%; height: 3.25rem; border: 1.5px solid #2F9A5F; border-radius: 9999px; background: #3BB273; color: #fff; font-size: 0.9375rem; font-weight: 700; font-family: inherit; cursor: pointer; box-shadow: 0 8px 18px rgba(59, 178, 115, 0.28); } .ds-sheet-commit:hover { filter: brightness(1.03); } .ds-sheet-commit:focus-visible { outline: 2px solid #2F9A5F; outline-offset: 3px; } .ds-sheet-commit:active { transform: scale(0.99); }"
+    },
+    {
+      "name": "Marketing Primary",
+      "kind": "button",
+      "refersTo": "button-marketing-primary",
+      "description": "Persuade-register CTA. Deeper forest leaf, 44px floor. Not for the app shell.",
+      "html": "<a class=\"ds-mk-btn\" href=\"#\">เริ่มใช้งานเว็บ</a>",
+      "css": ".ds-mk-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0.65rem 1.15rem; border: 1px solid transparent; border-radius: 999px; background: #1F6B42; color: #fff; font-size: 0.95rem; font-weight: 600; font-family: Sarabun, \"Noto Sans Thai\", \"Segoe UI\", sans-serif; text-decoration: none; cursor: pointer; transition: transform 120ms ease-out, background 160ms ease-out; } .ds-mk-btn:hover { background: #185734; } .ds-mk-btn:focus-visible { outline: 2px solid #2F9E62; outline-offset: 3px; } .ds-mk-btn:active { transform: scale(0.97); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Village Ledger",
+    "overview": "ยายเภา is a farm-ops notebook that should feel like a produce stand's cash tray: crisp, scanable, and green without becoming a nature illustration. The world is neighborly in material and color, then tightened into dashboard density — large tap targets, tabular numbers, short Thai labels, white trays over a mint wash. Personality lives in Young Rice, Mali display type, and the capsule commit. The rest of the chrome stays quiet so a grower can read income, cost, and profit in one glance.\n\nThe product has two registers that share a leaf family and must not be blended into a third look. The app is Operate: Washed Cloth field, white 22px trays, Young Rice pills, a fixed footer. The marketing site is Persuade: cream paper, deeper forest leaf, Mali headlines, a 1120px editorial shell. New app screens inherit the Operate register. New marketing surfaces inherit the Persuade register. Do not split the difference.\n\nConfirmed visual rejections: corporate-fintech navy-and-graphite, gray drop shadows, and a third type family. Google Sans is loaded and unused — leave it that way.",
+    "keyCharacteristics": [
+      "Young Rice as the single operational accent (income, commit, active)",
+      "Washed Cloth field with white trays, never a full-bleed white app",
+      "Sarabun for work, Mali for display and greeting",
+      "Full-pill actions with a firm tap (scale 0.99 / 0.96)",
+      "Ambient canopy glow tinted with Young Rice",
+      "Income / expense as the only data-color binary",
+      "Page tones (pink / blue / purple) as header accents only"
+    ],
+    "rules": [
+      { "name": "The Young Rice Rule", "body": "Young Rice is income, commit, and the active voice. It should occupy a minority of any screen. If a layout needs more green, use Washed Cloth and Young Rice Soft — not more filled pills.", "section": "colors" },
+      { "name": "The Ledger Binary Rule", "body": "Money has two colors: Young Rice for in, Chili for out. Do not invent a third amount color. Balance follows income.", "section": "colors" },
+      { "name": "The Ledger Pair Rule", "body": "Sarabun carries the work. Mali is for greetings and marketing display. Do not introduce a third family. Do not set app body in Mali.", "section": "typography" },
+      { "name": "The Phone-First Tray Rule", "body": "Work lives on white trays inside the 1080 column over Washed Cloth. Do not full-bleed white. Do not desktop-app the Operate register into a 12-column dashboard.", "section": "layout" },
+      { "name": "The Canopy Glow Rule", "body": "Shadows are tinted Young Rice (or Chili on spend). Never gray. Never cool blue. A leftover blue sheet shadow in the shared BottomSheet default is drift — new sheets use canopy rest.", "section": "elevation" },
+      { "name": "The Capsule Commit Rule", "body": "If the control spends money, saves a cycle, or filters the ledger, it is a pill. Do not square primary actions. Do not put 8px Material radius on a tray.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do sit work on white 22px trays over Washed Cloth.",
+      "Do make commit actions full capsules with a Young Rice Edge rim and a canopy bead.",
+      "Do keep Sarabun on app chrome and Mali on display / greeting only.",
+      "Do tint every rest shadow with Young Rice; tint spend shadows with Chili.",
+      "Do keep income / expense as the only amount colors.",
+      "Do hold the app to a 1080 column and sheets to 420.",
+      "Do keep tap targets at 44–48px and honor safe-area insets."
+    ],
+    "donts": [
+      "Don't introduce a third type family or set app body in Mali.",
+      "Don't use gray, graphite, or cool-blue drop shadows.",
+      "Don't promote page-tone pink / blue / purple into buttons or brand marks.",
+      "Don't square off primary actions or use 8px Material radius on trays.",
+      "Don't flood a screen with Young Rice fill — Soft and Cloth do the field.",
+      "Don't mix marketing Leaf Deep into the app shell, or Young Rice pills into the landing hero.",
+      "Don't treat unused Google Sans, marketing eyebrows, or Lucide marks as house style to copy."
+    ]
+  }
+}

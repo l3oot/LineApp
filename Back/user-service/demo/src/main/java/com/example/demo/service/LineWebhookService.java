@@ -20,6 +20,7 @@ import com.example.demo.dto.req.LineWebhookReq;
 import com.example.demo.exception.ApiException;
 import com.example.demo.dto.req.TransactionCreateReq;
 import com.example.demo.dto.res.LineProfileRes;
+import com.example.demo.dto.res.AiChatRes;
 import com.example.demo.dto.res.AiParseRes;
 import com.example.demo.dto.res.TransactionRes;
 import com.example.demo.entity.UserEntity;
@@ -32,23 +33,13 @@ import com.example.demo.util.AppTime;
  *
  * <ol>
  * <li>upsert UserEntity ตาม LINE userId (source.userId → user_sub)</li>
- * <li>เรียก ai-service /parse?text=&userId= → AiParseRes</li>
- * <li>{@code structured_ok=true} → map → insert ลง public.transaction → ส่ง
- * Flex Message</li>
- * <li>มี {@code message} (ยายตอบ) → reply ข้อความนั้นกลับ</li>
+ * <li>เรียก ai-service POST /chat (API Registry + tool calling)</li>
+ * <li>action {@code create_transaction} → insert + Flex Message</li>
+ * <li>มี {@code reply_text} → reply ข้อความนั้นกลับ</li>
  * <li>error → reply fallback</li>
  * </ol>
  *
- * Mapping AI → transaction:
- * <pre>
- *   user_id     ← UserEntity.userId (lookup จาก source.userId)
- *   cycle_id    ← data.cycleId
- *   category_id ← data.categoryId
- *   tx_type     ← data.type    (expense | income)
- *   amount      ← data.price
- *   note        ← data.main
- *   tx_date     ← event timestamp (Asia/Bangkok)
- * </pre>
+ * ยังคง local handlers: postback delete, Edit transaction, เมนู "แนะนำ"
  *
  * วิ่งบน {@code lineWebhookExecutor} เพื่อไม่ block response 200 ที่ต้องตอบ
  * LINE ทันที
@@ -70,9 +61,6 @@ public class LineWebhookService {
     private final TransactionService transactionService;
     private final LineTransactionNotifyService lineTransactionNotifyService;
     private final LineProperties lineProperties;
-    private final LineWeatherBriefService lineWeatherBriefService;
-    private final LineAgriPriceService lineAgriPriceService;
-    private final LineCycleSummaryService lineCycleSummaryService;
 
     public LineWebhookService(
             UserRepository userRepository,
@@ -81,10 +69,7 @@ public class LineWebhookService {
             LineFlexMessageBuilder lineFlexMessageBuilder,
             TransactionService transactionService,
             LineTransactionNotifyService lineTransactionNotifyService,
-            LineProperties lineProperties,
-            LineWeatherBriefService lineWeatherBriefService,
-            LineAgriPriceService lineAgriPriceService,
-            LineCycleSummaryService lineCycleSummaryService) {
+            LineProperties lineProperties) {
         this.userRepository = userRepository;
         this.aiClientService = aiClientService;
         this.lineMessagingService = lineMessagingService;
@@ -92,9 +77,6 @@ public class LineWebhookService {
         this.transactionService = transactionService;
         this.lineTransactionNotifyService = lineTransactionNotifyService;
         this.lineProperties = lineProperties;
-        this.lineWeatherBriefService = lineWeatherBriefService;
-        this.lineAgriPriceService = lineAgriPriceService;
-        this.lineCycleSummaryService = lineCycleSummaryService;
     }
 
     @Async("lineWebhookExecutor")
@@ -161,104 +143,27 @@ public class LineWebhookService {
                 return;
             }
 
-            if ("สภาพอากาศ".equals(userText.trim())) {
-                try {
-                    long tUser0 = System.currentTimeMillis();
-                    UserEntity user = upsertUserBySub(userSub);
-                    long tUser = System.currentTimeMillis() - tUser0;
-                    long tAi0 = System.currentTimeMillis();
-                    String brief = lineWeatherBriefService.buildBrief(user.getUserId());
-                    long tAi = System.currentTimeMillis() - tAi0;
-                    long tReply0 = System.currentTimeMillis();
-                    lineMessagingService.reply(replyToken, brief);
-                    log.info(
-                            "[ai-latency] hop=user reqId={} action=done intent=weather lineUser={} upsertMs={} workMs={} replyMs={} totalMs={}",
-                            reqId, userSub, tUser, tAi, System.currentTimeMillis() - tReply0,
-                            System.currentTimeMillis() - t0);
-                } catch (Exception e) {
-                    log.error("[ai-latency] hop=user reqId={} action=fail intent=weather lineUser={} elapsedMs={} error={}",
-                            reqId, userSub, System.currentTimeMillis() - t0, e.getMessage(), e);
-                    lineMessagingService.reply(replyToken, "🌦️ ยายยังดึงอากาศไม่ได้ตอนนี้ ลองพิมพ์ สภาพอากาศ อีกครั้งนะจ๊ะ");
-                }
-                return;
-            }
-
-            if (LineCycleSummaryService.isSummaryRequest(userText)) {
-                try {
-                    long tUser0 = System.currentTimeMillis();
-                    UserEntity user = upsertUserBySub(userSub);
-                    long tUser = System.currentTimeMillis() - tUser0;
-                    long tAi0 = System.currentTimeMillis();
-                    String summary = lineCycleSummaryService.buildReply(user.getUserId(), userText);
-                    long tAi = System.currentTimeMillis() - tAi0;
-                    long tReply0 = System.currentTimeMillis();
-                    lineMessagingService.reply(replyToken, summary);
-                    log.info(
-                            "[ai-latency] hop=user reqId={} action=done intent=cycle-summary lineUser={} upsertMs={} workMs={} replyMs={} totalMs={}",
-                            reqId, userSub, tUser, tAi, System.currentTimeMillis() - tReply0,
-                            System.currentTimeMillis() - t0);
-                } catch (Exception e) {
-                    log.error("[ai-latency] hop=user reqId={} action=fail intent=cycle-summary lineUser={} elapsedMs={} error={}",
-                            reqId, userSub, System.currentTimeMillis() - t0, e.getMessage(), e);
-                    lineMessagingService.reply(replyToken, LineCycleSummaryService.FALLBACK_REPLY);
-                }
-                return;
-            }
-
-            if (userText.contains("ราคา")) {
-                try {
-                    long tAi0 = System.currentTimeMillis();
-                    String priceReply = lineAgriPriceService.tryBuildReply(userText);
-                    long tAi = System.currentTimeMillis() - tAi0;
-                    if (LineAgriPriceService.ASK_NAME_REPLY.equals(priceReply)) {
-                        long tReply0 = System.currentTimeMillis();
-                        lineMessagingService.replyFlex(
-                                replyToken,
-                                "ลองพิมพ์ถามยายได้เลย เช่น ราคา ข้าว",
-                                lineFlexMessageBuilder.buildPriceHelpContents());
-                        log.info(
-                                "[ai-latency] hop=user reqId={} action=done intent=price-help lineUser={} workMs={} replyMs={} totalMs={}",
-                                reqId, userSub, tAi, System.currentTimeMillis() - tReply0,
-                                System.currentTimeMillis() - t0);
-                        return;
-                    }
-                    if (priceReply != null) {
-                        long tReply0 = System.currentTimeMillis();
-                        lineMessagingService.reply(replyToken, priceReply);
-                        log.info(
-                                "[ai-latency] hop=user reqId={} action=done intent=price lineUser={} workMs={} replyMs={} totalMs={}",
-                                reqId, userSub, tAi, System.currentTimeMillis() - tReply0,
-                                System.currentTimeMillis() - t0);
-                        return;
-                    }
-                } catch (Exception e) {
-                    log.error("[ai-latency] hop=user reqId={} action=fail intent=price lineUser={} elapsedMs={} error={}",
-                            reqId, userSub, System.currentTimeMillis() - t0, e.getMessage(), e);
-                    lineMessagingService.reply(replyToken, "🥬 ยายยังดึงราคาไม่ได้ตอนนี้ ลองพิมพ์ ราคามะนาว อีกครั้งนะจ๊ะ");
-                    return;
-                }
-            }
-
             long tUser0 = System.currentTimeMillis();
             UserEntity user = upsertUserBySub(userSub);
             long tUser = System.currentTimeMillis() - tUser0;
 
             long tAi0 = System.currentTimeMillis();
-            AiParseRes parsed = aiClientService.parse(userText, user.getUserId());
+            AiChatRes chat = aiClientService.chat(userText, user.getUserId());
             long tAi = System.currentTimeMillis() - tAi0;
 
             long tSave0 = System.currentTimeMillis();
-            LineReply reply = decideReply(user, parsed, eventTs);
+            LineReply reply = decideChatReply(user, chat, eventTs);
             long tSave = System.currentTimeMillis() - tSave0;
 
             long tReply0 = System.currentTimeMillis();
             lineMessagingService.send(reply, replyToken);
             log.info(
-                    "[ai-latency] hop=user reqId={} action=done intent=parse lineUser={} upsertMs={} aiMs={} saveMs={} replyMs={} totalMs={}",
+                    "[ai-latency] hop=user reqId={} action=done intent=chat lineUser={} upsertMs={} aiMs={} saveMs={} replyMs={} tools={} totalMs={}",
                     reqId, userSub, tUser, tAi, tSave, System.currentTimeMillis() - tReply0,
+                    chat == null ? null : chat.tools_used(),
                     System.currentTimeMillis() - t0);
         } catch (Exception e) {
-            log.error("[ai-latency] hop=user reqId={} action=fail intent=parse lineUser={} elapsedMs={} error={}",
+            log.error("[ai-latency] hop=user reqId={} action=fail intent=chat lineUser={} elapsedMs={} error={}",
                     reqId, userSub, System.currentTimeMillis() - t0, e.getMessage(), e);
             lineMessagingService.reply(replyToken, "ยายขอโทษน้า ระบบขัดข้องชั่วคราว ลองใหม่อีกครั้งนะจ๊ะ");
         }
@@ -366,21 +271,29 @@ public class LineWebhookService {
     }
 
     /**
-     * ตัดสินว่าจะ reply อะไรกลับ LINE — และถ้า AI extract ได้ครบ ให้ insert
-     * transaction ที่นี่
+     * ตัดสิน reply จาก POST /chat — create_transaction ยัง persist ที่ Java
      */
-    private LineReply decideReply(UserEntity user, AiParseRes parsed, long timestampMs) {
-        if (parsed == null) {
+    private LineReply decideChatReply(UserEntity user, AiChatRes chat, long timestampMs) {
+        if (chat == null) {
             return LineReply.text("ยายขอโทษน้า ระบบขัดข้องชั่วคราว ลองใหม่อีกครั้งนะจ๊ะ");
         }
 
-        if (parsed.structured_ok() && parsed.data() != null) {
-            return insertTransactionAndBuildReply(user, parsed.data(), timestampMs);
+        if (chat.actions() != null) {
+            for (AiChatRes.Action action : chat.actions()) {
+                if (action == null || action.type() == null) {
+                    continue;
+                }
+                if ("create_transaction".equals(action.type())) {
+                    AiParseRes.Data data = AiChatRes.toParseData(action.payload());
+                    if (data != null) {
+                        return insertTransactionAndBuildReply(user, data, timestampMs);
+                    }
+                }
+            }
         }
 
-        // ai-service ตอบเป็นข้อความถาม (ยายตอบหลาน) — ใช้ตามนั้น
-        if (parsed.message() != null && !parsed.message().isBlank()) {
-            return LineReply.text(parsed.message());
+        if (chat.reply_text() != null && !chat.reply_text().isBlank()) {
+            return LineReply.text(chat.reply_text());
         }
 
         return LineReply.text("ยายขอโทษน้า ยายยังไม่เข้าใจ ช่วยพิมพ์ใหม่อีกครั้งนะจ๊ะ");

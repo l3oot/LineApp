@@ -1,120 +1,131 @@
 import { Link } from "react-router-dom";
-import { FaLandmark } from "react-icons/fa";
-import { LuClipboardList, LuCloudSun } from "react-icons/lu";
-import AssetPlaceholder from "../../components/marketing/AssetPlaceholder";
+import ChatDemo from "../../components/marketing/ChatDemo";
+import CycleDemo from "../../components/marketing/CycleDemo";
+import FeatureShowcases from "../../components/marketing/FeatureShowcases";
+import Reveal from "../../components/marketing/Reveal";
+import SummaryDemo from "../../components/marketing/SummaryDemo";
 import { appPath } from "../../lib/appPaths";
+import { LINE_ADD_FRIEND_URL } from "../../lib/lineOfficial";
 import heroBg from "../../assets/index/bg.png";
-import lineChat from "../../assets/index/line.png";
-import lineWeb from "../../assets/index/line1.png";
-import lineAi from "../../assets/index/line2.png";
+
+function LineMark() {
+    return (
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden>
+            <path d="M12 2C6.5 2 2 5.6 2 10c0 4 3.6 7.3 8.4 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6C21.6 13.3 22 11.7 22 10c0-4.4-4.5-8-10-8Z" />
+        </svg>
+    );
+}
 
 export default function MarketingHome() {
     return (
         <>
             <section
-                className="mk-hero mk-hero--bg"
+                className="mk-hero mk-hero--bg mk-stage mk-stage--hero"
                 style={{ ["--mk-hero-bg" as string]: `url(${heroBg})` }}
             >
                 <div className="mk-shell mk-hero__grid">
                     <div className="mk-hero__copy">
-                        <span className="mk-eyebrow">บัญชีฟาร์มบน LINE</span>
-                        <h1>
+                        <h1 className="mk-rise" style={{ ["--mk-rise-delay" as string]: "0.08s" }}>
                             ยายเภา
-                            <span className="mk-dim"> จดรายรับรายจ่ายง่าย ๆ รู้กำไรต่อรอบปลูก</span>
                         </h1>
-                        <p className="mk-hero__lead">
-                            พิมพ์บอกยายเหมือนแชทเพื่อน หรือเปิดเว็บดูสรุป — แยกหมวด ติดตามต้นทุน
-                            และเห็นผลกำไรจริงของแต่ละรอบการเกษตร
+                        <p
+                            className="mk-hero__offer mk-rise"
+                            style={{ ["--mk-rise-delay" as string]: "0.2s" }}
+                        >
+                            จดรายรับรายจ่ายเกษตรง่าย ๆ รู้กำไรต่อรอบปลูก
                         </p>
-                        <div className="mk-hero__cta">
-                            <Link to={appPath()} className="mk-btn mk-btn--primary mk-btn--lg">
-                                เริ่มใช้งานเว็บ
-                            </Link>
+                        <p
+                            className="mk-hero__lead mk-rise"
+                            style={{ ["--mk-rise-delay" as string]: "0.32s" }}
+                        >
+                            ยายเภาช่วยจดรายรับรายจ่ายเกษตรผ่าน LINE หรือเปิดเว็บดูสรุป — แยกหมวด
+                            ติดตามต้นทุน และเห็นผลกำไรจริงของแต่ละรอบปลูก
+                        </p>
+                        <div
+                            className="mk-hero__cta mk-rise"
+                            style={{ ["--mk-rise-delay" as string]: "0.44s" }}
+                        >
                             <a
-                                href="#features"
-                                className="mk-btn mk-btn--ghost mk-btn--lg"
+                                href={LINE_ADD_FRIEND_URL}
+                                className="mk-btn mk-btn--line mk-btn--lg"
+                                target="_blank"
+                                rel="noopener noreferrer"
                             >
-                                ดูฟีเจอร์
+                                <LineMark />
+                                เพิ่มเพื่อน
                             </a>
                         </div>
-                        <div className="mk-stats" aria-label="จุดเด่น">
-                            <div>
-                                <div className="mk-stat__value">รอบปลูก</div>
-                                <div className="mk-stat__label">แยกรายรับ-ต้นทุนต่อรอบ</div>
-                            </div>
-                            <div>
-                                <div className="mk-stat__value">LINE</div>
-                                <div className="mk-stat__label">จดได้จากแชททุกวัน</div>
-                            </div>
-                            <div>
-                                <div className="mk-stat__value">AI</div>
-                                <div className="mk-stat__label">สรุปเงินหายไปไหน</div>
-                            </div>
-                        </div>
                     </div>
+
+                    <div
+                        className="mk-hero__proof mk-rise"
+                        style={{ ["--mk-rise-delay" as string]: "0.36s" }}
+                    >
+                        <ChatDemo />
+                    </div>
+                </div>
+
+                <a href="#features" className="mk-scroll-cue">
+                    เลื่อนลงเพื่อดูต่อ
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                        <path d="M6 9l6 6 6-6" />
+                    </svg>
+                </a>
+                <div className="mk-wave" aria-hidden>
+                    <svg viewBox="0 0 1440 72" preserveAspectRatio="none">
+                        <path d="M0,72 L0,28 C240,56 480,8 720,28 C960,48 1200,12 1440,32 L1440,72 Z" />
+                    </svg>
                 </div>
             </section>
 
-            <section id="features" className="mk-section">
-                <div className="mk-shell">
-                    <div className="mk-section__head">
-                        <h2>จดบัญชีฟาร์มได้หลายทาง</h2>
+            <section id="features" className="mk-section mk-stage mk-stage--paper mk-anchor">
+                <div className="mk-shell mk-stack mk-stack--section">
+                    <Reveal className="mk-section__head mk-section__head--center">
+                        <h2>จดรายรับรายจ่ายเกษตรได้หลายทาง</h2>
                         <p>
-                            เลือกวิธีที่เข้ากับงานในแปลง — พิมพ์บน LINE เปิดเว็บดูสรุป
+                            เลือกวิธีที่เข้ากับงานในแปลง — พิมพ์บน LINE ให้ยายเภาจดให้ เปิดเว็บดูสรุป
                             หรือดูราคาและอากาศประกอบการตัดสินใจ
                         </p>
-                    </div>
+                    </Reveal>
 
-                    <div className="mk-feature-grid">
-                        <article className="mk-feature">
-                            <span className="mk-feature__index">1</span>
-                            <h3>พิมพ์เหมือนคุยยาย</h3>
-                            <p>ส่งข้อความสั้น ๆ เช่น “ซื้อปุ๋ย 1200” แล้วยายจดและแยกหมวดให้</p>
-                        </article>
-                        <article className="mk-feature">
-                            <span className="mk-feature__index">2</span>
-                            <h3>ดูกำไรต่อรอบปลูก</h3>
-                            <p>รายรับลบต้นทุนต่อรอบ — รู้ว่ารอบไหนคุ้ม และเงินรั่วตรงไหน</p>
-                        </article>
-                        <article className="mk-feature">
-                            <span className="mk-feature__index">3</span>
-                            <h3>ราคาอากาศติดมือ</h3>
-                            <p>เช็คราคาสินค้าเกษตร พยากรณ์อากาศ และเบอร์หน่วยงาน ในแอปเดียวกัน</p>
-                        </article>
-                    </div>
+                    <ol className="mk-steps">
+                        <Reveal as="li" className="mk-step mk-step--peak" delay={40}>
+                            <span className="mk-step__n" aria-hidden>
+                                1
+                            </span>
+                            <div className="mk-step__body">
+                                <h3>พิมพ์เหมือนคุยยาย</h3>
+                                <p>ส่งข้อความสั้น ๆ เช่น “ซื้อปุ๋ย 1200” แล้วยายจดและแยกหมวดให้</p>
+                            </div>
+                        </Reveal>
+                        <Reveal as="li" className="mk-step" delay={100}>
+                            <span className="mk-step__n" aria-hidden>
+                                2
+                            </span>
+                            <div className="mk-step__body">
+                                <h3>ดูกำไรต่อรอบปลูก</h3>
+                                <p>รายรับลบต้นทุนต่อรอบ — รู้ว่ารอบไหนคุ้ม และเงินรั่วตรงไหน</p>
+                            </div>
+                        </Reveal>
+                        <Reveal as="li" className="mk-step" delay={160}>
+                            <span className="mk-step__n" aria-hidden>
+                                3
+                            </span>
+                            <div className="mk-step__body">
+                                <h3>ราคาอากาศติดมือ</h3>
+                                <p>เช็คราคาสินค้าเกษตร พยากรณ์อากาศ และเบอร์หน่วยงาน ในแอปเดียวกัน</p>
+                            </div>
+                        </Reveal>
+                    </ol>
                 </div>
             </section>
 
-            <section className="mk-section mk-section--tight">
-                <div className="mk-shell" style={{ display: "grid", gap: "3rem" }}>
-                    <div className="mk-split">
-                        <AssetPlaceholder
-                            aspect="auto"
-                            src={lineChat}
-                            label="ตัวอย่างแชทจดรายการกับยายเภาบน LINE"
-                        />
+            <section className="mk-stage mk-stage--story mk-stage--paper" aria-labelledby="story-web">
+                <div className="mk-shell">
+                    <Reveal className="mk-split mk-split--flip">
+                        <CycleDemo />
                         <div className="mk-split__copy">
-                            <h3>จดบน LINE ไม่ต้องเปิดแอปหลายตัว</h3>
-                            <p>
-                                อยู่แปลงหรืออยู่บ้าน ก็พิมพ์บอกยายได้ทันที
-                                เหมาะกับพฤติกรรมที่ใช้ LINE อยู่แล้วทุกวัน
-                            </p>
-                            <ul className="mk-list">
-                                <li>จดรายรับ-รายจ่ายด้วยข้อความ</li>
-                                <li>แยกหมวดอัตโนมัติตามบริบทฟาร์ม</li>
-                                <li>กลับมาดูสรุปบนเว็บเมื่อพร้อม</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div className="mk-split mk-split--flip">
-                        <AssetPlaceholder
-                            aspect="auto"
-                            src={lineWeb}
-                            label="สรุปรอบปลูกและกำไรจริงบนเว็บยายเภา"
-                        />
-                        <div className="mk-split__copy">
-                            <h3>เว็บสรุปให้เห็นภาพรวมชัด</h3>
+                            <h3 id="story-web">เว็บสรุปให้เห็นภาพรวมชัด</h3>
                             <p>
                                 เปิดดูรายการ กราฟ และรอบการเกษตรได้เต็มจอ
                                 ส่งออกข้อมูลต่อเมื่อต้องการวิเคราะห์เอง
@@ -125,69 +136,57 @@ export default function MarketingHome() {
                                 <li>Export Excel / PDF</li>
                             </ul>
                         </div>
-                    </div>
+                    </Reveal>
+                </div>
+            </section>
 
-                    <div className="mk-split">
-                        <AssetPlaceholder
-                            aspect="auto"
-                            src={lineAi}
-                            label="ยายสรุปด้วย AI — บอกว่าเงินหายไปไหน"
-                        />
+            <section className="mk-stage mk-stage--story" aria-labelledby="story-ai">
+                <div className="mk-shell">
+                    <Reveal className="mk-split">
+                        <SummaryDemo />
                         <div className="mk-split__copy">
-                            <h3>ยายช่วยสรุปว่าเงินหายไปไหน</h3>
+                            <h3 id="story-ai">ยายช่วยสรุปว่าเงินหายไปไหน</h3>
                             <p>
                                 ไม่ใช่แค่จดตัวเลข — ได้คำอธิบายสั้น ๆ ว่าต้นทุนไหนสูง
                                 และรอบนี้ผลเป็นอย่างไร
                             </p>
                         </div>
-                    </div>
+                    </Reveal>
                 </div>
             </section>
 
-            <section className="mk-section">
+            <section
+                id="all-features"
+                className="mk-section mk-stage mk-stage--paper"
+                aria-labelledby="all-features-title"
+            >
+                <div className="mk-shell mk-stack mk-stack--section">
+                    <Reveal className="mk-section__head mk-section__head--center">
+                        <h2 id="all-features-title">ทุกอย่างที่ยายเภาทำได้</h2>
+                        <p>เลือกฟีเจอร์ทางซ้าย แล้วดูตัวอย่างหน้าจอในแอปทางขวา</p>
+                    </Reveal>
+                    <Reveal delay={60}>
+                        <FeatureShowcases />
+                    </Reveal>
+                </div>
+            </section>
+
+            <section className="mk-stage mk-stage--cta">
                 <div className="mk-shell">
-                    <div className="mk-section__head">
-                        <h2>เครื่องมือคู่ใจชาวนา</h2>
-                        <p>นอกจากบัญชี ยายเภาช่วยเรื่องที่ต้องรู้ก่อนตัดสินใจในแต่ละวัน</p>
-                    </div>
-                    <div className="mk-feature-grid">
-                        <article className="mk-feature">
-                            <span className="mk-feature__icon" aria-hidden>
-                                <LuClipboardList size={22} />
-                            </span>
-                            <h3>ราคาสินค้าเกษตร</h3>
-                            <p>ดูราคารายวันจากแหล่งข้อมูลกลาง ก่อนตัดสินใจขาย</p>
-                        </article>
-                        <article className="mk-feature">
-                            <span className="mk-feature__icon mk-feature__icon--sky" aria-hidden>
-                                <LuCloudSun size={22} />
-                            </span>
-                            <h3>พยากรณ์อากาศ</h3>
-                            <p>วางแผนฉีดพ่น เก็บเกี่ยว หรือเลื่อนงานตามสภาพอากาศ</p>
-                        </article>
-                        <article className="mk-feature">
-                            <span className="mk-feature__icon mk-feature__icon--pink" aria-hidden>
-                                <FaLandmark size={20} />
-                            </span>
-                            <h3>ติดต่อหน่วยงาน</h3>
-                            <p>เบอร์สายด่วนและหน่วยงานเกษตร รวมไว้ที่เดียว</p>
-                        </article>
-                    </div>
-                </div>
-            </section>
-
-            <section className="mk-shell">
-                <div className="mk-cta-band">
-                    <h2>เริ่มจดกับยายเภาวันนี้</h2>
-                    <p>เห็นว่าเงินในฟาร์มไปไหน และกำไรต่อรอบปลูกเป็นเท่าไร</p>
-                    <div className="mk-hero__cta" style={{ justifyContent: "center" }}>
-                        <Link to={appPath()} className="mk-btn mk-btn--primary mk-btn--lg">
-                            เข้าใช้งานเว็บ
-                        </Link>
-                        <Link to="/about" className="mk-btn mk-btn--ghost mk-btn--lg">
-                            รู้จักยายเภา
-                        </Link>
-                    </div>
+                    <Reveal>
+                        <div className="mk-cta-band">
+                            <h2>เริ่มจดรายรับรายจ่ายเกษตรกับยายเภาวันนี้</h2>
+                            <p>เห็นว่าเงินในฟาร์มไปไหน และกำไรต่อรอบปลูกเป็นเท่าไร</p>
+                            <div className="mk-hero__cta mk-cta-band__actions">
+                                <Link to={appPath()} className="mk-btn mk-btn--primary mk-btn--lg">
+                                    เข้าใช้งานเว็บ
+                                </Link>
+                                <Link to="/about" className="mk-btn mk-btn--ghost mk-btn--lg">
+                                    รู้จักยายเภา
+                                </Link>
+                            </div>
+                        </div>
+                    </Reveal>
                 </div>
             </section>
         </>

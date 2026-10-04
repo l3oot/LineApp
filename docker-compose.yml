@@ -71,6 +71,7 @@ services:
       LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN}
       LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET}
       AI_PARSE_PATH: ${AI_PARSE_PATH}
+      AI_CHAT_PATH: "${AI_CHAT_PATH:-/chat}"
       AI_WEATHER_WARNING_PATH: "${AI_WEATHER_WARNING_PATH:-/weather-warning/summarize}"
       AI_WEATHER_BRIEF_PATH: "${AI_WEATHER_BRIEF_PATH:-/weather-brief/summarize}"
       AI_AGRI_PRICE_EXTRACT_PATH: "${AI_AGRI_PRICE_EXTRACT_PATH:-/agri-price/extract}"
@@ -78,6 +79,7 @@ services:
       AI_AGRI_PRICE_BRIEF_PATH: "${AI_AGRI_PRICE_BRIEF_PATH:-/agri-price/summarize}"
       AI_CYCLE_SUMMARY_PATH: "${AI_CYCLE_SUMMARY_PATH:-/cycle-summary/summarize}"
       AI_TIMEOUT_SECONDS: ${AI_TIMEOUT_SECONDS}
+      AI_INTERNAL_KEY: ${AI_INTERNAL_KEY}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
       FILE_STORAGE_BASE_URL: ${FILE_STORAGE_BASE_URL}
@@ -111,6 +113,9 @@ services:
       WATCHFILES_FORCE_POLLING: ${WATCHFILES_FORCE_POLLING}
       api_key_openai: ${api_key_openai}
       api_key_thaillm: ${api_key_thaillm}
+      AI_INTERNAL_KEY: ${AI_INTERNAL_KEY}
+      ORCHESTRATOR_MAX_TOOL_ROUNDS: "${ORCHESTRATOR_MAX_TOOL_ROUNDS:-3}"
+      GATEWAY_HTTP_TIMEOUT_SECONDS: "${GATEWAY_HTTP_TIMEOUT_SECONDS:-20}"
       LOG_FILE: ${AI_LOG_FILE:-/app/logs/ai-service.log}
     extra_hosts:
       - "host.docker.internal:host-gateway"

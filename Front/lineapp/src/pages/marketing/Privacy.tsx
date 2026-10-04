@@ -1,13 +1,16 @@
 import { Link } from "react-router-dom";
+import Reveal from "../../components/marketing/Reveal";
 
 export default function PrivacyPage() {
     return (
-        <div className="mk-content">
+        <div className="mk-content mk-content--legal">
             <div className="mk-shell">
-                <h1 className="mk-content__title">นโยบายความเป็นส่วนตัว</h1>
-                <p className="mk-content__meta">อัปเดตล่าสุด: 23 กันยายน 2569 — เอกสารฉบับร่างสำหรับหน้าเว็บ</p>
+                <Reveal as="header" className="mk-content__mast">
+                    <h1 className="mk-content__title">นโยบายความเป็นส่วนตัว</h1>
+                    <p className="mk-content__meta">อัปเดตล่าสุด: 23 กันยายน 2569 — เอกสารฉบับร่างสำหรับหน้าเว็บ</p>
+                </Reveal>
 
-                <article className="mk-prose">
+                <Reveal as="article" className="mk-prose mk-ledger-paper" delay={60}>
                     <p>
                         นโยบายนี้ อธิบายว่า <strong>ยายเภา</strong> เก็บ ใช้ และคุ้มครองข้อมูลส่วนบุคคลของคุณอย่างไร
                         เมื่อใช้เว็บไซต์ แอป หรือบริการผ่าน LINE
@@ -63,7 +66,7 @@ export default function PrivacyPage() {
                         หากมีคำถามเรื่องความเป็นส่วนตัว ติดต่อเราได้ที่หน้า{" "}
                         <Link to="/contact">ติดต่อเรา</Link>
                     </p>
-                </article>
+                </Reveal>
             </div>
         </div>
     );
