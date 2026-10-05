@@ -93,6 +93,7 @@ def search_tools(query: str, *, limit: int = 6) -> list[RegistryEntry]:
             "parse_expense",
             "get_weather_forecast",
             "search_agri_prices",
+            "list_agri_products",
             "list_transactions",
             "list_cycles",
         }

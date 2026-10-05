@@ -28,6 +28,14 @@ _UNVERIFIED_SAVE_REPLY = (
     "ถ้าจะจดรายจ่าย พิมพ์แบบ ซื้อปุ๋ยข้าวโพด 500 บาท นะจ๊ะ"
 )
 
+# คำถามขอรายชื่อสินค้าที่มีราคา — ไม่ใช่ถามราคาของสินค้าชิ้นเดียว
+_LIST_AGRI_PRODUCTS = re.compile(
+    r"(?:รายการสินค้า|รายชื่อสินค้า|สินค้าที่มีราคา|คลังสินค้า|"
+    r"มีสินค้า(?:อะไร|ไหน)?บ้าง|สินค้า(?:อะไร|ไหน)?บ้าง|"
+    r"สินค้ามีอะไรบ้าง|ดู(?:รายการ)?สินค้า|"
+    r"มีรายการ(?:สินค้า)?อะไรบ้าง)"
+)
+
 
 @dataclass(frozen=True)
 class RouteDecision:
@@ -67,6 +75,20 @@ def classify_record_intent(message: str) -> RouteDecision | None:
         confidence=0.99 if has_baht else 0.95,
         source="rule",
         reason="verb+amount_baht" if has_baht else "verb+amount",
+    )
+
+
+def classify_list_agri_products_intent(message: str) -> RouteDecision | None:
+    """ถ้าถามรายชื่อสินค้าที่มีราคา คืน route ไป list_agri_products"""
+    text = (message or "").strip()
+    if not text or not _LIST_AGRI_PRODUCTS.search(text):
+        return None
+    return RouteDecision(
+        intent="lookup",
+        tool_name="list_agri_products",
+        confidence=0.96,
+        source="rule",
+        reason="list_agri_products",
     )
 
 

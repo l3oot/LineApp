@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import unittest
 
-from src.prompts.orchestrator import build_tool_select_prompt, format_history_transcript
+from src.prompts.orchestrator import (
+    build_summarize_prompt,
+    build_tool_select_prompt,
+    format_history_transcript,
+)
 
 
 class HistoryPromptTests(unittest.TestCase):
@@ -35,6 +39,15 @@ class HistoryPromptTests(unittest.TestCase):
         self.assertIn("อากาศอยุธยา", prompt)
         self.assertIn("แล้วพรุ่งนี้ล่ะ", prompt)
         self.assertIn("ห้ามเรียก parse_expense แค่เพราะประวัติเคยบันทึก", prompt)
+
+    def test_summarize_requires_data_date(self) -> None:
+        prompt = build_summarize_prompt(
+            "ราคามะนาว",
+            "search_agri_prices",
+            {"productName": "มะนาว", "dateKey": "2026-10-05"},
+        )
+        self.assertIn("ต้องบอกวันที่ของข้อมูลชัดเจน", prompt)
+        self.assertIn("ห้ามใช้แค่คำว่า วันนี้ โดยไม่มีวันที่", prompt)
 
 
 if __name__ == "__main__":

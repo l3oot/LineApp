@@ -10,6 +10,7 @@ from src.dto.chat import ChatAction, ChatResponse, ChatTurn
 from src.gateway.api_gateway import GatewayError, execute_tool
 from src.orchestrator.intent_rules import (
     RouteDecision,
+    classify_list_agri_products_intent,
     classify_record_intent,
     sanitize_unverified_save,
 )
@@ -29,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 _FALLBACK_REPLY = "ยายขอโทษน้า ยายยังไม่เข้าใจ ช่วยพิมพ์ใหม่อีกครั้งนะจ๊ะ"
 _REPLY_CHAT = "reply_chat"
+_LIST_AGRI_PRODUCTS_TOOL = "list_agri_products"
+_PRODUCT_LIST_LIMIT = 40
 
 _ROUTER_SYSTEM = f"{SYSTEM_PERSONA}\n\n{TOOL_ROUTER_RULES}"
 
@@ -89,6 +92,29 @@ def _tools_for_prompt(entries: list[RegistryEntry]) -> list[dict[str, Any]]:
         }
     )
     return out
+
+
+def _unwrap_string_list(data: Any) -> list[str]:
+    if isinstance(data, list):
+        return [str(item).strip() for item in data if str(item).strip()]
+    if isinstance(data, dict):
+        inner = data.get("data")
+        if isinstance(inner, list):
+            return [str(item).strip() for item in inner if str(item).strip()]
+    return []
+
+
+def _format_agri_product_list(data: Any) -> str:
+    names = _unwrap_string_list(data)
+    if not names:
+        return "ตอนนี้ยายยังดึงรายการสินค้าไม่ได้จ๊ะ ลองใหม่อีกครั้งนะจ๊ะ"
+    shown = names[:_PRODUCT_LIST_LIMIT]
+    lines = [f"🥬 รายการสินค้าที่มีราคา มี {len(names)} รายการนะจ๊ะ"]
+    lines.extend(f"• {name}" for name in shown)
+    if len(names) > _PRODUCT_LIST_LIMIT:
+        lines.append(f"…และอีก {len(names) - _PRODUCT_LIST_LIMIT} รายการ")
+    lines.append("ถ้าอยากดูราคา พิมพ์ เช่น ราคามะนาว นะจ๊ะ")
+    return "\n".join(lines)
 
 
 def _history_as_dicts(history: list[ChatTurn] | list[dict[str, Any]] | None) -> list[dict[str, Any]]:
@@ -224,6 +250,9 @@ def _finish_tool(
         )
     data = result.get("data")
 
+    if tool_name == _LIST_AGRI_PRODUCTS_TOOL:
+        return _chat_reply(_format_agri_product_list(data), decision, tools_used, source_model)
+
     if tool_name == "parse_expense":
         action = _extract_create_action(data)
         if action is not None:
@@ -284,6 +313,20 @@ def run_tool_loop(
             user_message,
             user_id,
             rule,
+            [],
+            "rule",
+            history=history_dicts,
+        )
+
+    list_rule = classify_list_agri_products_intent(user_message)
+    if list_rule is not None:
+        _log_route(list_rule, user_message, context_msgs)
+        return _finish_tool(
+            _LIST_AGRI_PRODUCTS_TOOL,
+            {},
+            user_message,
+            user_id,
+            list_rule,
             [],
             "rule",
             history=history_dicts,
