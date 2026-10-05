@@ -7,12 +7,10 @@ const CROP = {
     title: "ข้าวโพด",
     statusLabel: "กำไร",
     range: "ก.ย. – ธ.ค. 2569",
-    daysLeft: "จะถึงใน 42 วัน",
-    capital: "50,000",
-    income: "18,500",
-    expense: "22,000",
-    remaining: "46,500",
-    usedPct: 44,
+    income: "22,000",
+    expense: "18,500",
+    remaining: "3,500",
+    usedPct: 84,
     barColor: "#25A247",
 } as const;
 
@@ -22,7 +20,7 @@ export default function CycleDemo() {
             <div className="mk-cycle-demo__phone">
                 <div className="mk-cycle-demo__add" aria-hidden>
                     <span className="mk-cycle-demo__add-icon">+</span>
-                    <span>เพิ่มพืช</span>
+                    <span>เพิ่มการเกษตร</span>
                 </div>
 
                 <div className="mk-cycle-demo__list">
@@ -38,20 +36,21 @@ export default function CycleDemo() {
                                 </span>
                                 <p className="mk-cycle-demo__meta">
                                     <span>{CROP.range}</span>
-                                    <span>{CROP.daysLeft}</span>
                                 </p>
                             </div>
                         </div>
 
                         <div className="mk-cycle-demo__stats">
                             <div className="mk-cycle-demo__stat">
-                                <span className="mk-cycle-demo__stat-label">ทุน</span>
-                                <span className="mk-cycle-demo__stat-value">{CROP.capital}</span>
+                                <span className="mk-cycle-demo__stat-label">รายรับ</span>
+                                <span className="mk-cycle-demo__stat-value mk-cycle-demo__stat-value--income">
+                                    {CROP.income}
+                                </span>
                             </div>
-                            <div className="mk-cycle-demo__stat mk-cycle-demo__stat--wide">
-                                <span className="mk-cycle-demo__stat-label">รับ / จ่าย</span>
-                                <span className="mk-cycle-demo__stat-value">
-                                    {CROP.income} / {CROP.expense}
+                            <div className="mk-cycle-demo__stat">
+                                <span className="mk-cycle-demo__stat-label">รายจ่าย</span>
+                                <span className="mk-cycle-demo__stat-value mk-cycle-demo__stat-value--expense">
+                                    {CROP.expense}
                                 </span>
                             </div>
                             <div className="mk-cycle-demo__stat">

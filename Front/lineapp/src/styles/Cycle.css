@@ -98,19 +98,6 @@
     white-space: nowrap;
 }
 
-.cycle-card-datecomein {
-    width: auto;
-    margin: 0.125rem 0 0 0.4rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    white-space: nowrap;
-    color: var(--text-soft);
-}
-
-.cycle-card-datecomein--overdue {
-    color: #e53935;
-}
-
 .cycle-card-actions {
     position: absolute;
     top: 0;
@@ -177,7 +164,7 @@
 
 .cycle-card-stats {
     display: grid;
-    grid-template-columns: 0.9fr 1.5fr 0.9fr 0.9fr;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0;
     margin-top: 0.875rem;
     border: none;
@@ -251,24 +238,20 @@
     color: #2d6fbe;
 }
 
-.cycle-stat-value--flow {
-    color: var(--danger);
+.cycle-stat-value--income {
+    color: var(--income);
+}
+
+.cycle-stat-value--expense {
+    color: var(--expense);
 }
 
 .cycle-stat-value--remaining {
     color: var(--balance);
 }
 
-.cycle-stat--income-expense {
-    padding-left: 0.375rem;
-    padding-right: 0.375rem;
-}
-
-.cycle-stat--income-expense .cycle-stat-label {
-    white-space: nowrap;
-}
-
-.cycle-stat--income-expense .cycle-stat-value--flow {
+.cycle-stat-value--income,
+.cycle-stat-value--expense {
     font-size: 0.75rem;
     white-space: nowrap;
 }
@@ -722,38 +705,6 @@
     text-align: center;
     font-size: 0.875rem;
     color: var(--text-soft);
-}
-
-.cycle-detail-list-title {
-    margin: 0 0 0.75rem;
-    font-size: 1rem;
-    font-weight: 800;
-    color: var(--text);
-}
-
-.cycle-detail-list.list-page {
-    gap: 0.75rem;
-}
-
-.cycle-detail-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    margin-top: 0.25rem;
-}
-
-.cycle-detail-pagination-label {
-    min-width: 4.5rem;
-    text-align: center;
-    font-size: 0.8125rem;
-    font-weight: 700;
-    color: var(--text-soft);
-}
-
-.cycle-detail-pagination .pill-control:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
 }
 
 @media (max-width: 380px) {

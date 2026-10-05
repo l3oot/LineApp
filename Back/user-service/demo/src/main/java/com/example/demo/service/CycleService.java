@@ -1,6 +1,5 @@
 package com.example.demo.service;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
@@ -15,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.dto.req.CycleCreateReq;
 import com.example.demo.dto.req.CycleUpdateReq;
 import com.example.demo.dto.res.CycleRes;
-import com.example.demo.entity.BudgetCycleEntity;
 import com.example.demo.entity.CropEntity;
 import com.example.demo.entity.CycleEntity;
 import com.example.demo.enums.ErrorCode;
@@ -113,9 +111,6 @@ public class CycleService {
         if (req.startDate() == null || req.endDate() == null) {
             throw new ApiException(ErrorCode.CYCLE_UPDATE_FIELDS_REQUIRED, "startDate and endDate are required");
         }
-        if (req.budgetAmount() != null && req.budgetAmount().signum() < 0) {
-            throw new ApiException(ErrorCode.BUDGET_AMOUNT_INVALID, "budgetAmount must be >= 0");
-        }
 
         CropEntity crop = requireOwnedCrop(req.cropId(), req.userId());
         String status = req.status() == null || req.status().isBlank() ? STATUS_ACTIVE : req.status();
@@ -133,17 +128,10 @@ public class CycleService {
                 note,
                 status));
 
-        if (req.budgetAmount() != null && req.budgetAmount().signum() > 0) {
-            budgetCycleRepository.save(new BudgetCycleEntity(saved.getCycleId(), req.budgetAmount()));
-        }
-
         return toRes(saved, crop);
     }
 
     CycleRes toRes(CycleEntity entity, CropEntity crop) {
-        BigDecimal budget = budgetCycleRepository.findFirstByCycleIdOrderByCreatedAtDesc(entity.getCycleId())
-                .map(BudgetCycleEntity::getAmount)
-                .orElse(null);
         Long dateComeIn = entity.getEndDate() == null
                 ? null
                 : ChronoUnit.DAYS.between(LocalDate.now(), entity.getEndDate()) + 1;
@@ -159,7 +147,7 @@ public class CycleService {
                 entity.getStatus(),
                 crop != null ? crop.getIcon() : null,
                 entity.getCreatedAt(),
-                budget,
+                null,
                 dateComeIn);
     }
 

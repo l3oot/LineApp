@@ -7,10 +7,19 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
+class ChatTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(..., min_length=1)
+
+
 class ChatRequest(BaseModel):
     user_id: str | None = Field(default=None, description="UUID ผู้ใช้ในระบบ")
     message: str = Field(..., min_length=1, description="ข้อความจากผู้ใช้")
     locale: str = Field(default="th")
+    history: list[ChatTurn] = Field(
+        default_factory=list,
+        description="ข้อความก่อนหน้า (ไม่รวม message ล่าสุด) จาก Spring in-memory",
+    )
 
 
 class ChatAction(BaseModel):

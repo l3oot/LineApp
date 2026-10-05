@@ -1,5 +1,10 @@
 import type { Transaction } from "../lib/userService";
 import { parseTxDateTime } from "./parseTxDateTime";
+import {
+    activeSeasonStartYear,
+    isInSeasonWindow,
+    seasonWindowForYear,
+} from "./seasonWindows";
 
 export type CycleFinancialStats = {
     income: number;
@@ -62,10 +67,47 @@ export function statsForSeason(
     return { income, expense };
 }
 
-export function seasonRemaining(
-    capital: number,
-    income: number,
-    expense: number,
-): number {
-    return capital - (expense - income);
+/** สรุปรายรับ-รายจ่ายของรอบปีตามเดือนที่พืชเลือก ไม่ต้องเปิดฤดูกาลใหม่เอง */
+export function statsForCropRound(
+    crop: {
+        startMonth: number | null;
+        endMonth: number | null;
+        currentSeason?: {
+            cycleId: string;
+            startDate?: string | null;
+            endDate?: string | null;
+        } | null;
+    },
+    transactions: Transaction[],
+    cycleIds: Iterable<string> = [],
+): CycleFinancialStats {
+    if (crop.startMonth == null || crop.endMonth == null) {
+        return statsForSeason(transactions, crop.currentSeason);
+    }
+
+    const ids = new Set(cycleIds);
+    if (crop.currentSeason?.cycleId) ids.add(crop.currentSeason.cycleId);
+    const window = seasonWindowForYear(
+        crop.startMonth,
+        crop.endMonth,
+        activeSeasonStartYear(crop.startMonth, crop.endMonth),
+    );
+
+    let income = 0;
+    let expense = 0;
+    for (const tx of transactions) {
+        if (!tx.cycleId || !ids.has(tx.cycleId)) continue;
+        if (!isInSeasonWindow(parseTxDateTime(tx.txDate), window.startDate, window.endDate)) {
+            continue;
+        }
+        const amount = Number(tx.amount);
+        if (Number.isNaN(amount)) continue;
+        if (tx.txType === "income") income += amount;
+        else if (tx.txType === "expense") expense += amount;
+    }
+    return { income, expense };
+}
+
+export function seasonRemaining(income: number, expense: number): number {
+    return income - expense;
 }

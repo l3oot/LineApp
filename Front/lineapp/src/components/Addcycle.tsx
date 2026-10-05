@@ -11,14 +11,11 @@ type AddcycleProps = {
     income: number;
     expense: number;
     length: string;
-    budget?: number | null;
-    dateComeIn?: number | null;
     icon: IconName;
     onEdit?: () => void;
     onDelete?: () => void;
     onMore?: () => void;
     onSummarize?: () => void;
-    onNewSeason?: () => void;
     deleting?: boolean;
 };
 
@@ -27,21 +24,16 @@ export default function Addcycle({
     income,
     expense,
     length,
-    budget,
-    dateComeIn,
     icon,
     onEdit,
     onDelete,
     onMore,
     onSummarize,
-    onNewSeason,
     deleting = false,
 }: AddcycleProps) {
     const { t } = useTranslation();
-    const capital = budget ?? 0;
-    const remaining = capital - (expense - income);
-    const budgetBase = capital > 0 ? capital : income;
-    const percent = calpercentused(expense, budgetBase);
+    const remaining = income - expense;
+    const percent = calpercentused(expense, income);
     const bgcolor = calbgcolor(percent);
     const PnL = calPnL(percent);
     const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
@@ -65,18 +57,10 @@ export default function Addcycle({
                     >
                         {t(`pnl.${PnL}`)}
                     </span>
-                    <div className="flex flex-row items-center">
-                        <p className="cycle-card-date">
-                            <FiCalendar size={13} aria-hidden />
-                            <span>{length}</span>
-                        </p>
-                        {typeof dateComeIn === "number" && (
-                            <p className={`cycle-card-datecomein${dateComeIn < 0 ? " cycle-card-datecomein--overdue" : ""}`}>
-                                {t("addcycle.dateComeIn", { days: dateComeIn })}
-                            </p>
-                        )}
-                    </div>
-
+                    <p className="cycle-card-date">
+                        <FiCalendar size={13} aria-hidden />
+                        <span>{length}</span>
+                    </p>
                 </div>
 
                 <div className="cycle-card-actions">
@@ -103,22 +87,22 @@ export default function Addcycle({
 
             <div className="cycle-card-stats">
                 <div className="cycle-stat">
-                    <span className="cycle-stat-icon cycle-stat-icon--capital cycle-stat-icon--filled" aria-hidden>
-                        💵
-                    </span>
-                    <span className="cycle-stat-label">{t("addcycle.capital")}</span>
-                    <span className="cycle-stat-value cycle-stat-value--capital">
-                        {capital.toLocaleString()}
-                    </span>
-                </div>
-
-                <div className="cycle-stat cycle-stat--income-expense">
                     <span className="cycle-stat-icon cycle-stat-icon--income-expense cycle-stat-icon--filled" aria-hidden>
                         🧮
                     </span>
-                    <span className="cycle-stat-label">{t("addcycle.incomeExpense")}</span>
-                    <span className="cycle-stat-value cycle-stat-value--flow">
-                        {income.toLocaleString()} / {expense.toLocaleString()}
+                    <span className="cycle-stat-label">{t("addcycle.income")}</span>
+                    <span className="cycle-stat-value cycle-stat-value--income">
+                        {income.toLocaleString()}
+                    </span>
+                </div>
+
+                <div className="cycle-stat">
+                    <span className="cycle-stat-icon cycle-stat-icon--income-expense cycle-stat-icon--filled" aria-hidden>
+                        🧮
+                    </span>
+                    <span className="cycle-stat-label">{t("addcycle.expense")}</span>
+                    <span className="cycle-stat-value cycle-stat-value--expense">
+                        {expense.toLocaleString()}
                     </span>
                 </div>
 
@@ -174,24 +158,14 @@ export default function Addcycle({
                 </div>
             </div>
 
-            {(onSummarize || onMore || onNewSeason) && (
+            {(onSummarize || onMore) && (
                 <div
                     className={`cycle-card-footer${
-                        [onSummarize, onMore, onNewSeason].filter(Boolean).length > 1
+                        [onSummarize, onMore].filter(Boolean).length > 1
                             ? ""
                             : " cycle-card-footer--single"
                     }`}
                 >
-                    {onNewSeason && (
-                        <button
-                            type="button"
-                            className="cycle-card-summary-btn"
-                            onClick={onNewSeason}
-                            disabled={deleting}
-                        >
-                            {t("addcycle.newSeason")}
-                        </button>
-                    )}
                     {onSummarize && (
                         <button
                             type="button"

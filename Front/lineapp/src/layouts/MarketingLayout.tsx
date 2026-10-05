@@ -120,33 +120,32 @@ export default function MarketingLayout({ children }: MarketingLayoutProps) {
                                     </NavLink>
                                 ),
                             )}
-                            <Link
-                                to="/entrepreneur"
-                                className="mk-btn mk-btn--ghost"
-                                style={{ marginTop: "0.35rem" }}
-                                onClick={closeMenu}
-                            >
-                                สำหรับผู้ประกอบการ
-                            </Link>
-                            <a
-                                href={LINE_ADD_FRIEND_URL}
-                                className="mk-btn mk-btn--line"
-                                style={{ marginTop: "0.5rem" }}
-                                onClick={closeMenu}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <LineMark />
-                                เพิ่มเพื่อนบน LINE
-                            </a>
-                            <Link
-                                to={appPath()}
-                                className="mk-btn mk-btn--primary"
-                                style={{ marginTop: "0.5rem" }}
-                                onClick={closeMenu}
-                            >
-                                เข้าใช้งานแอป
-                            </Link>
+                            <div className="mk-drawer__ctas">
+                                <Link
+                                    to="/entrepreneur"
+                                    className="mk-btn mk-btn--ghost"
+                                    onClick={closeMenu}
+                                >
+                                    สำหรับผู้ประกอบการ
+                                </Link>
+                                <a
+                                    href={LINE_ADD_FRIEND_URL}
+                                    className="mk-btn mk-btn--line"
+                                    onClick={closeMenu}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <LineMark />
+                                    เพิ่มเพื่อนบน LINE
+                                </a>
+                                <Link
+                                    to={appPath()}
+                                    className="mk-btn mk-btn--primary"
+                                    onClick={closeMenu}
+                                >
+                                    เข้าใช้งานแอป
+                                </Link>
+                            </div>
                         </nav>
                     </div>
                 </div>

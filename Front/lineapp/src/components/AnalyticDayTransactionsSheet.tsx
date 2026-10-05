@@ -1,13 +1,18 @@
+import { useEffect, useMemo, useState } from "react";
 import type { CalendarDate } from "@internationalized/date";
 import { FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import BottomSheet from "./BottomSheet";
+import FilterChipButton from "./FilterChipButton";
 import TransactionCard from "./TransactionCard";
 import type { Transaction } from "../lib/userService";
 import { formatCalendarDate, intlLocaleForAppLanguage } from "../utils/formatAppDate";
 import { formatTxTime } from "../utils/parseTxDateTime";
 import { icons } from "../assets/Iconlist";
 import { resolveTxIconEmoji } from "../utils/resolveTxIcon";
+import "../styles/list.css";
+
+type DayTxFilter = "all" | "income" | "expense";
 
 type AnalyticDayTransactionsSheetProps = {
     open: boolean;
@@ -33,6 +38,16 @@ export default function AnalyticDayTransactionsSheet({
     const { t, i18n } = useTranslation();
     const fallbackCategory = t("list.quickAddCategory");
     const dateLabel = date ? formatCalendarDate(date, i18n.language) : "";
+    const [filter, setFilter] = useState<DayTxFilter>("all");
+
+    useEffect(() => {
+        if (open) setFilter("all");
+    }, [open, date]);
+
+    const visibleTransactions = useMemo(
+        () => transactions.filter((tx) => filter === "all" || tx.txType === filter),
+        [transactions, filter],
+    );
 
     return (
         <BottomSheet
@@ -63,14 +78,35 @@ export default function AnalyticDayTransactionsSheet({
                         </button>
                     </div>
 
+                    <div className="mb-3 flex shrink-0 flex-wrap gap-1.5">
+                        <FilterChipButton
+                            label={t("list.all")}
+                            active={filter === "all"}
+                            variant="all"
+                            onClick={() => setFilter("all")}
+                        />
+                        <FilterChipButton
+                            label={t("list.income")}
+                            active={filter === "income"}
+                            variant="income"
+                            onClick={() => setFilter("income")}
+                        />
+                        <FilterChipButton
+                            label={t("list.expense")}
+                            active={filter === "expense"}
+                            variant="expense"
+                            onClick={() => setFilter("expense")}
+                        />
+                    </div>
+
                     <div className="min-h-0 flex-1 overflow-y-auto">
-                        {transactions.length === 0 ? (
+                        {visibleTransactions.length === 0 ? (
                             <p className="py-8 text-center text-sm text-[var(--text-soft)]">
                                 {t("analytic.dayEmpty")}
                             </p>
                         ) : (
                             <div className="flex flex-col gap-2 pb-2">
-                                {transactions.map((tx) => (
+                                {visibleTransactions.map((tx) => (
                                     <TransactionCard
                                         key={tx.txId}
                                         title={tx.note?.trim() || "—"}

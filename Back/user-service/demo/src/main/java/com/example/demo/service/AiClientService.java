@@ -19,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.demo.config.AiServiceProperties;
+import com.example.demo.chat.ChatMessage;
 import com.example.demo.dto.req.AiAgriPriceBriefReq;
 import com.example.demo.dto.req.AiAgriPriceExtractReq;
 import com.example.demo.dto.req.AiAgriPriceMatchReq;
@@ -64,12 +65,30 @@ public class AiClientService {
      * เรียก ai-service POST /chat (API Registry + tool calling) — return null ถ้าพังหรือ timeout
      */
     public AiChatRes chat(String message, UUID userId) {
+        return chat(message, userId, List.of());
+    }
+
+    /**
+     * เรียก ai-service POST /chat พร้อม recent history (ไม่รวมข้อความล่าสุด)
+     */
+    public AiChatRes chat(String message, UUID userId, List<ChatMessage> history) {
         URI uri = aiUri(props.getChatPath());
         String uid = userId == null ? null : userId.toString();
+        List<AiChatReq.ChatTurn> turns = toTurns(history);
         HttpEntity<AiChatReq> entity = new HttpEntity<>(
-                new AiChatReq(uid, message, "th"),
+                new AiChatReq(uid, message, "th", turns),
                 latencyHeaders(MediaType.APPLICATION_JSON));
         return callAi(props.getChatPath(), uri, HttpMethod.POST, entity, AiChatRes.class);
+    }
+
+    private static List<AiChatReq.ChatTurn> toTurns(List<ChatMessage> history) {
+        if (history == null || history.isEmpty()) {
+            return List.of();
+        }
+        return history.stream()
+                .filter(m -> m != null && m.role() != null && m.content() != null)
+                .map(m -> new AiChatReq.ChatTurn(m.role(), m.content()))
+                .toList();
     }
 
     /**
