@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import unittest
 
-from src.orchestrator.intent_rules import classify_record_intent, sanitize_unverified_save
+from src.orchestrator.intent_rules import (
+    classify_list_agri_products_intent,
+    classify_record_intent,
+    sanitize_unverified_save,
+)
 from src.service.llm_response_parser import (
     fallback_extract_from_text,
     looks_like_complete_transaction,
@@ -51,6 +55,26 @@ class RecordIntentTests(unittest.TestCase):
 
     def test_spending_word_without_record_verb(self) -> None:
         self.assertIsNone(classify_record_intent("ค่าใช้จ่ายเดือนนี้ 5000"))
+
+
+class ListAgriProductsIntentTests(unittest.TestCase):
+    def test_list_questions_route_to_catalog(self) -> None:
+        for text in (
+            "มีรายการสินค้าอะไรบ้าง",
+            "รายการสินค้า",
+            "สินค้าอะไรบ้าง",
+            "มีสินค้าอะไรบ้าง",
+            "ดูรายการสินค้า",
+        ):
+            decision = classify_list_agri_products_intent(text)
+            self.assertIsNotNone(decision, text)
+            assert decision is not None
+            self.assertEqual(decision.tool_name, "list_agri_products", text)
+            self.assertEqual(decision.source, "rule", text)
+
+    def test_price_of_named_product_is_not_list(self) -> None:
+        self.assertIsNone(classify_list_agri_products_intent("ราคามะนาวเท่าไหร่"))
+        self.assertIsNone(classify_list_agri_products_intent("ราคาข้าวโพด"))
 
 
 class SaveClaimTests(unittest.TestCase):

@@ -127,7 +127,7 @@ def _compact_quotes(quotes: list[AgriPriceQuote]) -> str:
     for quote in quotes:
         unit = quote.unit or "บาท"
         lines.append(
-            f"{quote.productName} | วันที่ {quote.dateKey} | เฉลี่ย {quote.averagePrice:.2f} {unit}"
+            f"{quote.productName} | วันที่ข้อมูล {quote.dateKey} | เฉลี่ย {quote.averagePrice:.2f} {unit}"
             f" | จาก {quote.marketCount} ตลาด"
         )
     return "\n".join(lines) if lines else "-"

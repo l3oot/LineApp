@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -28,6 +29,10 @@ public class LineWeatherBriefService {
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final int MAX_CHARS = 500;
     private static final String FALLBACK_REPLY = "🌦️ ยายยังดึงอากาศไม่ได้ตอนนี้ ลองพิมพ์ สภาพอากาศ อีกครั้งนะจ๊ะ";
+    private static final String[] THAI_MONTHS = {
+        "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+        "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
+    };
     private static final String[] CONDITION_THAI = {
         "ไม่ระบุ",
         "ท้องฟ้าแจ่มใส",
@@ -96,6 +101,9 @@ public class LineWeatherBriefService {
             sb.append("พื้นที่: ").append(forecast.locationLabel()).append('\n');
         }
         WeatherHourRes now = forecast.current();
+        LocalDate dataDate = dataDateOf(now, hours);
+        sb.append("วันที่ข้อมูล: ").append(formatThaiDate(dataDate))
+                .append(" (").append(dataDate.format(DATE)).append(")\n");
         if (now != null) {
             sb.append("ตอนนี้ ").append(clock(now.time())).append(": ")
                     .append(hourDetail(now)).append('\n');
@@ -237,6 +245,35 @@ public class LineWeatherBriefService {
         }
         return parsed.atZoneSameInstant(AppTime.ZONE).toLocalTime()
                 .format(DateTimeFormatter.ofPattern("HH:mm"));
+    }
+
+    private static LocalDate dataDateOf(WeatherHourRes current, List<WeatherHourRes> hours) {
+        if (current != null) {
+            LocalDate fromCurrent = localDateOf(current.time());
+            if (fromCurrent != null) {
+                return fromCurrent;
+            }
+        }
+        for (WeatherHourRes hour : hours) {
+            LocalDate fromHour = localDateOf(hour.time());
+            if (fromHour != null) {
+                return fromHour;
+            }
+        }
+        return AppTime.today();
+    }
+
+    private static LocalDate localDateOf(String time) {
+        OffsetDateTime parsed = parseTime(time);
+        if (parsed == null) {
+            return null;
+        }
+        return parsed.atZoneSameInstant(AppTime.ZONE).toLocalDate();
+    }
+
+    private static String formatThaiDate(LocalDate date) {
+        return date.getDayOfMonth() + " " + THAI_MONTHS[date.getMonthValue() - 1] + " "
+                + (date.getYear() + 543);
     }
 
     private static OffsetDateTime parseTime(String time) {

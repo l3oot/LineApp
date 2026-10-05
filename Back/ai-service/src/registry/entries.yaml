@@ -94,7 +94,7 @@ tools:
     parameters: {}
 
   - id: search_agri_prices
-    description: ค้นหาราคาสินค้าเกษตรล่าสุด เช่น ข้าว มะนาว ปาล์ม
+    description: ค้นหาราคาสินค้าเกษตรล่าสุดเมื่อรู้ชื่อสินค้าแล้ว เช่น ราคามะนาว ราคาข้าว
     keywords:
       - ราคา
       - สินค้าเกษตร
@@ -118,6 +118,25 @@ tools:
         type: string
         description: ช่วงเวลา auto | daily | weekly ฯลฯ
         required: false
+
+  - id: list_agri_products
+    description: ดูรายชื่อ/รายการสินค้าเกษตรที่มีราคาในระบบ (ยังไม่ใช่ตัวเลขราคา)
+    keywords:
+      - รายการสินค้า
+      - รายชื่อสินค้า
+      - สินค้าอะไรบ้าง
+      - มีสินค้าอะไร
+      - สินค้ามีอะไร
+      - สินค้าไหนบ้าง
+      - สินค้าที่มีราคา
+      - คลังสินค้า
+      - ดูสินค้า
+      - มีรายการสินค้า
+    permission: read
+    method: GET
+    path: /api/agri-prices/product-names
+    executor: http
+    parameters: {}
 
   - id: list_transactions
     description: ดูรายการรับ-จ่ายของเกษตรกร (กรองตามรอบหรือช่วงวันที่ได้)

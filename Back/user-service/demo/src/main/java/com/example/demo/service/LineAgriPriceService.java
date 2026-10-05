@@ -289,9 +289,8 @@ public class LineAgriPriceService {
                     .append(formatPrice(quote.averagePrice()))
                     .append(' ')
                     .append(quote.unit() == null || quote.unit().isBlank() ? "บาท" : quote.unit())
-                    .append(" (")
-                    .append(quote.dateKey())
-                    .append(')');
+                    .append(" วันที่ข้อมูล ")
+                    .append(quote.dateKey());
         }
         return sb.toString();
     }
