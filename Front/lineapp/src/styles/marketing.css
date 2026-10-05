@@ -2531,7 +2531,7 @@ a.mk-btn--line,
 
 .mk-cycle-demo__stats {
   display: grid;
-  grid-template-columns: 0.85fr 1.35fr 0.95fr 0.9fr;
+  grid-template-columns: 1.35fr 0.95fr 0.9fr;
   margin-top: 0.75rem;
   border-radius: 1rem;
   overflow: hidden;
@@ -2640,11 +2640,7 @@ a.mk-btn--line,
   }
 
   .mk-cycle-demo__stats {
-    grid-template-columns: 1fr 1.2fr 1fr;
-  }
-
-  .mk-cycle-demo__stat:last-child {
-    display: none;
+    grid-template-columns: 1.2fr 1fr 1fr;
   }
 }
 

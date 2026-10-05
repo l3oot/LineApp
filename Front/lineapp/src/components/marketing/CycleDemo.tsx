@@ -8,11 +8,10 @@ const CROP = {
     statusLabel: "กำไร",
     range: "ก.ย. – ธ.ค. 2569",
     daysLeft: "จะถึงใน 42 วัน",
-    capital: "50,000",
-    income: "18,500",
-    expense: "22,000",
-    remaining: "46,500",
-    usedPct: 44,
+    income: "22,000",
+    expense: "18,500",
+    remaining: "3,500",
+    usedPct: 84,
     barColor: "#25A247",
 } as const;
 
@@ -44,10 +43,6 @@ export default function CycleDemo() {
                         </div>
 
                         <div className="mk-cycle-demo__stats">
-                            <div className="mk-cycle-demo__stat">
-                                <span className="mk-cycle-demo__stat-label">ทุน</span>
-                                <span className="mk-cycle-demo__stat-value">{CROP.capital}</span>
-                            </div>
                             <div className="mk-cycle-demo__stat mk-cycle-demo__stat--wide">
                                 <span className="mk-cycle-demo__stat-label">รับ / จ่าย</span>
                                 <span className="mk-cycle-demo__stat-value">

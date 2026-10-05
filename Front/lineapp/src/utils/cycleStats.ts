@@ -115,10 +115,6 @@ export function statsForCropRound(
     };
 }
 
-export function seasonRemaining(
-    capital: number,
-    income: number,
-    expense: number,
-): number {
-    return capital - (expense - income);
+export function seasonRemaining(income: number, expense: number): number {
+    return income - expense;
 }

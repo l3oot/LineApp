@@ -65,9 +65,8 @@ function formatRelativeTxDate(
   });
 }
 
-function cropRemaining(crop: Crop, income: number, expense: number): number {
-  const capital = crop.currentSeason?.budgetAmount ?? 0;
-  return seasonRemaining(capital, income, expense);
+function cropRemaining(income: number, expense: number): number {
+  return seasonRemaining(income, expense);
 }
 
 export default function Sum() {
@@ -220,7 +219,7 @@ export default function Sum() {
                   transactions,
                   cycleIdsByCrop.get(crop.cropId) ?? [],
                 );
-                const remaining = cropRemaining(crop, stats.income, stats.expense);
+                const remaining = cropRemaining(stats.income, stats.expense);
                 const iconName = isIconName(crop.icon) ? crop.icon : "corn";
                 return (
                   <Link key={crop.cropId} to="/app/cycle" className="home-cycle-row">

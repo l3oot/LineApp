@@ -11,7 +11,6 @@ type AddcycleProps = {
     income: number;
     expense: number;
     length: string;
-    budget?: number | null;
     dateComeIn?: number | null;
     icon: IconName;
     onEdit?: () => void;
@@ -26,7 +25,6 @@ export default function Addcycle({
     income,
     expense,
     length,
-    budget,
     dateComeIn,
     icon,
     onEdit,
@@ -36,10 +34,8 @@ export default function Addcycle({
     deleting = false,
 }: AddcycleProps) {
     const { t } = useTranslation();
-    const capital = budget ?? 0;
-    const remaining = capital - (expense - income);
-    const budgetBase = capital > 0 ? capital : income;
-    const percent = calpercentused(expense, budgetBase);
+    const remaining = income - expense;
+    const percent = calpercentused(expense, income);
     const bgcolor = calbgcolor(percent);
     const PnL = calPnL(percent);
     const safePercent = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
@@ -100,16 +96,6 @@ export default function Addcycle({
             </div>
 
             <div className="cycle-card-stats">
-                <div className="cycle-stat">
-                    <span className="cycle-stat-icon cycle-stat-icon--capital cycle-stat-icon--filled" aria-hidden>
-                        💵
-                    </span>
-                    <span className="cycle-stat-label">{t("addcycle.capital")}</span>
-                    <span className="cycle-stat-value cycle-stat-value--capital">
-                        {capital.toLocaleString()}
-                    </span>
-                </div>
-
                 <div className="cycle-stat cycle-stat--income-expense">
                     <span className="cycle-stat-icon cycle-stat-icon--income-expense cycle-stat-icon--filled" aria-hidden>
                         🧮

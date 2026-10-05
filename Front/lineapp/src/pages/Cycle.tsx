@@ -13,7 +13,6 @@ import { useTranslation } from "react-i18next";
 import { icons } from "../assets/Iconlist";
 import { CalendarDate } from "@internationalized/date";
 import AppDateField from "../components/AppDateField";
-import FormattedNumberInput from "../components/FormattedNumberInput";
 import { auth } from "../lib/auth";
 import {
     cropApi,
@@ -108,7 +107,6 @@ export default function CyclePage() {
     const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
     const [startDate, setStartDate] = useState<CalendarDate>(() => defaultCycleStartDate());
     const [endDate, setEndDate] = useState<CalendarDate>(() => defaultCycleEndDate());
-    const [budget, setBudget] = useState("");
     const [note, setNote] = useState("");
     const [isStartPickerOpen, setIsStartPickerOpen] = useState(false);
     const [isEndPickerOpen, setIsEndPickerOpen] = useState(false);
@@ -186,7 +184,6 @@ export default function CyclePage() {
         const today = defaultCycleStartDate(i18n.language);
         setStartDate(today);
         setEndDate(defaultCycleEndDate(i18n.language));
-        setBudget("");
         setNote("");
         setIsStartPickerOpen(false);
         setIsEndPickerOpen(false);
@@ -213,7 +210,6 @@ export default function CyclePage() {
         setSelectedIcon(isIconName(crop.icon) ? crop.icon : "corn");
         setStartDate(apiDateToCalendarDate(season?.startDate));
         setEndDate(apiDateToCalendarDate(season?.endDate));
-        setBudget("");
         setNote(season?.note ?? crop.note ?? "");
         setIconQuery("");
         setIsIconPickerOpen(false);
@@ -281,10 +277,6 @@ export default function CyclePage() {
             } else {
                 const nextTitle = title.trim();
                 if (!nextTitle) return;
-                const budgetNumber = budget.trim() === "" ? null : Number(budget);
-                if (budgetNumber !== null && (Number.isNaN(budgetNumber) || budgetNumber < 0)) {
-                    return;
-                }
                 await cropApi.create({
                     name: nextTitle,
                     note: note.trim().slice(0, 50),
@@ -296,7 +288,6 @@ export default function CyclePage() {
                     startDate: calendarDateToApiDate(startDate),
                     endDate: calendarDateToApiDate(endDate),
                     seasonNote: note.trim().slice(0, 50),
-                    budgetAmount: budgetNumber,
                 });
                 await reloadCrops();
                 await refreshQuota();
@@ -354,7 +345,6 @@ export default function CyclePage() {
                                         title={crop.name}
                                         income={round.income}
                                         expense={round.expense}
-                                        budget={season?.budgetAmount}
                                         dateComeIn={round.dateComeIn}
                                         length={cropSeasonLabel(crop, i18n.language) || t("cycle.noSeason")}
                                         icon={iconName}
@@ -433,18 +423,6 @@ export default function CyclePage() {
                                 value={farmType}
                                 onChange={(event) => setFarmType(event.target.value)}
                                 placeholder={t("cycle.farmTypePlaceholder")}
-                                className="mt-1.5 w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
-                            />
-                        </label>
-                    )}
-
-                    {sheetMode === "addCrop" && (
-                        <label className="text-sm font-semibold text-[var(--text)]">
-                            {t("cycle.budgetLabel")}
-                            <FormattedNumberInput
-                                value={budget}
-                                onChange={setBudget}
-                                placeholder={t("cycle.budgetPlaceholder")}
                                 className="mt-1.5 w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-all focus:border-[var(--primary)]"
                             />
                         </label>
