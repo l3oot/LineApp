@@ -23,20 +23,21 @@ export type ExpenseShareSlice = {
     percent: number;
 };
 
+/** Share-bar marks. Soft farm hues; neighbors still differ in hue and lightness. */
 export const EXPENSE_PIE_COLORS = [
-    "#e57373",
-    "#ef9a9a",
-    "#d32f2f",
-    "#f48fb1",
-    "#c62828",
+    "#C97A72",
+    "#C6A86A",
+    "#6E8FA8",
+    "#A8846C",
+    "#8E7A9C",
 ];
 
 export const INCOME_PIE_COLORS = [
-    "#5bb35f",
-    "#81c784",
-    "#43a047",
-    "#a5d6a7",
-    "#388e3c",
+    "#3F7A58",
+    "#A8B87A",
+    "#2F5A48",
+    "#7E9E78",
+    "#5A7A62",
 ];
 
 export type TrendLineSeries = {

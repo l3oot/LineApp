@@ -82,17 +82,6 @@ export function activeSeasonStartYear(
     return parts.year;
 }
 
-export function daysUntilSeasonEnd(endDate: string, today: Date = new Date()): number {
-    const parts = bangkokDate(today);
-    if (!parts) return 0;
-    const todayMs = Date.parse(
-        `${parts.year}-${pad(parts.month)}-${pad(parts.day)}T00:00:00+07:00`,
-    );
-    const endMs = Date.parse(`${endDate}T00:00:00+07:00`);
-    if (Number.isNaN(todayMs) || Number.isNaN(endMs)) return 0;
-    return Math.round((endMs - todayMs) / 86_400_000) + 1;
-}
-
 export function isInSeasonWindow(date: Date, startDate: string, endDate: string): boolean {
     if (Number.isNaN(date.getTime())) return false;
     const startMs = Date.parse(`${startDate}T00:00:00+07:00`);

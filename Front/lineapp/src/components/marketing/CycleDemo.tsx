@@ -7,7 +7,6 @@ const CROP = {
     title: "ข้าวโพด",
     statusLabel: "กำไร",
     range: "ก.ย. – ธ.ค. 2569",
-    daysLeft: "จะถึงใน 42 วัน",
     income: "22,000",
     expense: "18,500",
     remaining: "3,500",
@@ -37,7 +36,6 @@ export default function CycleDemo() {
                                 </span>
                                 <p className="mk-cycle-demo__meta">
                                     <span>{CROP.range}</span>
-                                    <span>{CROP.daysLeft}</span>
                                 </p>
                             </div>
                         </div>

@@ -2,7 +2,6 @@ import type { Transaction } from "../lib/userService";
 import { parseTxDateTime } from "./parseTxDateTime";
 import {
     activeSeasonStartYear,
-    daysUntilSeasonEnd,
     isInSeasonWindow,
     seasonWindowForYear,
 } from "./seasonWindows";
@@ -77,15 +76,13 @@ export function statsForCropRound(
             cycleId: string;
             startDate?: string | null;
             endDate?: string | null;
-            dateComeIn?: number | null;
         } | null;
     },
     transactions: Transaction[],
     cycleIds: Iterable<string> = [],
-): CycleFinancialStats & { dateComeIn: number | null } {
+): CycleFinancialStats {
     if (crop.startMonth == null || crop.endMonth == null) {
-        const stats = statsForSeason(transactions, crop.currentSeason);
-        return { ...stats, dateComeIn: crop.currentSeason?.dateComeIn ?? null };
+        return statsForSeason(transactions, crop.currentSeason);
     }
 
     const ids = new Set(cycleIds);
@@ -108,11 +105,7 @@ export function statsForCropRound(
         if (tx.txType === "income") income += amount;
         else if (tx.txType === "expense") expense += amount;
     }
-    return {
-        income,
-        expense,
-        dateComeIn: daysUntilSeasonEnd(window.endDate),
-    };
+    return { income, expense };
 }
 
 export function seasonRemaining(income: number, expense: number): number {

@@ -345,7 +345,6 @@ export default function CyclePage() {
                                         title={crop.name}
                                         income={round.income}
                                         expense={round.expense}
-                                        dateComeIn={round.dateComeIn}
                                         length={cropSeasonLabel(crop, i18n.language) || t("cycle.noSeason")}
                                         icon={iconName}
                                         deleting={deletingCropId === crop.cropId}

@@ -11,7 +11,6 @@ type AddcycleProps = {
     income: number;
     expense: number;
     length: string;
-    dateComeIn?: number | null;
     icon: IconName;
     onEdit?: () => void;
     onDelete?: () => void;
@@ -25,7 +24,6 @@ export default function Addcycle({
     income,
     expense,
     length,
-    dateComeIn,
     icon,
     onEdit,
     onDelete,
@@ -59,18 +57,10 @@ export default function Addcycle({
                     >
                         {t(`pnl.${PnL}`)}
                     </span>
-                    <div className="flex flex-row items-center">
-                        <p className="cycle-card-date">
-                            <FiCalendar size={13} aria-hidden />
-                            <span>{length}</span>
-                        </p>
-                        {typeof dateComeIn === "number" && (
-                            <p className={`cycle-card-datecomein${dateComeIn < 0 ? " cycle-card-datecomein--overdue" : ""}`}>
-                                {t("addcycle.dateComeIn", { days: dateComeIn })}
-                            </p>
-                        )}
-                    </div>
-
+                    <p className="cycle-card-date">
+                        <FiCalendar size={13} aria-hidden />
+                        <span>{length}</span>
+                    </p>
                 </div>
 
                 <div className="cycle-card-actions">
