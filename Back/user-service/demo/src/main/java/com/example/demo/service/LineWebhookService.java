@@ -3,6 +3,7 @@ package com.example.demo.service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -15,6 +16,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.chat.ChatHistoryService;
+import com.example.demo.chat.ChatMessage;
 import com.example.demo.config.LineProperties;
 import com.example.demo.dto.req.LineWebhookReq;
 import com.example.demo.exception.ApiException;
@@ -56,6 +59,7 @@ public class LineWebhookService {
 
     private final UserRepository userRepository;
     private final AiClientService aiClientService;
+    private final ChatHistoryService chatHistoryService;
     private final LineMessagingService lineMessagingService;
     private final LineFlexMessageBuilder lineFlexMessageBuilder;
     private final TransactionService transactionService;
@@ -65,6 +69,7 @@ public class LineWebhookService {
     public LineWebhookService(
             UserRepository userRepository,
             AiClientService aiClientService,
+            ChatHistoryService chatHistoryService,
             LineMessagingService lineMessagingService,
             LineFlexMessageBuilder lineFlexMessageBuilder,
             TransactionService transactionService,
@@ -72,6 +77,7 @@ public class LineWebhookService {
             LineProperties lineProperties) {
         this.userRepository = userRepository;
         this.aiClientService = aiClientService;
+        this.chatHistoryService = chatHistoryService;
         this.lineMessagingService = lineMessagingService;
         this.lineFlexMessageBuilder = lineFlexMessageBuilder;
         this.transactionService = transactionService;
@@ -147,19 +153,28 @@ public class LineWebhookService {
             UserEntity user = upsertUserBySub(userSub);
             long tUser = System.currentTimeMillis() - tUser0;
 
+            chatHistoryService.append(user.getUserId(), "user", userText);
+            List<ChatMessage> history = chatHistoryService.getHistoryBeforeLatest(user.getUserId());
+
             long tAi0 = System.currentTimeMillis();
-            AiChatRes chat = aiClientService.chat(userText, user.getUserId());
+            AiChatRes chat = aiClientService.chat(userText, user.getUserId(), history);
             long tAi = System.currentTimeMillis() - tAi0;
 
             long tSave0 = System.currentTimeMillis();
             LineReply reply = decideChatReply(user, chat, eventTs);
             long tSave = System.currentTimeMillis() - tSave0;
 
+            String assistantText = assistantHistoryText(reply);
+            if (assistantText != null) {
+                chatHistoryService.append(user.getUserId(), "assistant", assistantText);
+            }
+
             long tReply0 = System.currentTimeMillis();
             lineMessagingService.send(reply, replyToken);
             log.info(
-                    "[ai-latency] hop=user reqId={} action=done intent=chat lineUser={} upsertMs={} aiMs={} saveMs={} replyMs={} tools={} totalMs={}",
+                    "[ai-latency] hop=user reqId={} action=done intent=chat lineUser={} upsertMs={} aiMs={} saveMs={} replyMs={} history={} tools={} totalMs={}",
                     reqId, userSub, tUser, tAi, tSave, System.currentTimeMillis() - tReply0,
+                    history.size(),
                     chat == null ? null : chat.tools_used(),
                     System.currentTimeMillis() - t0);
         } catch (Exception e) {
@@ -268,6 +283,23 @@ public class LineWebhookService {
         log.info("[ai-latency] hop=user reqId={} action=upsert-user lineUser={} profileMs={} totalMs={}",
                 AiLatency.currentOrDash(), userSub, tProfile, System.currentTimeMillis() - t0);
         return saved;
+    }
+
+    /**
+     * ข้อความที่เก็บใน history — Flex ใช้ altText สั้น ๆ ไม่เก็บ bubble JSON
+     */
+    private static String assistantHistoryText(LineReply reply) {
+        if (reply == null) {
+            return null;
+        }
+        if (reply.isFlex()) {
+            String alt = reply.flexAltText();
+            return (alt != null && !alt.isBlank()) ? alt.strip() : "บันทึกรายการแล้ว";
+        }
+        if (reply.text() != null && !reply.text().isBlank()) {
+            return reply.text().strip();
+        }
+        return null;
     }
 
     /**

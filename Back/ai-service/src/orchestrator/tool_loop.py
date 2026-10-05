@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 from src.config import settings
-from src.dto.chat import ChatAction, ChatResponse
+from src.dto.chat import ChatAction, ChatResponse, ChatTurn
 from src.gateway.api_gateway import GatewayError, execute_tool
 from src.orchestrator.intent_rules import (
     RouteDecision,
@@ -18,6 +18,7 @@ from src.prompts.orchestrator import (
     TOOL_ROUTER_RULES,
     build_summarize_prompt,
     build_tool_select_prompt,
+    format_history_transcript,
 )
 from src.registry.api_registry import search_tools
 from src.registry.models import RegistryEntry
@@ -90,6 +91,32 @@ def _tools_for_prompt(entries: list[RegistryEntry]) -> list[dict[str, Any]]:
     return out
 
 
+def _history_as_dicts(history: list[ChatTurn] | list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    if not history:
+        return []
+    out: list[dict[str, Any]] = []
+    for turn in history:
+        if isinstance(turn, ChatTurn):
+            role = turn.role
+            content = (turn.content or "").strip()
+        elif isinstance(turn, dict):
+            role = str(turn.get("role") or "").strip()
+            content = str(turn.get("content") or "").strip()
+        else:
+            continue
+        if role not in ("user", "assistant") or not content:
+            continue
+        out.append({"role": role, "content": content})
+    return out
+
+
+def _compose_llm_user_message(user_message: str, history: list[dict[str, Any]]) -> str:
+    history_block = format_history_transcript(history)
+    if not history_block:
+        return user_message
+    return f"{history_block}ข้อความล่าสุดของหลาน:\n{user_message.strip()}"
+
+
 def _extract_create_action(parse_payload: Any) -> ChatAction | None:
     if not isinstance(parse_payload, dict):
         return None
@@ -110,17 +137,18 @@ def _ensure_parse_text(args: dict[str, Any], user_message: str) -> dict[str, Any
     return cleaned
 
 
-def _log_route(decision: RouteDecision, user_message: str) -> None:
+def _log_route(decision: RouteDecision, user_message: str, context_msgs: int) -> None:
     preview = " ".join((user_message or "").split())[:80]
     logger.info(
         "[ai-route] hop=ai reqId=%s intent=%s tool=%s confidence=%.2f source=%s "
-        "reason=%s context_msgs=1 preview=%s",
+        "reason=%s context_msgs=%d preview=%s",
         get_request_id(),
         decision.intent,
         decision.tool_name,
         decision.confidence,
         decision.source,
         decision.reason,
+        context_msgs,
         preview,
     )
 
@@ -171,6 +199,7 @@ def _finish_tool(
     decision: RouteDecision,
     tools_used: list[str],
     source_model: str | None,
+    history: list[dict[str, Any]] | None = None,
 ) -> ChatResponse:
     if tool_name == _REPLY_CHAT:
         reply = arguments.get("reply") if isinstance(arguments, dict) else None
@@ -210,7 +239,7 @@ def _finish_tool(
         if isinstance(data, dict) and data.get("message"):
             return _chat_reply(str(data["message"]), decision, tools_used, source_model)
 
-    summarize_prompt = build_summarize_prompt(user_message, tool_name, data)
+    summarize_prompt = build_summarize_prompt(user_message, tool_name, data, history=history)
     try:
         summarized = run_llm(summarize_prompt)
         source_model = summarized.get("source_model") or source_model
@@ -237,11 +266,18 @@ def _finish_tool(
         )
 
 
-def run_tool_loop(user_message: str, user_id: str | None) -> ChatResponse:
-    # ส่งเฉพาะข้อความล่าสุด — ไม่แนบประวัติแชทตอนเลือกทาง
+def run_tool_loop(
+    user_message: str,
+    user_id: str | None,
+    history: list[ChatTurn] | list[dict[str, Any]] | None = None,
+) -> ChatResponse:
+    history_dicts = _history_as_dicts(history)
+    context_msgs = len(history_dicts) + 1  # รวมข้อความล่าสุด
+
+    # Intent rule ดูข้อความล่าสุดอย่างเดียว — ไม่ให้ follow-up สั้น ๆ ไปบันทึกผิด
     rule = classify_record_intent(user_message)
     if rule is not None:
-        _log_route(rule, user_message)
+        _log_route(rule, user_message, context_msgs)
         return _finish_tool(
             "parse_expense",
             {"text": user_message},
@@ -250,11 +286,17 @@ def run_tool_loop(user_message: str, user_id: str | None) -> ChatResponse:
             rule,
             [],
             "rule",
+            history=history_dicts,
         )
 
     shortlist = search_tools(user_message, limit=6)
     openai_tools = _tools_for_openai(shortlist)
-    fallback_prompt = build_tool_select_prompt(user_message, _tools_for_prompt(shortlist))
+    fallback_prompt = build_tool_select_prompt(
+        user_message,
+        _tools_for_prompt(shortlist),
+        history=history_dicts,
+    )
+    llm_user_message = _compose_llm_user_message(user_message, history_dicts)
 
     tools_used: list[str] = []
     source_model: str | None = None
@@ -263,7 +305,7 @@ def run_tool_loop(user_message: str, user_id: str | None) -> ChatResponse:
     for round_i in range(max_rounds):
         selection = run_llm_tool_select(
             system_prompt=_ROUTER_SYSTEM,
-            user_message=user_message,
+            user_message=llm_user_message,
             tools=openai_tools,
             fallback_prompt=fallback_prompt,
             tool_choice="required",
@@ -273,7 +315,7 @@ def run_tool_loop(user_message: str, user_id: str | None) -> ChatResponse:
         arguments = selection.get("arguments") or {}
         direct_reply = selection.get("reply")
         decision = _decision_from_selection(tool_name)
-        _log_route(decision, user_message)
+        _log_route(decision, user_message, context_msgs)
 
         if not tool_name or tool_name == _REPLY_CHAT:
             text = direct_reply or ""
@@ -295,6 +337,7 @@ def run_tool_loop(user_message: str, user_id: str | None) -> ChatResponse:
             decision,
             tools_used,
             source_model,
+            history=history_dicts,
         )
 
     return _with_route(

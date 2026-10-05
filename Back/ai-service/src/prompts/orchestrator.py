@@ -16,12 +16,17 @@ SYSTEM_PERSONA = (
 
 # ใช้ตอนเลือกเครื่องมือเท่านั้น — สรุปผลเครื่องมือใช้ SYSTEM_PERSONA ตามเดิม
 TOOL_ROUTER_RULES = (
-    "ตัดสินจากข้อความล่าสุดนี้ข้อความเดียว ห้ามเดาจากบทสนทนาก่อนหน้า\n"
+    "ตัดสินจากข้อความล่าสุดเป็นหลัก "
+    "ถ้าข้อความล่าสุดสั้นหรืออ้างอิงบริบท "
+    "ให้อ่านประวัติแชทล่าสุดเพื่อเข้าใจว่าหลานหมายถึงอะไร "
+    "(เช่น จังหวัด วัน สินค้าที่เพิ่งถาม)\n"
     "ต้องเรียกเครื่องมือเสมอ ห้ามตอบเป็นข้อความลอย\n"
     "ถ้าเป็นการคุยทั่วไป ให้เรียก reply_chat และใส่คำตอบใน reply\n"
     "ถ้าหลานสั่งบันทึกรายรับหรือรายจ่าย "
     "(มีกริยา ซื้อ ขาย จ่าย ได้ รับ และมีตัวเลข) "
     "ต้องเรียก parse_expense เท่านั้น และใส่ text เป็นข้อความเดิม\n"
+    "ห้ามเรียก parse_expense แค่เพราะประวัติเคยบันทึก "
+    "ถ้าข้อความล่าสุดไม่ใช่คำสั่งบันทึกใหม่\n"
     "ตัวเลขท้ายประโยคแบบนี้คือจำนวนเงินหน่วยบาท ไม่ใช่กิโลกรัมหรือปริมาณ "
     "แม้ไม่มีคำว่าบาท เช่น ซื้อปุ๋ยข้าวโพด 500 หมายถึง 500 บาท\n"
     "ห้ามพูดว่า บันทึกแล้ว จดแล้ว หรือลงรายการแล้ว "
@@ -34,8 +39,32 @@ TOOL_ROUTER_RULES = (
 )
 
 
-def build_tool_select_prompt(user_message: str, tools: list[dict[str, Any]]) -> str:
+def format_history_transcript(history: list[dict[str, Any]] | None) -> str:
+    """แปลง history เป็น transcript สั้น ๆ สำหรับใส่ใน prompt"""
+    if not history:
+        return ""
+    lines: list[str] = []
+    for turn in history:
+        if not isinstance(turn, dict):
+            continue
+        role = str(turn.get("role") or "").strip().lower()
+        content = str(turn.get("content") or "").strip()
+        if not content:
+            continue
+        label = "หลาน" if role == "user" else "ยาย"
+        lines.append(f"{label}: {content}")
+    if not lines:
+        return ""
+    return "ประวัติแชทล่าสุด:\n" + "\n".join(lines) + "\n\n"
+
+
+def build_tool_select_prompt(
+    user_message: str,
+    tools: list[dict[str, Any]],
+    history: list[dict[str, Any]] | None = None,
+) -> str:
     tools_json = json.dumps(tools, ensure_ascii=False, indent=2)
+    history_block = format_history_transcript(history)
     return (
         f"{SYSTEM_PERSONA}\n\n"
         f"{TOOL_ROUTER_RULES}\n\n"
@@ -46,19 +75,28 @@ def build_tool_select_prompt(user_message: str, tools: list[dict[str, Any]]) -> 
         '{"tool":"reply_chat","arguments":{"reply":"ข้อความตอบหลาน"},"reply":null}\n'
         "ห้ามใส่คำว่าบันทึกแล้วใน reply\n\n"
         f"รายการเครื่องมือ:\n{tools_json}\n\n"
+        f"{history_block}"
         f"ข้อความล่าสุดของหลาน:\n{user_message.strip()}\n"
     )
 
 
-def build_summarize_prompt(user_message: str, tool_name: str, tool_result: Any) -> str:
+def build_summarize_prompt(
+    user_message: str,
+    tool_name: str,
+    tool_result: Any,
+    history: list[dict[str, Any]] | None = None,
+) -> str:
     result_json = json.dumps(tool_result, ensure_ascii=False, default=str)
     if len(result_json) > 6000:
         result_json = result_json[:6000] + "…(ตัดท้าย)"
+    history_block = format_history_transcript(history)
     return (
         f"{SYSTEM_PERSONA}\n\n"
         "สรุปผลจากเครื่องมือให้หลานเข้าใจง่าย เป็นภาษาไทยสั้น ๆ "
         "อย่าเล่า JSON ทั้งก้อน เน้นคำตอบที่ใช้งานได้จริง "
-        "ห้ามบอกว่าบันทึกแล้วหรือลงรายการแล้ว\n\n"
+        "ห้ามบอกว่าบันทึกแล้วหรือลงรายการแล้ว\n"
+        "ถ้าประวัติแชทช่วยให้สรุปตรงคำถาม follow-up ได้ ให้ใช้ได้\n\n"
+        f"{history_block}"
         f"ข้อความหลาน:\n{user_message.strip()}\n\n"
         f"เครื่องมือที่ใช้: {tool_name}\n"
         f"ผลลัพธ์:\n{result_json}\n"

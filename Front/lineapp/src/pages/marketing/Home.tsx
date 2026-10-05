@@ -34,16 +34,9 @@ export default function MarketingHome() {
                         >
                             จดรายรับรายจ่ายเกษตรง่าย ๆ รู้กำไรต่อรอบปลูก
                         </p>
-                        <p
-                            className="mk-hero__lead mk-rise"
-                            style={{ ["--mk-rise-delay" as string]: "0.32s" }}
-                        >
-                            ยายเภาช่วยจดรายรับรายจ่ายเกษตรผ่าน LINE หรือเปิดเว็บดูสรุป — แยกหมวด
-                            ติดตามต้นทุน และเห็นผลกำไรจริงของแต่ละรอบปลูก
-                        </p>
                         <div
                             className="mk-hero__cta mk-rise"
-                            style={{ ["--mk-rise-delay" as string]: "0.44s" }}
+                            style={{ ["--mk-rise-delay" as string]: "0.32s" }}
                         >
                             <a
                                 href={LINE_ADD_FRIEND_URL}
