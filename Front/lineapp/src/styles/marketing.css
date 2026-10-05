@@ -2531,7 +2531,7 @@ a.mk-btn--line,
 
 .mk-cycle-demo__stats {
   display: grid;
-  grid-template-columns: 1.35fr 0.95fr 0.9fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: 0.75rem;
   border-radius: 1rem;
   overflow: hidden;
@@ -2565,6 +2565,14 @@ a.mk-btn--line,
   color: var(--cd-ink);
   line-height: 1.2;
   letter-spacing: 0.01em;
+}
+
+.mk-cycle-demo__stat-value--income {
+  color: var(--income, #3bb273);
+}
+
+.mk-cycle-demo__stat-value--expense {
+  color: var(--expense, #f06b6b);
 }
 
 .mk-cycle-demo__stat-value--remain {
@@ -2640,7 +2648,7 @@ a.mk-btn--line,
   }
 
   .mk-cycle-demo__stats {
-    grid-template-columns: 1.2fr 1fr 1fr;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 

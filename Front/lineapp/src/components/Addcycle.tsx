@@ -96,13 +96,23 @@ export default function Addcycle({
             </div>
 
             <div className="cycle-card-stats">
-                <div className="cycle-stat cycle-stat--income-expense">
+                <div className="cycle-stat">
                     <span className="cycle-stat-icon cycle-stat-icon--income-expense cycle-stat-icon--filled" aria-hidden>
                         🧮
                     </span>
-                    <span className="cycle-stat-label">{t("addcycle.incomeExpense")}</span>
-                    <span className="cycle-stat-value cycle-stat-value--flow">
-                        {income.toLocaleString()} / {expense.toLocaleString()}
+                    <span className="cycle-stat-label">{t("addcycle.income")}</span>
+                    <span className="cycle-stat-value cycle-stat-value--income">
+                        {income.toLocaleString()}
+                    </span>
+                </div>
+
+                <div className="cycle-stat">
+                    <span className="cycle-stat-icon cycle-stat-icon--income-expense cycle-stat-icon--filled" aria-hidden>
+                        🧮
+                    </span>
+                    <span className="cycle-stat-label">{t("addcycle.expense")}</span>
+                    <span className="cycle-stat-value cycle-stat-value--expense">
+                        {expense.toLocaleString()}
                     </span>
                 </div>
 

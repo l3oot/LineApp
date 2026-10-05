@@ -43,10 +43,16 @@ export default function CycleDemo() {
                         </div>
 
                         <div className="mk-cycle-demo__stats">
-                            <div className="mk-cycle-demo__stat mk-cycle-demo__stat--wide">
-                                <span className="mk-cycle-demo__stat-label">รับ / จ่าย</span>
-                                <span className="mk-cycle-demo__stat-value">
-                                    {CROP.income} / {CROP.expense}
+                            <div className="mk-cycle-demo__stat">
+                                <span className="mk-cycle-demo__stat-label">รายรับ</span>
+                                <span className="mk-cycle-demo__stat-value mk-cycle-demo__stat-value--income">
+                                    {CROP.income}
+                                </span>
+                            </div>
+                            <div className="mk-cycle-demo__stat">
+                                <span className="mk-cycle-demo__stat-label">รายจ่าย</span>
+                                <span className="mk-cycle-demo__stat-value mk-cycle-demo__stat-value--expense">
+                                    {CROP.expense}
                                 </span>
                             </div>
                             <div className="mk-cycle-demo__stat">
