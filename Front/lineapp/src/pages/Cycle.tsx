@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import "../styles/Cycle.css";
 import { FaPlus } from "react-icons/fa";
@@ -26,7 +26,7 @@ import {
     type Transaction,
 } from "../lib/userService";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
-import { statsForSeason } from "../utils/cycleStats";
+import { statsForCropRound } from "../utils/cycleStats";
 import {
     gregorianDateKey,
     initialAppDateTime,
@@ -82,19 +82,13 @@ function cropSeasonLabel(crop: Crop, lang: string): string {
     return formatCycleMonthRange(season.startDate, season.endDate, lang);
 }
 
-function needsNewSeason(season: Cycle | null): boolean {
-    if (!season) return true;
-    if ((season.status ?? "active") !== "active") return true;
-    return typeof season.dateComeIn === "number" && season.dateComeIn < 0;
-}
-
-type SheetMode = "addCrop" | "editCrop" | "addSeason";
+type SheetMode = "addCrop" | "editCrop";
 
 export default function CyclePage() {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
     const [crops, setCrops] = useState<Crop[]>([]);
+    const [cycles, setCycles] = useState<Cycle[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -104,7 +98,6 @@ export default function CyclePage() {
     const [seasonToSummarize, setSeasonToSummarize] = useState<Cycle | null>(null);
     const [sheetMode, setSheetMode] = useState<SheetMode>("addCrop");
     const [editingCrop, setEditingCrop] = useState<Crop | null>(null);
-    const [seasonCrop, setSeasonCrop] = useState<Crop | null>(null);
     const [planQuota, setPlanQuota] = useState<PlanQuota | null>(null);
 
     const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -132,10 +125,25 @@ export default function CyclePage() {
     };
 
     const reloadCrops = async () => {
-        const [cropRows, txRows] = await Promise.all([cropApi.list(), transactionApi.list()]);
+        const [cropRows, cycleRows, txRows] = await Promise.all([
+            cropApi.list(),
+            cycleApi.list(),
+            transactionApi.list(),
+        ]);
         setCrops(cropRows ?? []);
+        setCycles(cycleRows ?? []);
         setTransactions(txRows ?? []);
     };
+
+    const cycleIdsByCrop = useMemo(() => {
+        const map = new Map<string, string[]>();
+        for (const cycle of cycles) {
+            const ids = map.get(cycle.cropId) ?? [];
+            ids.push(cycle.cycleId);
+            map.set(cycle.cropId, ids);
+        }
+        return map;
+    }, [cycles]);
 
     useEffect(() => {
         if (!auth.isAuthed()) {
@@ -145,16 +153,18 @@ export default function CyclePage() {
         let cancelled = false;
         setLoading(true);
         setError(null);
-        Promise.all([cropApi.list(), transactionApi.list(), planApi.getQuota()])
-            .then(([cropRows, txRows, quota]) => {
+        Promise.all([cropApi.list(), cycleApi.list(), transactionApi.list(), planApi.getQuota()])
+            .then(([cropRows, cycleRows, txRows, quota]) => {
                 if (cancelled) return;
                 setCrops(cropRows ?? []);
+                setCycles(cycleRows ?? []);
                 setTransactions(txRows ?? []);
                 setPlanQuota(quota);
             })
             .catch((err: unknown) => {
                 if (cancelled) return;
                 setCrops([]);
+                setCycles([]);
                 setTransactions([]);
                 setPlanQuota(null);
                 setError(getFriendlyApiErrorMessage(err, t));
@@ -166,19 +176,6 @@ export default function CyclePage() {
             cancelled = true;
         };
     }, [navigate, t]);
-
-    useEffect(() => {
-        const newSeasonCropId = searchParams.get("newSeason");
-        if (!newSeasonCropId || loading || crops.length === 0) return;
-        const crop = crops.find((c) => c.cropId === newSeasonCropId);
-        if (!crop) return;
-        openAddSeasonSheet(crop);
-        const next = new URLSearchParams(searchParams);
-        next.delete("newSeason");
-        setSearchParams(next, { replace: true });
-        // openAddSeasonSheet is stable enough for this one-shot deep link
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [crops, loading, searchParams, setSearchParams]);
 
     const resetForm = () => {
         setTitle("");
@@ -202,7 +199,6 @@ export default function CyclePage() {
         }
         setSheetMode("addCrop");
         setEditingCrop(null);
-        setSeasonCrop(null);
         resetForm();
         setError(null);
         setIsSheetOpen(true);
@@ -212,7 +208,6 @@ export default function CyclePage() {
         const season = crop.currentSeason;
         setSheetMode("editCrop");
         setEditingCrop(crop);
-        setSeasonCrop(null);
         setTitle(crop.name);
         setFarmType(crop.farmType ?? "ทั่วไป");
         setSelectedIcon(isIconName(crop.icon) ? crop.icon : "corn");
@@ -228,45 +223,11 @@ export default function CyclePage() {
         setIsSheetOpen(true);
     };
 
-    const openAddSeasonSheet = (crop: Crop) => {
-        setSheetMode("addSeason");
-        setEditingCrop(null);
-        setSeasonCrop(crop);
-        setTitle(crop.name);
-        setFarmType(crop.farmType ?? "");
-        setSelectedIcon(isIconName(crop.icon) ? crop.icon : "corn");
-        const base = defaultCycleStartDate(i18n.language);
-        const startMonth = crop.startMonth ?? base.month;
-        const endMonth = crop.endMonth ?? base.month;
-        let year = base.year;
-        // ถ้าเลยเดือนจบของปีนี้แล้ว เลื่อนไปปีถัดไป
-        if (endMonth >= startMonth && base.month > endMonth) {
-            year += 1;
-        }
-        const start = new CalendarDate(year, startMonth, 1);
-        const endYear = endMonth >= startMonth ? year : year + 1;
-        const end = new CalendarDate(endYear, endMonth, 1).add({
-            months: 1,
-            days: -1,
-        });
-        setStartDate(start);
-        setEndDate(end);
-        setBudget("");
-        setNote("");
-        setIconQuery("");
-        setIsIconPickerOpen(false);
-        setIsStartPickerOpen(false);
-        setIsEndPickerOpen(false);
-        setError(null);
-        setIsSheetOpen(true);
-    };
-
     const handleCloseSheet = () => {
         setIsSheetOpen(false);
         setIsStartPickerOpen(false);
         setIsEndPickerOpen(false);
         setEditingCrop(null);
-        setSeasonCrop(null);
         resetForm();
     };
 
@@ -317,30 +278,6 @@ export default function CyclePage() {
                     });
                 }
                 await reloadCrops();
-            } else if (sheetMode === "addSeason" && seasonCrop) {
-                const budgetNumber = budget.trim() === "" ? null : Number(budget);
-                if (budgetNumber !== null && (Number.isNaN(budgetNumber) || budgetNumber < 0)) {
-                    return;
-                }
-                await cycleApi.create({
-                    cropId: seasonCrop.cropId,
-                    note: note.trim().slice(0, 50),
-                    startDate: calendarDateToApiDate(startDate),
-                    endDate: calendarDateToApiDate(endDate),
-                    status: "active",
-                    budgetAmount: budgetNumber,
-                });
-                await cropApi.update({
-                    cropId: seasonCrop.cropId,
-                    name: seasonCrop.name,
-                    note: seasonCrop.note,
-                    farmType: seasonCrop.farmType ?? "ทั่วไป",
-                    icon: isIconName(seasonCrop.icon) ? seasonCrop.icon : "corn",
-                    status: seasonCrop.status ?? "active",
-                    startMonth: startDate.month,
-                    endMonth: endDate.month,
-                });
-                await reloadCrops();
             } else {
                 const nextTitle = title.trim();
                 if (!nextTitle) return;
@@ -373,11 +310,7 @@ export default function CyclePage() {
     };
 
     const sheetTitle =
-        sheetMode === "editCrop"
-            ? t("cycle.editFormTitle")
-            : sheetMode === "addSeason"
-              ? t("cycle.newSeasonTitle")
-              : t("cycle.formTitle");
+        sheetMode === "editCrop" ? t("cycle.editFormTitle") : t("cycle.formTitle");
 
     return (
         <MainLayout>
@@ -409,17 +342,20 @@ export default function CyclePage() {
                         <div className="flex flex-col gap-3">
                             {crops.map((crop) => {
                                 const season = crop.currentSeason;
-                                // รายรับ/รายจ่าย/คงเหลือ คิดเฉพาะรอบปีปัจจุบัน (currentSeason)
-                                const stats = statsForSeason(transactions, season);
+                                const round = statsForCropRound(
+                                    crop,
+                                    transactions,
+                                    cycleIdsByCrop.get(crop.cropId) ?? [],
+                                );
                                 const iconName = isIconName(crop.icon) ? crop.icon : "corn";
                                 return (
                                     <Addcycle
                                         key={crop.cropId}
                                         title={crop.name}
-                                        income={stats.income}
-                                        expense={stats.expense}
+                                        income={round.income}
+                                        expense={round.expense}
                                         budget={season?.budgetAmount}
-                                        dateComeIn={season?.dateComeIn}
+                                        dateComeIn={round.dateComeIn}
                                         length={cropSeasonLabel(crop, i18n.language) || t("cycle.noSeason")}
                                         icon={iconName}
                                         deleting={deletingCropId === crop.cropId}
@@ -431,11 +367,6 @@ export default function CyclePage() {
                                                 : undefined
                                         }
                                         onMore={() => navigate(`/app/cycle/crop/${crop.cropId}`)}
-                                        onNewSeason={
-                                            needsNewSeason(season)
-                                                ? () => openAddSeasonSheet(crop)
-                                                : undefined
-                                        }
                                     />
                                 );
                             })}
@@ -471,8 +402,7 @@ export default function CyclePage() {
                     className="bottom-sheet-scroll flex flex-1 flex-col gap-3 overflow-y-auto pb-1"
                     onSubmit={handleSubmit}
                 >
-                    {sheetMode !== "addSeason" && (
-                        <div className="flex items-end gap-2">
+                    <div className="flex items-end gap-2">
                             <label className="flex-1 text-sm font-semibold text-[var(--text)]">
                                 {t("cycle.nameLabel")}
                                 <input
@@ -493,14 +423,7 @@ export default function CyclePage() {
                             >
                                 <span className="text-[20px] leading-none">{icons[selectedIcon]}</span>
                             </button>
-                        </div>
-                    )}
-
-                    {sheetMode === "addSeason" && (
-                        <p className="text-sm font-semibold text-[var(--text)]">
-                            {t("cycle.newSeasonFor", { name: seasonCrop?.name ?? title })}
-                        </p>
-                    )}
+                    </div>
 
                     {sheetMode === "addCrop" && (
                         <label className="text-sm font-semibold text-[var(--text)]">
@@ -515,7 +438,7 @@ export default function CyclePage() {
                         </label>
                     )}
 
-                    {(sheetMode === "addCrop" || sheetMode === "addSeason") && (
+                    {sheetMode === "addCrop" && (
                         <label className="text-sm font-semibold text-[var(--text)]">
                             {t("cycle.budgetLabel")}
                             <FormattedNumberInput
@@ -528,7 +451,6 @@ export default function CyclePage() {
                     )}
 
                     {(sheetMode === "addCrop" ||
-                        sheetMode === "addSeason" ||
                         (sheetMode === "editCrop" && editingCrop?.currentSeason)) && (
                         <div className="grid grid-cols-2 gap-2">
                             <label className="text-sm font-bold text-[var(--text)]">

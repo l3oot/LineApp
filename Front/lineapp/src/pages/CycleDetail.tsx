@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import MainLayout from "../layouts/MainLayout";
@@ -23,6 +23,12 @@ import { groupTransactionsByDate } from "../utils/groupTransactionsByDate";
 import { displayYearFromGregorian } from "../utils/formatAppDate";
 import { formatMonthRange } from "../utils/formatMonthYear";
 import { parseTxDateTime } from "../utils/parseTxDateTime";
+import {
+    activeSeasonStartYear,
+    transactionInSeasonWindow,
+    yearSeasonsFromDates,
+    type SeasonWindow,
+} from "../utils/seasonWindows";
 import "../styles/analytic.css";
 import "../styles/list.css";
 import "../styles/Cycle.css";
@@ -68,11 +74,13 @@ export default function CycleDetail() {
     const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [txLoading, setTxLoading] = useState(false);
+    const [txLoaded, setTxLoaded] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [notFound, setNotFound] = useState(false);
     const [activeFilter, setActiveFilter] = useState<"all" | "expense" | "income">("all");
     const [listPage, setListPage] = useState(1);
     const [collapsedCards, setCollapsedCards] = useState<Record<string, boolean>>({});
+    const seasonChoiceKey = useRef<string | null>(null);
     const fallbackCategory = t("list.quickAddCategory");
 
     const preferredSeasonFromUrl = searchParams.get("season");
@@ -89,6 +97,7 @@ export default function CycleDetail() {
         }
         let cancelled = false;
         setLoading(true);
+        setTxLoaded(false);
         setLoadError(null);
         setNotFound(false);
         Promise.all([
@@ -108,13 +117,15 @@ export default function CycleDetail() {
                 const ordered = [...(seasonRows ?? [])].sort(
                     (a, b) => seasonStartYear(b) - seasonStartYear(a),
                 );
-                const defaultSeason = pickDefaultSeasonId(ordered, preferredSeasonFromUrl);
                 setCrop(cropRow);
                 setSeasons(ordered);
-                setListSeasonId(defaultSeason);
-                setPreferredSeasonId(
-                    defaultSeason === ALL_SEASONS ? null : defaultSeason,
-                );
+                if (cropRow.startMonth == null || cropRow.endMonth == null) {
+                    const defaultSeason = pickDefaultSeasonId(ordered, preferredSeasonFromUrl);
+                    setListSeasonId(defaultSeason);
+                    setPreferredSeasonId(
+                        defaultSeason === ALL_SEASONS ? null : defaultSeason,
+                    );
+                }
                 setExpenseCategories(expenseCats ?? []);
                 setIncomeCategories(incomeCats ?? []);
             })
@@ -156,12 +167,43 @@ export default function CycleDetail() {
                 }
             })
             .finally(() => {
-                if (!cancelled) setTxLoading(false);
+                if (!cancelled) {
+                    setTxLoading(false);
+                    setTxLoaded(true);
+                }
             });
         return () => {
             cancelled = true;
         };
     }, [cropId, loading, notFound, seasons, t]);
+
+    const yearSeasons = useMemo(() => {
+        if (crop?.startMonth == null || crop.endMonth == null) return null;
+        return yearSeasonsFromDates(
+            crop.startMonth,
+            crop.endMonth,
+            transactions.map((tx) => parseTxDateTime(tx.txDate)),
+        );
+    }, [crop, transactions]);
+
+    useEffect(() => {
+        if (!txLoaded || !yearSeasons?.length || !crop?.startMonth || !crop.endMonth) return;
+        if (seasonChoiceKey.current === crop.cropId) return;
+        seasonChoiceKey.current = crop.cropId;
+        const ids = new Set(yearSeasons.map((season) => season.id));
+        const preferred = preferredSeasonFromUrl;
+        let next = ALL_SEASONS;
+        if (preferred === ALL_SEASONS) {
+            next = ALL_SEASONS;
+        } else if (preferred && ids.has(preferred)) {
+            next = preferred;
+        } else {
+            const active = String(activeSeasonStartYear(crop.startMonth, crop.endMonth));
+            next = ids.has(active) ? active : (yearSeasons[0]?.id ?? ALL_SEASONS);
+        }
+        setListSeasonId(next);
+        setPreferredSeasonId(next === ALL_SEASONS ? null : next);
+    }, [txLoaded, yearSeasons, crop, preferredSeasonFromUrl]);
 
     const categoryById = useMemo(
         () =>
@@ -171,10 +213,18 @@ export default function CycleDetail() {
         [expenseCategories, incomeCategories],
     );
 
+    const selectedYearSeason = useMemo(
+        () => yearSeasons?.find((season) => season.id === listSeasonId) ?? null,
+        [yearSeasons, listSeasonId],
+    );
+
     const listTransactions = useMemo(() => {
         if (listSeasonId === ALL_SEASONS) return transactions;
+        if (selectedYearSeason) {
+            return transactions.filter((tx) => transactionInSeasonWindow(tx, selectedYearSeason));
+        }
         return transactions.filter((tx) => tx.cycleId === listSeasonId);
-    }, [transactions, listSeasonId]);
+    }, [transactions, listSeasonId, selectedYearSeason]);
 
     const filteredTransactions = useMemo(() => {
         const rows = listTransactions.filter(
@@ -221,34 +271,47 @@ export default function CycleDetail() {
             : "";
     const rawIcon = crop?.icon;
     const cropIcon = isIconName(rawIcon) ? rawIcon : "corn";
-    const showNewSeasonCta =
-        seasons.length === 0 ||
-        !seasons.some((s) => (s.status ?? "active") === "active") ||
-        (typeof crop?.currentSeason?.dateComeIn === "number" &&
-            crop.currentSeason.dateComeIn < 0);
 
     const chartsLoading = loading || txLoading;
+
+    const seasonChoices = useMemo(() => {
+        const source: { id: string; label: string; startDate: string; endDate: string }[] =
+            yearSeasons != null
+                ? yearSeasons.map((season: SeasonWindow) => ({
+                      id: season.id,
+                      label: displayYearFromGregorian(season.startYear, i18n.language),
+                      startDate: season.startDate,
+                      endDate: season.endDate,
+                  }))
+                : seasons.map((season) => ({
+                      id: season.cycleId,
+                      label: seasonTabLabel(season, i18n.language),
+                      startDate: season.startDate,
+                      endDate: season.endDate,
+                  }));
+        return source;
+    }, [yearSeasons, seasons, i18n.language]);
 
     const seasonFilterOptions = useMemo(
         () => [
             { value: ALL_SEASONS, label: t("cycle.seasonAllYears") },
-            ...seasons.map((s) => ({
-                value: s.cycleId,
-                label: seasonTabLabel(s, i18n.language),
+            ...seasonChoices.map((season) => ({
+                value: season.id,
+                label: season.label,
             })),
         ],
-        [seasons, i18n.language, t],
+        [seasonChoices, t],
     );
 
     const chartSeasons = useMemo(
         () =>
-            seasons.map((s) => ({
-                cycleId: s.cycleId,
-                label: seasonTabLabel(s, i18n.language),
-                startDate: s.startDate,
-                endDate: s.endDate,
+            seasonChoices.map((season) => ({
+                cycleId: season.id,
+                label: season.label,
+                startDate: season.startDate,
+                endDate: season.endDate,
             })),
-        [seasons, i18n.language],
+        [seasonChoices],
     );
 
     return (
@@ -273,20 +336,6 @@ export default function CycleDetail() {
                                         ) : null}
                                     </div>
                                 </header>
-
-                                {showNewSeasonCta && (
-                                    <button
-                                        type="button"
-                                        className="pill-action-btn pill-action-btn--compact"
-                                        onClick={() =>
-                                            navigate(`/app/cycle?newSeason=${encodeURIComponent(cropId)}`)
-                                        }
-                                    >
-                                        <span className="pill-action-btn-text">
-                                            {t("addcycle.newSeason")}
-                                        </span>
-                                    </button>
-                                )}
 
                                 <AnalyticCharts
                                     transactions={transactions}
@@ -328,7 +377,7 @@ export default function CycleDetail() {
                                                     onClick={() => setListFilter("income")}
                                                 />
                                             </div>
-                                            {seasons.length > 0 ? (
+                                            {seasonChoices.length > 0 ? (
                                                 <Dropdown
                                                     label={t("analytic.season")}
                                                     data={seasonFilterOptions}
@@ -370,10 +419,16 @@ export default function CycleDetail() {
                                     </div>
 
                                     {!chartsLoading && filteredTransactions.length > LIST_PAGE_SIZE ? (
-                                        <div className="cycle-detail-pagination">
+                                        <nav
+                                            className="cycle-detail-pagination"
+                                            aria-label={t("cycle.detailPaginationPage", {
+                                                page: listPage,
+                                                total: listTotalPages,
+                                            })}
+                                        >
                                             <button
                                                 type="button"
-                                                className="pill-control pill-control--chip pill-control--ghost"
+                                                className="cycle-detail-page-btn"
                                                 disabled={listPage <= 1}
                                                 onClick={() => setListPage((p) => Math.max(1, p - 1))}
                                             >
@@ -387,7 +442,7 @@ export default function CycleDetail() {
                                             </span>
                                             <button
                                                 type="button"
-                                                className="pill-control pill-control--chip pill-control--ghost"
+                                                className="cycle-detail-page-btn"
                                                 disabled={listPage >= listTotalPages}
                                                 onClick={() =>
                                                     setListPage((p) => Math.min(listTotalPages, p + 1))
@@ -395,7 +450,7 @@ export default function CycleDetail() {
                                             >
                                                 {t("cycle.detailPaginationNext")}
                                             </button>
-                                        </div>
+                                        </nav>
                                     ) : null}
                                 </section>
                             </>

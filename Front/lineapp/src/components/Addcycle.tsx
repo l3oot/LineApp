@@ -18,7 +18,6 @@ type AddcycleProps = {
     onDelete?: () => void;
     onMore?: () => void;
     onSummarize?: () => void;
-    onNewSeason?: () => void;
     deleting?: boolean;
 };
 
@@ -34,7 +33,6 @@ export default function Addcycle({
     onDelete,
     onMore,
     onSummarize,
-    onNewSeason,
     deleting = false,
 }: AddcycleProps) {
     const { t } = useTranslation();
@@ -174,24 +172,14 @@ export default function Addcycle({
                 </div>
             </div>
 
-            {(onSummarize || onMore || onNewSeason) && (
+            {(onSummarize || onMore) && (
                 <div
                     className={`cycle-card-footer${
-                        [onSummarize, onMore, onNewSeason].filter(Boolean).length > 1
+                        [onSummarize, onMore].filter(Boolean).length > 1
                             ? ""
                             : " cycle-card-footer--single"
                     }`}
                 >
-                    {onNewSeason && (
-                        <button
-                            type="button"
-                            className="cycle-card-summary-btn"
-                            onClick={onNewSeason}
-                            disabled={deleting}
-                        >
-                            {t("addcycle.newSeason")}
-                        </button>
-                    )}
                     {onSummarize && (
                         <button
                             type="button"

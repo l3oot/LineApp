@@ -18,9 +18,11 @@ import { useWeatherForecast } from "../lib/useWeatherForecast";
 import {
   categoryApi,
   cropApi,
+  cycleApi,
   transactionApi,
   type Category,
   type Crop,
+  type Cycle,
   type Transaction,
 } from "../lib/userService";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
@@ -31,7 +33,7 @@ import {
   sumTransactionTotals,
 } from "../utils/transactionDateRange";
 import { resolveTxIconEmoji } from "../utils/resolveTxIcon";
-import { seasonRemaining, statsForSeason } from "../utils/cycleStats";
+import { seasonRemaining, statsForCropRound } from "../utils/cycleStats";
 import { formatCycleMonthRange, formatMonthRange } from "../utils/formatMonthYear";
 
 type IconName = keyof typeof icons;
@@ -79,6 +81,7 @@ export default function Sum() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [crops, setCrops] = useState<Crop[]>([]);
+  const [cycles, setCycles] = useState<Cycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const weather = useWeatherForecast();
@@ -95,18 +98,21 @@ export default function Sum() {
       transactionApi.list(),
       categoryApi.list(),
       cropApi.list().catch(() => [] as Crop[]),
+      cycleApi.list().catch(() => [] as Cycle[]),
     ])
-      .then(([txRows, categoryRows, cropRows]) => {
+      .then(([txRows, categoryRows, cropRows, cycleRows]) => {
         if (cancelled) return;
         setTransactions(txRows ?? []);
         setCategories(categoryRows ?? []);
         setCrops(cropRows ?? []);
+        setCycles(cycleRows ?? []);
       })
       .catch((err) => {
         if (cancelled) return;
         setTransactions([]);
         setCategories([]);
         setCrops([]);
+        setCycles([]);
         setError(getFriendlyApiErrorMessage(err, t));
       })
       .finally(() => {
@@ -130,6 +136,16 @@ export default function Sum() {
   const overviewTotals = useMemo(() => sumTransactionTotals(txsInRange), [txsInRange]);
 
   const homeCrops = useMemo(() => crops.slice(0, 3), [crops]);
+
+  const cycleIdsByCrop = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const cycle of cycles) {
+      const ids = map.get(cycle.cropId) ?? [];
+      ids.push(cycle.cycleId);
+      map.set(cycle.cropId, ids);
+    }
+    return map;
+  }, [cycles]);
 
   const recentTransactions = useMemo(() => {
     return [...transactions]
@@ -199,7 +215,11 @@ export default function Sum() {
             <div className="home-cycle-list">
               {homeCrops.map((crop) => {
                 const season = crop.currentSeason;
-                const stats = statsForSeason(transactions, season);
+                const stats = statsForCropRound(
+                  crop,
+                  transactions,
+                  cycleIdsByCrop.get(crop.cropId) ?? [],
+                );
                 const remaining = cropRemaining(crop, stats.income, stats.expense);
                 const iconName = isIconName(crop.icon) ? crop.icon : "corn";
                 return (

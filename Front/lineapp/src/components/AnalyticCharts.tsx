@@ -10,12 +10,11 @@ import {
     BarElement,
     PointElement,
     LineElement,
-    ArcElement,
     Filler,
     Tooltip,
     Legend,
 } from "chart.js";
-import { Bar, Line, Pie } from "react-chartjs-2";
+import { Bar, Line } from "react-chartjs-2";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { analyticFilters, type AnalyticFilter } from "../data/analyticMockData";
@@ -47,6 +46,7 @@ import {
     toGregorianCalendarDate,
 } from "../utils/formatAppDate";
 import { parseTxDateTime } from "../utils/parseTxDateTime";
+import { isInSeasonWindow } from "../utils/seasonWindows";
 
 ChartJS.register(
     CategoryScale,
@@ -54,7 +54,6 @@ ChartJS.register(
     BarElement,
     PointElement,
     LineElement,
-    ArcElement,
     Filler,
     Tooltip,
     Legend,
@@ -278,8 +277,14 @@ export default function AnalyticCharts({
 
     const trendTransactions = useMemo(() => {
         if (!useSeasonBar || trendSeasonId === ALL_SEASONS_TAB) return transactions;
+        const range = seasonRangeForId(trendSeasonId);
+        if (range?.startDate && range.endDate) {
+            return transactions.filter((tx) =>
+                isInSeasonWindow(parseTxDateTime(tx.txDate), range.startDate!, range.endDate!),
+            );
+        }
         return transactions.filter((tx) => tx.cycleId === trendSeasonId);
-    }, [transactions, useSeasonBar, trendSeasonId]);
+    }, [transactions, useSeasonBar, trendSeasonId, seasonRangeForId]);
 
     const handleDaySelect = useCallback((date: CalendarDate) => {
         setSelectedDay(date);
@@ -530,61 +535,6 @@ export default function AnalyticCharts({
         },
         maintainAspectRatio: false,
     };
-    const buildPieData = (
-        slices: typeof expensePieSlices,
-        label: string,
-        colors: string[],
-        activeIndex: number | null,
-    ) => ({
-        labels: slices.map((s) => s.label),
-        datasets: [
-            {
-                label,
-                data: slices.map((s) => s.amount),
-                backgroundColor: slices.map((_, i) => {
-                    const color = colors[i % colors.length];
-                    if (activeIndex === null || activeIndex === i) return color;
-                    return `${color}55`;
-                }),
-                borderColor: "white",
-                borderWidth: 3,
-                hoverOffset: 15,
-                offset: slices.map((_, i) => (activeIndex === i ? 18 : 0)),
-                radius: "80%",
-            },
-        ],
-    });
-
-    const expensePieData = buildPieData(
-        expensePieSlices,
-        t("analytic.expenseShare"),
-        EXPENSE_PIE_COLORS,
-        activeExpensePieIndex,
-    );
-    const incomePieData = buildPieData(
-        incomePieSlices,
-        t("analytic.incomeShare"),
-        INCOME_PIE_COLORS,
-        activeIncomePieIndex,
-    );
-
-    const pieOptions = {
-        responsive: true,
-        plugins: {
-            legend: {
-                display: false,
-            },
-            tooltip: {
-                callbacks: {
-                    label: function (context: { label?: string }) {
-                        return ` ${context.label ?? ""}`;
-                    },
-                },
-            },
-        },
-        maintainAspectRatio: false,
-    };
-
     return (
         <>
             <section className="analytic-card">
@@ -733,7 +683,6 @@ export default function AnalyticCharts({
                     key: "expense" as const,
                     title: t("analytic.expenseShare"),
                     slices: expensePieSlices,
-                    pieData: expensePieData,
                     colors: EXPENSE_PIE_COLORS,
                     activeIndex: activeExpensePieIndex,
                     setActiveIndex: setActiveExpensePieIndex,
@@ -744,7 +693,6 @@ export default function AnalyticCharts({
                     key: "income" as const,
                     title: t("analytic.incomeShare"),
                     slices: incomePieSlices,
-                    pieData: incomePieData,
                     colors: INCOME_PIE_COLORS,
                     activeIndex: activeIncomePieIndex,
                     setActiveIndex: setActiveIncomePieIndex,
@@ -778,19 +726,49 @@ export default function AnalyticCharts({
                             )}
                         </div>
                     </div>
-                    <div className="analytic-pie-layout">
+                    <div className="analytic-share-layout">
                         {loading ? (
                             <div className="analytic-empty">{t("analytic.loading")}</div>
                         ) : card.slices.length === 0 ? (
                             <div className="analytic-empty">{t("list.empty")}</div>
                         ) : (
                             <>
-                                <div className="analytic-pie-chart">
-                                    <Pie data={card.pieData} options={pieOptions} />
-                                </div>
-                                <div className="analytic-pie-legend-list">
+                                <div
+                                    className="analytic-share-bar"
+                                    role="img"
+                                    aria-label={card.slices
+                                        .map((item) => `${item.label} ${item.percent}%`)
+                                        .join(", ")}
+                                >
                                     {card.slices.map((item, index) => {
                                         const isActive = card.activeIndex === index;
+                                        const color = card.colors[index % card.colors.length];
+                                        return (
+                                            <button
+                                                key={`${card.key}-seg-${item.label}-${index}`}
+                                                type="button"
+                                                className={`analytic-share-seg${isActive ? " is-active" : ""}`}
+                                                style={{
+                                                    flexGrow: item.amount,
+                                                    backgroundColor: color,
+                                                    opacity:
+                                                        isActive || card.activeIndex === null ? 1 : 0.35,
+                                                }}
+                                                aria-pressed={isActive}
+                                                aria-label={`${item.label} ${item.percent}%`}
+                                                onClick={() =>
+                                                    card.setActiveIndex((current) =>
+                                                        current === index ? null : index,
+                                                    )
+                                                }
+                                            />
+                                        );
+                                    })}
+                                </div>
+                                <div className="analytic-share-legend">
+                                    {card.slices.map((item, index) => {
+                                        const isActive = card.activeIndex === index;
+                                        const color = card.colors[index % card.colors.length];
                                         return (
                                             <button
                                                 key={`${card.key}-${item.label}-${index}`}
@@ -800,19 +778,23 @@ export default function AnalyticCharts({
                                                         current === index ? null : index,
                                                     )
                                                 }
-                                                className={`analytic-pie-legend-btn${isActive ? " is-active" : ""}`}
+                                                className={`analytic-share-btn${isActive ? " is-active" : ""}`}
+                                                aria-pressed={isActive}
                                             >
-                                                <span
-                                                    className="analytic-pie-swatch"
-                                                    style={{
-                                                        backgroundColor:
-                                                            card.colors[index % card.colors.length],
-                                                        opacity:
-                                                            isActive || card.activeIndex === null ? 1 : 0.45,
-                                                    }}
-                                                />
-                                                <p className="analytic-pie-legend-label">{item.label}</p>
-                                                <p className="analytic-pie-legend-percent">{item.percent}%</p>
+                                                <span className="analytic-share-meta">
+                                                    <span
+                                                        className="analytic-share-swatch"
+                                                        style={{
+                                                            backgroundColor: color,
+                                                            opacity:
+                                                                isActive || card.activeIndex === null
+                                                                    ? 1
+                                                                    : 0.45,
+                                                        }}
+                                                    />
+                                                    <span className="analytic-share-label">{item.label}</span>
+                                                </span>
+                                                <span className="analytic-share-percent">{item.percent}%</span>
                                             </button>
                                         );
                                     })}
