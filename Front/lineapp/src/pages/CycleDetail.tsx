@@ -1,11 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import MainLayout from "../layouts/MainLayout";
 import AnalyticCharts from "../components/AnalyticCharts";
-import Dropdown from "../components/Dropdown";
-import FilterChipButton from "../components/FilterChipButton";
-import ListDayTypeCard from "../components/ListDayTypeCard";
 import { icons } from "../assets/Iconlist";
 import { auth } from "../lib/auth";
 import {
@@ -19,22 +16,18 @@ import {
     type Transaction,
 } from "../lib/userService";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
-import { groupTransactionsByDate } from "../utils/groupTransactionsByDate";
 import { displayYearFromGregorian } from "../utils/formatAppDate";
 import { formatMonthRange } from "../utils/formatMonthYear";
 import { parseTxDateTime } from "../utils/parseTxDateTime";
 import {
     activeSeasonStartYear,
-    transactionInSeasonWindow,
     yearSeasonsFromDates,
     type SeasonWindow,
 } from "../utils/seasonWindows";
 import "../styles/analytic.css";
-import "../styles/list.css";
 import "../styles/Cycle.css";
 
 const ALL_SEASONS = "all";
-const LIST_PAGE_SIZE = 10;
 
 function isIconName(value: string | null | undefined): value is keyof typeof icons {
     return Boolean(value && Object.prototype.hasOwnProperty.call(icons, value));
@@ -67,7 +60,6 @@ export default function CycleDetail() {
     const navigate = useNavigate();
     const [crop, setCrop] = useState<Crop | null>(null);
     const [seasons, setSeasons] = useState<Cycle[]>([]);
-    const [listSeasonId, setListSeasonId] = useState<string>(ALL_SEASONS);
     const [preferredSeasonId, setPreferredSeasonId] = useState<string | null>(null);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
@@ -77,11 +69,7 @@ export default function CycleDetail() {
     const [txLoaded, setTxLoaded] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [notFound, setNotFound] = useState(false);
-    const [activeFilter, setActiveFilter] = useState<"all" | "expense" | "income">("all");
-    const [listPage, setListPage] = useState(1);
-    const [collapsedCards, setCollapsedCards] = useState<Record<string, boolean>>({});
     const seasonChoiceKey = useRef<string | null>(null);
-    const fallbackCategory = t("list.quickAddCategory");
 
     const preferredSeasonFromUrl = searchParams.get("season");
 
@@ -121,7 +109,6 @@ export default function CycleDetail() {
                 setSeasons(ordered);
                 if (cropRow.startMonth == null || cropRow.endMonth == null) {
                     const defaultSeason = pickDefaultSeasonId(ordered, preferredSeasonFromUrl);
-                    setListSeasonId(defaultSeason);
                     setPreferredSeasonId(
                         defaultSeason === ALL_SEASONS ? null : defaultSeason,
                     );
@@ -201,69 +188,8 @@ export default function CycleDetail() {
             const active = String(activeSeasonStartYear(crop.startMonth, crop.endMonth));
             next = ids.has(active) ? active : (yearSeasons[0]?.id ?? ALL_SEASONS);
         }
-        setListSeasonId(next);
         setPreferredSeasonId(next === ALL_SEASONS ? null : next);
     }, [txLoaded, yearSeasons, crop, preferredSeasonFromUrl]);
-
-    const categoryById = useMemo(
-        () =>
-            Object.fromEntries(
-                [...expenseCategories, ...incomeCategories].map((c) => [c.categoryId, c.name]),
-            ),
-        [expenseCategories, incomeCategories],
-    );
-
-    const selectedYearSeason = useMemo(
-        () => yearSeasons?.find((season) => season.id === listSeasonId) ?? null,
-        [yearSeasons, listSeasonId],
-    );
-
-    const listTransactions = useMemo(() => {
-        if (listSeasonId === ALL_SEASONS) return transactions;
-        if (selectedYearSeason) {
-            return transactions.filter((tx) => transactionInSeasonWindow(tx, selectedYearSeason));
-        }
-        return transactions.filter((tx) => tx.cycleId === listSeasonId);
-    }, [transactions, listSeasonId, selectedYearSeason]);
-
-    const filteredTransactions = useMemo(() => {
-        const rows = listTransactions.filter(
-            (tx) => activeFilter === "all" || tx.txType === activeFilter,
-        );
-        return [...rows].sort(
-            (a, b) => parseTxDateTime(b.txDate).getTime() - parseTxDateTime(a.txDate).getTime(),
-        );
-    }, [activeFilter, listTransactions]);
-
-    const listTotalPages = Math.max(1, Math.ceil(filteredTransactions.length / LIST_PAGE_SIZE));
-
-    useEffect(() => {
-        setListPage(1);
-    }, [activeFilter, listSeasonId]);
-
-    useEffect(() => {
-        setListPage((prev) => Math.min(prev, listTotalPages));
-    }, [listTotalPages]);
-
-    const pagedGroups = useMemo(() => {
-        const start = (listPage - 1) * LIST_PAGE_SIZE;
-        const pageRows = filteredTransactions.slice(start, start + LIST_PAGE_SIZE);
-        return groupTransactionsByDate(pageRows, i18n.language);
-    }, [filteredTransactions, listPage, i18n.language]);
-
-    const toggleCardCollapsed = useCallback((key: string) => {
-        setCollapsedCards((prev) => ({ ...prev, [key]: !prev[key] }));
-    }, []);
-
-    const selectListSeason = (id: string) => {
-        setListSeasonId(id);
-        setCollapsedCards({});
-    };
-
-    const setListFilter = (filter: "all" | "expense" | "income") => {
-        setActiveFilter(filter);
-        setCollapsedCards({});
-    };
 
     const monthLabel =
         crop?.startMonth != null && crop?.endMonth != null
@@ -291,17 +217,6 @@ export default function CycleDetail() {
                   }));
         return source;
     }, [yearSeasons, seasons, i18n.language]);
-
-    const seasonFilterOptions = useMemo(
-        () => [
-            { value: ALL_SEASONS, label: t("cycle.seasonAllYears") },
-            ...seasonChoices.map((season) => ({
-                value: season.id,
-                label: season.label,
-            })),
-        ],
-        [seasonChoices, t],
-    );
 
     const chartSeasons = useMemo(
         () =>
@@ -350,109 +265,6 @@ export default function CycleDetail() {
                                     allSeasonsLabel={t("cycle.seasonAllYears")}
                                     seasons={chartSeasons}
                                 />
-
-                                <section className="list-page cycle-detail-list">
-                                    <h2 className="cycle-detail-list-title">
-                                        {t("cycle.detailTransactions")}
-                                    </h2>
-                                    <div className="list-filter-card">
-                                        <div className="list-filter-row">
-                                            <div className="list-filter-chips">
-                                                <FilterChipButton
-                                                    label={t("list.all")}
-                                                    active={activeFilter === "all"}
-                                                    variant="all"
-                                                    onClick={() => setListFilter("all")}
-                                                />
-                                                <FilterChipButton
-                                                    label={t("list.expense")}
-                                                    active={activeFilter === "expense"}
-                                                    variant="expense"
-                                                    onClick={() => setListFilter("expense")}
-                                                />
-                                                <FilterChipButton
-                                                    label={t("list.income")}
-                                                    active={activeFilter === "income"}
-                                                    variant="income"
-                                                    onClick={() => setListFilter("income")}
-                                                />
-                                            </div>
-                                            {seasonChoices.length > 0 ? (
-                                                <Dropdown
-                                                    label={t("analytic.season")}
-                                                    data={seasonFilterOptions}
-                                                    value={listSeasonId}
-                                                    onValueChange={selectListSeason}
-                                                    minWidth={96}
-                                                />
-                                            ) : null}
-                                        </div>
-                                    </div>
-
-                                    <div className="list-groups">
-                                        {chartsLoading && (
-                                            <div className="list-loading">{t("cycle.detailLoading")}</div>
-                                        )}
-                                        {!chartsLoading &&
-                                            pagedGroups.map((group) => (
-                                                <ListDayTypeCard
-                                                    key={group.date}
-                                                    date={group.date}
-                                                    transactions={group.transactions}
-                                                    collapsed={Boolean(collapsedCards[group.date])}
-                                                    onToggle={() => toggleCardCollapsed(group.date)}
-                                                    categoryById={categoryById}
-                                                    fallbackCategory={fallbackCategory}
-                                                    fallbackIcon={icons.bill}
-                                                    selectedTxIds={[]}
-                                                    onToggleSelect={() => undefined}
-                                                    onEdit={(tx) =>
-                                                        navigate(
-                                                            `/app/list?editTxId=${encodeURIComponent(tx.txId)}`,
-                                                        )
-                                                    }
-                                                />
-                                            ))}
-                                        {!chartsLoading && filteredTransactions.length === 0 && (
-                                            <div className="list-empty">{t("list.empty")}</div>
-                                        )}
-                                    </div>
-
-                                    {!chartsLoading && filteredTransactions.length > LIST_PAGE_SIZE ? (
-                                        <nav
-                                            className="cycle-detail-pagination"
-                                            aria-label={t("cycle.detailPaginationPage", {
-                                                page: listPage,
-                                                total: listTotalPages,
-                                            })}
-                                        >
-                                            <button
-                                                type="button"
-                                                className="cycle-detail-page-btn"
-                                                disabled={listPage <= 1}
-                                                onClick={() => setListPage((p) => Math.max(1, p - 1))}
-                                            >
-                                                {t("cycle.detailPaginationPrev")}
-                                            </button>
-                                            <span className="cycle-detail-pagination-label">
-                                                {t("cycle.detailPaginationPage", {
-                                                    page: listPage,
-                                                    total: listTotalPages,
-                                                })}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                className="cycle-detail-page-btn"
-                                                disabled={listPage >= listTotalPages}
-                                                onClick={() =>
-                                                    setListPage((p) => Math.min(listTotalPages, p + 1))
-                                                }
-                                            >
-                                                {t("cycle.detailPaginationNext")}
-                                            </button>
-                                        </nav>
-                                    ) : null}
-                                </section>
                             </>
                         )}
                     </div>

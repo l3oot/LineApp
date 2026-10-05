@@ -21,7 +21,7 @@ export default function CycleDemo() {
             <div className="mk-cycle-demo__phone">
                 <div className="mk-cycle-demo__add" aria-hidden>
                     <span className="mk-cycle-demo__add-icon">+</span>
-                    <span>เพิ่มพืช</span>
+                    <span>เพิ่มการเกษตร</span>
                 </div>
 
                 <div className="mk-cycle-demo__list">
