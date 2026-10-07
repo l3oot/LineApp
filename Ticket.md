@@ -12,6 +12,10 @@
 
 ## Backend
 
+- [ ] **Fix:** Flex 2 อันใน messages[]  ปุ่มเข้าเว็ปเพื่อลดการใช้ Rich menu
+
+- [ ] **ADD:** pathumma thaillm
+
 - [x] **Fix:** Ai Service ตอบช้า
 
 - [x] **Fix:** สรุป AI ดึงต้นทุนมาคำนวนด้วย
@@ -21,8 +25,6 @@
 - [x] **Fix:** \service\CoinService.java : REFERENCE_TYPE_TRANSACTION = "TRANSACTION";
 
 - [x] **ADD:** สำหรับผู้ประกอบการ
-
-- [ ] **ADD:** pathumma thaillm
 
 - [x] **ADD:** JWT Filter
 
