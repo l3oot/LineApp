@@ -28,6 +28,22 @@ _UNVERIFIED_SAVE_REPLY = (
     "ถ้าจะจดรายจ่าย พิมพ์แบบ ซื้อปุ๋ยข้าวโพด 500 บาท นะจ๊ะ"
 )
 
+WEB_APP_URL = "https://yaiphao.com/app"
+WEB_ENTRY_REPLY = f"เข้าเว็บได้ที่ {WEB_APP_URL} นะจ๊ะ"
+
+_WEB_WORD = r"(?:เว็บไซต์|เว็บ|เว็ป|เวป)"
+_WEB_ENTRY = re.compile(
+    rf"(?:"
+    rf"เข้า(?:สู่)?{_WEB_WORD}"
+    rf"|เปิด{_WEB_WORD}"
+    rf"|(?:ลิงก์|ลิงค์|ลิ้งก์|ลิ้งค์|ลิ้ง|link|url)\s*{_WEB_WORD}"
+    rf"|{_WEB_WORD}(?:\s*)(?:อยู่ที่ไหน|อยู่ไหน|ที่ไหน|ตรงไหน|ยังไง|อย่างไร|ได้ที่ไหน)"
+    rf"|ทางเข้า{_WEB_WORD}"
+    rf"|ขอ(?:ลิงก์|ลิงค์|ลิ้งก์|ลิ้งค์|url)\s*(?:เข้า)?{_WEB_WORD}"
+    rf")",
+    re.IGNORECASE,
+)
+
 # คำถามขอรายชื่อสินค้าที่มีราคา — ไม่ใช่ถามราคาของสินค้าชิ้นเดียว
 _LIST_AGRI_PRODUCTS = re.compile(
     r"(?:รายการสินค้า|รายชื่อสินค้า|สินค้าที่มีราคา|คลังสินค้า|"
@@ -75,6 +91,20 @@ def classify_record_intent(message: str) -> RouteDecision | None:
         confidence=0.99 if has_baht else 0.95,
         source="rule",
         reason="verb+amount_baht" if has_baht else "verb+amount",
+    )
+
+
+def classify_web_entry_intent(message: str) -> RouteDecision | None:
+    """ถ้าถามทางเข้าเว็บ ให้ตอบ URL ของแอปตรง ๆ"""
+    text = (message or "").strip()
+    if not text or not _WEB_ENTRY.search(text):
+        return None
+    return RouteDecision(
+        intent="chat",
+        tool_name=None,
+        confidence=0.97,
+        source="rule",
+        reason="web_entry",
     )
 
 

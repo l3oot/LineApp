@@ -5,14 +5,22 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from src.client.lineapp_api import fetch_user_profile, get_lineapp_api_base
 from src.config import settings
 from src.dto.chat import ChatAction, ChatResponse, ChatTurn
 from src.gateway.api_gateway import GatewayError, execute_tool
 from src.orchestrator.intent_rules import (
+    WEB_ENTRY_REPLY,
     RouteDecision,
     classify_list_agri_products_intent,
     classify_record_intent,
+    classify_web_entry_intent,
     sanitize_unverified_save,
+)
+from src.orchestrator.weather_location import (
+    NO_PROFILE_PLACE_REPLY,
+    WEATHER_TOOLS,
+    prepare_weather_arguments,
 )
 from src.prompts.orchestrator import (
     SYSTEM_PERSONA,
@@ -217,6 +225,38 @@ def _decision_from_selection(tool_name: str | None) -> RouteDecision:
     return RouteDecision("lookup", tool_name, 0.6, "llm", "tool_call")
 
 
+def _prepare_weather_call(
+    arguments: dict[str, Any],
+    user_message: str,
+    user_id: str | None,
+) -> dict[str, Any] | str:
+    """ใส่พื้นที่จากโปรไฟล์เมื่อข้อความล่าสุดไม่ได้ระบุที่ ไม่งั้นคืนข้อความให้หลาน"""
+    prepared = prepare_weather_arguments(arguments, user_message, None)
+    uid = (user_id or "").strip()
+    if prepared is None and uid:
+        profile = fetch_user_profile(
+            get_lineapp_api_base(),
+            uid,
+            timeout=settings.gateway_http_timeout_seconds,
+        )
+        prepared = prepare_weather_arguments(arguments, user_message, profile)
+    if prepared is None:
+        logger.info(
+            "[ai-route] hop=ai reqId=%s action=weather-no-place userId=%s",
+            get_request_id(),
+            uid or "-",
+        )
+        return NO_PROFILE_PLACE_REPLY
+    logger.info(
+        "[ai-route] hop=ai reqId=%s action=weather-place province=%s amphoe=%s tambon=%s",
+        get_request_id(),
+        prepared.get("province"),
+        prepared.get("amphoe"),
+        prepared.get("tambon"),
+    )
+    return prepared
+
+
 def _finish_tool(
     tool_name: str,
     arguments: dict[str, Any],
@@ -233,6 +273,12 @@ def _finish_tool(
 
     if tool_name == "parse_expense":
         arguments = _ensure_parse_text(arguments, user_message)
+
+    if tool_name in WEATHER_TOOLS:
+        prepared = _prepare_weather_call(arguments, user_message, user_id)
+        if isinstance(prepared, str):
+            return _chat_reply(prepared, decision, tools_used, source_model)
+        arguments = prepared
 
     tools_used.append(tool_name)
     try:
@@ -317,6 +363,11 @@ def run_tool_loop(
             "rule",
             history=history_dicts,
         )
+
+    web_rule = classify_web_entry_intent(user_message)
+    if web_rule is not None:
+        _log_route(web_rule, user_message, context_msgs)
+        return _chat_reply(WEB_ENTRY_REPLY, web_rule, [], "rule")
 
     list_rule = classify_list_agri_products_intent(user_message)
     if list_rule is not None:

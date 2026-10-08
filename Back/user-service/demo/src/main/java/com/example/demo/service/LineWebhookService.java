@@ -27,6 +27,8 @@ import com.example.demo.dto.res.AiChatRes;
 import com.example.demo.dto.res.AiParseRes;
 import com.example.demo.dto.res.TransactionRes;
 import com.example.demo.entity.UserEntity;
+import com.example.demo.repository.CategoryRepository;
+import com.example.demo.repository.CycleRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.util.AiLatency;
 import com.example.demo.util.AppTime;
@@ -65,6 +67,8 @@ public class LineWebhookService {
     private final TransactionService transactionService;
     private final LineTransactionNotifyService lineTransactionNotifyService;
     private final LineProperties lineProperties;
+    private final CycleRepository cycleRepository;
+    private final CategoryRepository categoryRepository;
 
     public LineWebhookService(
             UserRepository userRepository,
@@ -74,7 +78,9 @@ public class LineWebhookService {
             LineFlexMessageBuilder lineFlexMessageBuilder,
             TransactionService transactionService,
             LineTransactionNotifyService lineTransactionNotifyService,
-            LineProperties lineProperties) {
+            LineProperties lineProperties,
+            CycleRepository cycleRepository,
+            CategoryRepository categoryRepository) {
         this.userRepository = userRepository;
         this.aiClientService = aiClientService;
         this.chatHistoryService = chatHistoryService;
@@ -83,6 +89,8 @@ public class LineWebhookService {
         this.transactionService = transactionService;
         this.lineTransactionNotifyService = lineTransactionNotifyService;
         this.lineProperties = lineProperties;
+        this.cycleRepository = cycleRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     @Async("lineWebhookExecutor")
@@ -348,16 +356,36 @@ public class LineWebhookService {
 
         try {
             TransactionRes saved = transactionService.createTransaction(req);
-            return LineReply.flex(
+            LineReply.FlexBubble transactionCard = new LineReply.FlexBubble(
                     lineFlexMessageBuilder.buildTransactionBubble(
                             data,
                             saved,
                             timestampMs,
                             lineProperties.resolveLiffBaseUrl()),
                     lineFlexMessageBuilder.buildAltText(data, saved));
+            if (needsGoWebPrompt(user.getUserId())) {
+                return LineReply.flexes(
+                        transactionCard,
+                        new LineReply.FlexBubble(
+                                lineFlexMessageBuilder.buildGoWebContents(),
+                                "เข้าใช้ระบบ"));
+            }
+            return LineReply.flex(transactionCard.contents(), transactionCard.altText());
         } catch (ApiException e) {
             log.warn("createTransaction failed: {}", e.getMessage());
             return LineReply.text("บันทึกไม่สำเร็จจ้า ลองใหม่อีกครั้งนะจ๊ะ");
         }
+    }
+
+    /**
+     * ส่งปุ่มเข้าเว็บเฉพาะผู้ใช้ที่ยังไม่เคยสร้างรอบการเกษตร หรือยังไม่เคยสร้างหมวด
+     */
+    private boolean needsGoWebPrompt(UUID userId) {
+        if (userId == null) {
+            return false;
+        }
+        boolean hasCycle = cycleRepository.existsByUserId(userId);
+        boolean hasCategory = categoryRepository.existsByUserId(userId);
+        return !hasCycle || !hasCategory;
     }
 }

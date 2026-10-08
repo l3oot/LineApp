@@ -57,30 +57,43 @@ public class LineMessagingService {
      * ตอบกลับด้วย Flex Message bubble
      */
     public boolean replyFlex(String replyToken, String altText, Map<String, Object> contents) {
-        if (replyToken == null || replyToken.isBlank()) {
-            log.warn("replyFlex skipped: empty replyToken");
-            return false;
-        }
-        Map<String, Object> flexMessage = Map.of(
-                "type", "flex",
-                "altText", truncate(altText),
-                "contents", contents
-        );
-        Map<String, Object> body = Map.of(
-                "replyToken", replyToken,
-                "messages", List.of(flexMessage)
-        );
-        return post(REPLY_URL, body);
+        return replyMessages(replyToken, List.of(flexPayload(altText, contents)));
     }
 
     public void send(LineReply reply, String replyToken) {
         if (reply.isFlex()) {
-            if (!replyFlex(replyToken, reply.flexAltText(), reply.flexContents())) {
+            List<Map<String, Object>> messages = reply.flexes().stream()
+                    .map(flex -> flexPayload(flex.altText(), flex.contents()))
+                    .toList();
+            if (!replyMessages(replyToken, messages)) {
                 reply(replyToken, reply.flexAltText());
             }
             return;
         }
         reply(replyToken, reply.text());
+    }
+
+    private boolean replyMessages(String replyToken, List<Map<String, Object>> messages) {
+        if (replyToken == null || replyToken.isBlank()) {
+            log.warn("reply skipped: empty replyToken");
+            return false;
+        }
+        if (messages == null || messages.isEmpty()) {
+            return false;
+        }
+        Map<String, Object> body = Map.of(
+                "replyToken", replyToken,
+                "messages", messages
+        );
+        return post(REPLY_URL, body);
+    }
+
+    private static Map<String, Object> flexPayload(String altText, Map<String, Object> contents) {
+        return Map.of(
+                "type", "flex",
+                "altText", truncate(altText),
+                "contents", contents
+        );
     }
 
     /**

@@ -11,6 +11,8 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
 
     List<CategoryEntity> findByUserIdOrderByNameAsc(UUID userId);
 
+    boolean existsByUserId(UUID userId);
+
     List<CategoryEntity> findByUserIdAndTypeOrderByNameAsc(UUID userId, String type);
 
     boolean existsByUserIdAndName(UUID userId, String name);

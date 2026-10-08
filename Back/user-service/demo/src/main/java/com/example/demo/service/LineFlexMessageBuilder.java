@@ -40,6 +40,7 @@ public class LineFlexMessageBuilder {
     private static final String EDIT_TEMPLATE = "line/flex/edit.json";
     private static final String HELP_TEMPLATE = "line/flex/help.json";
     private static final String PRICE_TEMPLATE = "line/flex/price.json";
+    private static final String GOWEB_TEMPLATE = "line/flex/goweb.json";
     private static final String INCOME_COLOR = "#30793F";
     private static final String EXPENSE_COLOR = "#E36C64";
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -189,6 +190,13 @@ public class LineFlexMessageBuilder {
      */
     public Map<String, Object> buildPriceHelpContents() {
         return parseStaticTemplate(PRICE_TEMPLATE, "price");
+    }
+
+    /**
+     * Flex ปุ่มเข้าเว็บ /app — ส่งคู่กับ transaction bubble
+     */
+    public Map<String, Object> buildGoWebContents() {
+        return parseStaticTemplate(GOWEB_TEMPLATE, "goweb");
     }
 
     private Map<String, Object> parseStaticTemplate(String classpath, String name) {
