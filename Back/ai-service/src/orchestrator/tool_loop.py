@@ -6,6 +6,7 @@ import logging
 from typing import Any
 
 from src.client.agri_chat import AgriChatError, ask_agri_chat, build_agri_messages
+from src.orchestrator.agri_rewrite import rewrite_agri_for_yai
 from src.client.lineapp_api import fetch_user_profile, get_lineapp_api_base
 from src.config import settings
 from src.dto.chat import ChatAction, ChatResponse, ChatTurn
@@ -275,7 +276,7 @@ def _reply_from_agri_chat(
 ) -> ChatResponse:
     tools_used.append(_ASK_AGRI_KNOWLEDGE)
     try:
-        reply = ask_agri_chat(build_agri_messages(user_message, history))
+        raw = ask_agri_chat(build_agri_messages(user_message, history))
     except AgriChatError as exc:
         logger.warning(
             "[ai-route] hop=ai reqId=%s action=agri-chat-fail intent=%s error=%s",
@@ -283,16 +284,9 @@ def _reply_from_agri_chat(
             decision.intent,
             exc,
         )
-        reply = _AGRI_KNOWLEDGE_FAIL
-    return _with_route(
-        ChatResponse(
-            reply_text=reply or _AGRI_KNOWLEDGE_FAIL,
-            actions=[],
-            tools_used=tools_used,
-            source_model="agri-pathumma",
-        ),
-        decision,
-    )
+        return _chat_reply(_AGRI_KNOWLEDGE_FAIL, decision, tools_used, "agri-pathumma")
+    reply, model = rewrite_agri_for_yai(user_message, raw)
+    return _chat_reply(reply, decision, tools_used, model or "agri-pathumma")
 
 
 def _prepare_weather_call(
