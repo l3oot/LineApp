@@ -27,6 +27,8 @@ class Settings:
     ai_internal_key: str
     gateway_http_timeout_seconds: float
     orchestrator_max_tool_rounds: int
+    agri_chat_stream_url: str
+    agri_chat_timeout_seconds: float
     llm: LlmSettings
 
 
@@ -39,6 +41,11 @@ def _load_settings() -> Settings:
         ai_internal_key=os.getenv("AI_INTERNAL_KEY", "").strip(),
         gateway_http_timeout_seconds=float(os.getenv("GATEWAY_HTTP_TIMEOUT_SECONDS", "20")),
         orchestrator_max_tool_rounds=int(os.getenv("ORCHESTRATOR_MAX_TOOL_ROUNDS", "3")),
+        agri_chat_stream_url=os.getenv(
+            "AGRI_CHAT_STREAM_URL",
+            "https://agri.pathumma.in.th/api/chat/stream",
+        ).strip(),
+        agri_chat_timeout_seconds=float(os.getenv("AGRI_CHAT_TIMEOUT_SECONDS", "45")),
         llm=LlmSettings(
             openai_api_key=openai_api_key,
             thaillm_api_key=thaillm_api_key,

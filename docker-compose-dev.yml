@@ -138,6 +138,8 @@ services:
       AI_INTERNAL_KEY: ${AI_INTERNAL_KEY}
       ORCHESTRATOR_MAX_TOOL_ROUNDS: "${ORCHESTRATOR_MAX_TOOL_ROUNDS:-3}"
       GATEWAY_HTTP_TIMEOUT_SECONDS: "${GATEWAY_HTTP_TIMEOUT_SECONDS:-20}"
+      AGRI_CHAT_STREAM_URL: "${AGRI_CHAT_STREAM_URL:-https://agri.pathumma.in.th/api/chat/stream}"
+      AGRI_CHAT_TIMEOUT_SECONDS: "${AGRI_CHAT_TIMEOUT_SECONDS:-45}"
       LOG_FILE: ${AI_LOG_FILE:-/app/logs/ai-service.log}
     extra_hosts:
       - "host.docker.internal:host-gateway"
