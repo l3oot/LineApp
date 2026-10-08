@@ -2,49 +2,21 @@
 
 ## Frontend
 
-- [x] **Fix:** สรุป AI ดึงต้นทุนมาคำนวนด้วย
-
-- [x] **ADD:** ทำ web landing page ที่ base domain /about /contact /terms /privacy
-
-- [x] **FIX:** แก้ part ของ /app เพื่อแยกจาก web landing page
-
-- [x] **ADD:** สำหรับผู้ประกอบการ
+- No ticket
 
 ## Backend
 
 - [ ] **Fix:** Flex 2 อันใน messages[]  ปุ่มเข้าเว็ปเพื่อลดการใช้ Rich menu
 
-- [ ] **ADD:** pathumma thaillm
-
-- [x] **Fix:** Ai Service ตอบช้า
-
-- [x] **Fix:** สรุป AI ดึงต้นทุนมาคำนวนด้วย
-
-- [x] **ADD:** เพิ่ม Log File
-
-- [x] **Fix:** \service\CoinService.java : REFERENCE_TYPE_TRANSACTION = "TRANSACTION";
-
-- [x] **ADD:** สำหรับผู้ประกอบการ
-
-- [x] **ADD:** JWT Filter
-
-- [x] **ADD:** FALLBACK_COMMODs : service\AgriPriceClientService.java
-
-- [x] **ADD:** _DEFAULT_CYCLE_USER_ID : ai-service\src\config\settings.py
-
-- [x] **Fix:** แก้ LINE Push เป็น LINE Reply
+- [ ] **ADD:** pathumma thaillm LineApp\agriculture_ai_chatbot_summary.md
 
 ## DevOps
 
 - No ticket
 
-
-
 ## Database
 
 - No ticket
-
-
 
 ## Security
 
