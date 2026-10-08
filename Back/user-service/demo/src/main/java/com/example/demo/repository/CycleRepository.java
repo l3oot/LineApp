@@ -11,6 +11,8 @@ public interface CycleRepository extends JpaRepository<CycleEntity, UUID> {
 
     List<CycleEntity> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
+    boolean existsByUserId(UUID userId);
+
     List<CycleEntity> findByCropIdOrderByCreatedAtDesc(UUID cropId);
 
     List<CycleEntity> findByCropIdAndStatus(UUID cropId, String status);

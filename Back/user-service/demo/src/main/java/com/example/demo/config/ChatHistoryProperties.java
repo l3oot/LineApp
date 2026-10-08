@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
  *
  * <pre>
  * chat.history.max-messages=20
- * chat.history.ttl-minutes=30
+ * chat.history.ttl-minutes=10
  * chat.history.cleanup-ms=300000
  * </pre>
  */
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 public class ChatHistoryProperties {
 
     private int maxMessages = 20;
-    private int ttlMinutes = 30;
+    private int ttlMinutes = 10;
     private long cleanupMs = 300_000L;
 
     public int getMaxMessages() {

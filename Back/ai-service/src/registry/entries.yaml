@@ -20,15 +20,15 @@ tools:
     parameters:
       province:
         type: string
-        description: ชื่อจังหวัดภาษาไทย เช่น บุรีรัมย์
+        description: ชื่อจังหวัดภาษาไทย ใส่เฉพาะเมื่อหลานระบุในข้อความ ถ้าว่างระบบใช้โปรไฟล์
         required: false
       amphoe:
         type: string
-        description: ชื่ออำเภอ
+        description: ชื่ออำเภอ ใส่เฉพาะเมื่อหลานระบุในข้อความ
         required: false
       tambon:
         type: string
-        description: ชื่อตำบล
+        description: ชื่อตำบล ใส่เฉพาะเมื่อหลานระบุในข้อความ
         required: false
       date:
         type: string
@@ -59,15 +59,15 @@ tools:
     parameters:
       province:
         type: string
-        description: ชื่อจังหวัดภาษาไทย
+        description: ชื่อจังหวัดภาษาไทย ใส่เฉพาะเมื่อหลานระบุในข้อความ ถ้าว่างระบบใช้โปรไฟล์
         required: false
       amphoe:
         type: string
-        description: ชื่ออำเภอ
+        description: ชื่ออำเภอ ใส่เฉพาะเมื่อหลานระบุในข้อความ
         required: false
       tambon:
         type: string
-        description: ชื่อตำบล
+        description: ชื่อตำบล ใส่เฉพาะเมื่อหลานระบุในข้อความ
         required: false
       date:
         type: string

@@ -1,0 +1,52 @@
+{
+    "type": "carousel",
+    "contents": [
+      {
+        "type": "bubble",
+        "body": {
+          "type": "box",
+          "layout": "vertical",
+          "spacing": "sm",
+          "contents": [
+            {
+              "type": "text",
+              "text": "เข้าใช้ระบบ",
+              "wrap": true,
+              "weight": "bold",
+              "size": "xl"
+            },
+            {
+              "type": "box",
+              "layout": "baseline",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "เพื่อใช้งานยายเภาอย่างเต็มที่",
+                  "wrap": true,
+                  "weight": "regular",
+                  "size": "sm",
+                  "flex": 0
+                }
+              ]
+            }
+          ]
+        },
+        "footer": {
+          "type": "box",
+          "layout": "vertical",
+          "spacing": "sm",
+          "contents": [
+            {
+              "type": "button",
+              "style": "primary",
+              "action": {
+                "type": "uri",
+                "label": "เข้าสู่ระบบ",
+                "uri": "https://yaiphao.com/app"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }

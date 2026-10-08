@@ -27,15 +27,15 @@ def get_lineapp_api_base() -> str:
     return DEFAULT_LINEAPP_API_BASE
 
 
-def _get_api_data(
+def _request_api_body(
     base_url: str,
     path: str,
     params: dict[str, str],
     *,
     timeout: float,
     log_label: str,
-) -> list[dict[str, Any]]:
-    """ส่ง GET ไป user-service พร้อม fallback URL — คืน body['data'] ที่เป็น list[dict]"""
+) -> dict[str, Any] | None:
+    """ส่ง GET ไป user-service พร้อม fallback URL — คืน body ที่ success=true"""
     candidates = candidate_urls(base_url, path)
     last_error: requests.RequestException | None = None
     response: requests.Response | None = None
@@ -85,7 +85,7 @@ def _get_api_data(
             candidates,
             last_error,
         )
-        return []
+        return None
     try:
         body = response.json()
     except ValueError as exc:
@@ -96,7 +96,7 @@ def _get_api_data(
             response.text[:500],
             exc,
         )
-        return []
+        return None
     if not isinstance(body, dict):
         logger.warning(
             "%s unexpected body type=%s preview=%s",
@@ -104,7 +104,7 @@ def _get_api_data(
             type(body).__name__,
             str(body)[:300],
         )
-        return []
+        return None
     if not body.get("success"):
         logger.warning(
             "%s success=false url=%s message=%s typeError=%s",
@@ -113,6 +113,21 @@ def _get_api_data(
             body.get("message"),
             body.get("typeError"),
         )
+        return None
+    return body
+
+
+def _get_api_data(
+    base_url: str,
+    path: str,
+    params: dict[str, str],
+    *,
+    timeout: float,
+    log_label: str,
+) -> list[dict[str, Any]]:
+    """ส่ง GET ไป user-service พร้อม fallback URL — คืน body['data'] ที่เป็น list[dict]"""
+    body = _request_api_body(base_url, path, params, timeout=timeout, log_label=log_label)
+    if body is None:
         return []
     data = body.get("data")
     if not isinstance(data, list):
@@ -179,3 +194,32 @@ def fetch_categories_for_user(
     ]
     logger.info("GET category OK count=%s preview=%s", len(rows), preview)
     return rows
+
+
+def fetch_user_profile(
+    base_url: str, user_id: str, timeout: float = 15.0
+) -> dict[str, Any] | None:
+    """GET {base}/api/user-profile?userId= — คืน data object หรือ None เมื่อไม่มี/พัง"""
+    if not user_id or not str(user_id).strip():
+        logger.info("fetch_user_profile skipped: empty user_id")
+        return None
+    body = _request_api_body(
+        base_url,
+        "/api/user-profile",
+        {"userId": user_id.strip()},
+        timeout=timeout,
+        log_label="user-profile",
+    )
+    if body is None:
+        return None
+    data = body.get("data")
+    if not isinstance(data, dict):
+        logger.warning("user-profile data not an object: %s", type(data).__name__)
+        return None
+    logger.info(
+        "GET user-profile OK province=%s district=%s subDistrict=%s",
+        data.get("province"),
+        data.get("district"),
+        data.get("subDistrict"),
+    )
+    return data

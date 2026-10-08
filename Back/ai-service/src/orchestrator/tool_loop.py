@@ -5,14 +5,24 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from src.client.agri_chat import AgriChatError, ask_agri_chat, build_agri_messages
+from src.client.lineapp_api import fetch_user_profile, get_lineapp_api_base
 from src.config import settings
 from src.dto.chat import ChatAction, ChatResponse, ChatTurn
 from src.gateway.api_gateway import GatewayError, execute_tool
 from src.orchestrator.intent_rules import (
+    WEB_ENTRY_REPLY,
     RouteDecision,
+    classify_agri_knowledge_intent,
     classify_list_agri_products_intent,
     classify_record_intent,
+    classify_web_entry_intent,
     sanitize_unverified_save,
+)
+from src.orchestrator.weather_location import (
+    NO_PROFILE_PLACE_REPLY,
+    WEATHER_TOOLS,
+    prepare_weather_arguments,
 )
 from src.prompts.orchestrator import (
     SYSTEM_PERSONA,
@@ -29,7 +39,9 @@ from src.utils.request_id import get_request_id
 logger = logging.getLogger(__name__)
 
 _FALLBACK_REPLY = "ยายขอโทษน้า ยายยังไม่เข้าใจ ช่วยพิมพ์ใหม่อีกครั้งนะจ๊ะ"
+_AGRI_KNOWLEDGE_FAIL = "ยายถามผู้รู้เรื่องเกษตรให้ไม่ทันนะจ๊ะ ลองถามใหม่อีกครั้งนะจ๊ะ"
 _REPLY_CHAT = "reply_chat"
+_ASK_AGRI_KNOWLEDGE = "ask_agri_knowledge"
 _LIST_AGRI_PRODUCTS_TOOL = "list_agri_products"
 _PRODUCT_LIST_LIMIT = 40
 
@@ -41,7 +53,8 @@ _REPLY_CHAT_TOOL: dict[str, Any] = {
         "name": _REPLY_CHAT,
         "description": (
             "ตอบหลานเป็นข้อความเมื่อไม่ต้องบันทึกรายการและไม่ต้องดึงข้อมูลจากเครื่องมืออื่น "
-            "ห้ามใช้เมื่อข้อความเป็นคำสั่งซื้อ จ่าย ขาย ได้ หรือรับที่ตามด้วยตัวเลขเงิน"
+            "ห้ามใช้เมื่อข้อความเป็นคำสั่งซื้อ จ่าย ขาย ได้ หรือรับที่ตามด้วยตัวเลขเงิน "
+            "ห้ามใช้ตอบคำถามหรือความรู้ด้านการเกษตร ให้ใช้ ask_agri_knowledge"
         ),
         "parameters": {
             "type": "object",
@@ -57,8 +70,30 @@ _REPLY_CHAT_TOOL: dict[str, Any] = {
 }
 
 
+_ASK_AGRI_KNOWLEDGE_TOOL: dict[str, Any] = {
+    "type": "function",
+    "function": {
+        "name": _ASK_AGRI_KNOWLEDGE,
+        "description": (
+            "ถามความรู้หรือคำถามด้านการเกษตร การปลูก โรคพืช แมลง ปุ๋ย พันธุ์ ดิน "
+            "การดูแลพืชหรือสัตว์ ห้ามใช้เมื่อถามราคา อากาศ รายรับรายจ่าย หรือสั่งบันทึกรายการ"
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "description": "คำถามล่าสุดของหลาน",
+                }
+            },
+            "required": ["text"],
+        },
+    },
+}
+
+
 def _tools_for_openai(entries: list[RegistryEntry]) -> list[dict[str, Any]]:
-    return [e.openai_tool() for e in entries] + [_REPLY_CHAT_TOOL]
+    return [e.openai_tool() for e in entries] + [_ASK_AGRI_KNOWLEDGE_TOOL, _REPLY_CHAT_TOOL]
 
 
 def _tools_for_prompt(entries: list[RegistryEntry]) -> list[dict[str, Any]]:
@@ -78,6 +113,19 @@ def _tools_for_prompt(entries: list[RegistryEntry]) -> list[dict[str, Any]]:
                 },
             }
         )
+    out.append(
+        {
+            "id": _ASK_AGRI_KNOWLEDGE,
+            "description": _ASK_AGRI_KNOWLEDGE_TOOL["function"]["description"],
+            "parameters": {
+                "text": {
+                    "type": "string",
+                    "description": "คำถามล่าสุดของหลาน",
+                    "required": True,
+                }
+            },
+        }
+    )
     out.append(
         {
             "id": _REPLY_CHAT,
@@ -212,9 +260,71 @@ def _chat_reply(text: str, decision: RouteDecision, tools_used: list[str], sourc
 def _decision_from_selection(tool_name: str | None) -> RouteDecision:
     if tool_name == "parse_expense":
         return RouteDecision("record", tool_name, 0.7, "llm", "tool_call")
+    if tool_name == _ASK_AGRI_KNOWLEDGE:
+        return RouteDecision("knowledge", tool_name, 0.75, "llm", "tool_call")
     if not tool_name or tool_name == _REPLY_CHAT:
         return RouteDecision("chat", tool_name, 0.4, "llm", "reply")
     return RouteDecision("lookup", tool_name, 0.6, "llm", "tool_call")
+
+
+def _reply_from_agri_chat(
+    user_message: str,
+    history: list[dict[str, Any]] | None,
+    decision: RouteDecision,
+    tools_used: list[str],
+) -> ChatResponse:
+    tools_used.append(_ASK_AGRI_KNOWLEDGE)
+    try:
+        reply = ask_agri_chat(build_agri_messages(user_message, history))
+    except AgriChatError as exc:
+        logger.warning(
+            "[ai-route] hop=ai reqId=%s action=agri-chat-fail intent=%s error=%s",
+            get_request_id(),
+            decision.intent,
+            exc,
+        )
+        reply = _AGRI_KNOWLEDGE_FAIL
+    return _with_route(
+        ChatResponse(
+            reply_text=reply or _AGRI_KNOWLEDGE_FAIL,
+            actions=[],
+            tools_used=tools_used,
+            source_model="agri-pathumma",
+        ),
+        decision,
+    )
+
+
+def _prepare_weather_call(
+    arguments: dict[str, Any],
+    user_message: str,
+    user_id: str | None,
+) -> dict[str, Any] | str:
+    """ใส่พื้นที่จากโปรไฟล์เมื่อข้อความล่าสุดไม่ได้ระบุที่ ไม่งั้นคืนข้อความให้หลาน"""
+    prepared = prepare_weather_arguments(arguments, user_message, None)
+    uid = (user_id or "").strip()
+    if prepared is None and uid:
+        profile = fetch_user_profile(
+            get_lineapp_api_base(),
+            uid,
+            timeout=settings.gateway_http_timeout_seconds,
+        )
+        prepared = prepare_weather_arguments(arguments, user_message, profile)
+    if prepared is None:
+        logger.info(
+            "[ai-route] hop=ai reqId=%s action=weather-no-place userId=%s",
+            get_request_id(),
+            uid or "-",
+        )
+        return NO_PROFILE_PLACE_REPLY
+    logger.info(
+        "[ai-route] hop=ai reqId=%s action=weather-place province=%s amphoe=%s tambon=%s",
+        get_request_id(),
+        prepared.get("province"),
+        prepared.get("amphoe"),
+        prepared.get("tambon"),
+    )
+    return prepared
 
 
 def _finish_tool(
@@ -231,8 +341,17 @@ def _finish_tool(
         reply = arguments.get("reply") if isinstance(arguments, dict) else None
         return _chat_reply(str(reply or ""), decision, tools_used, source_model)
 
+    if tool_name == _ASK_AGRI_KNOWLEDGE:
+        return _reply_from_agri_chat(user_message, history, decision, tools_used)
+
     if tool_name == "parse_expense":
         arguments = _ensure_parse_text(arguments, user_message)
+
+    if tool_name in WEATHER_TOOLS:
+        prepared = _prepare_weather_call(arguments, user_message, user_id)
+        if isinstance(prepared, str):
+            return _chat_reply(prepared, decision, tools_used, source_model)
+        arguments = prepared
 
     tools_used.append(tool_name)
     try:
@@ -318,6 +437,11 @@ def run_tool_loop(
             history=history_dicts,
         )
 
+    web_rule = classify_web_entry_intent(user_message)
+    if web_rule is not None:
+        _log_route(web_rule, user_message, context_msgs)
+        return _chat_reply(WEB_ENTRY_REPLY, web_rule, [], "rule")
+
     list_rule = classify_list_agri_products_intent(user_message)
     if list_rule is not None:
         _log_route(list_rule, user_message, context_msgs)
@@ -331,6 +455,11 @@ def run_tool_loop(
             "rule",
             history=history_dicts,
         )
+
+    knowledge_rule = classify_agri_knowledge_intent(user_message)
+    if knowledge_rule is not None:
+        _log_route(knowledge_rule, user_message, context_msgs)
+        return _reply_from_agri_chat(user_message, history_dicts, knowledge_rule, [])
 
     shortlist = search_tools(user_message, limit=6)
     openai_tools = _tools_for_openai(shortlist)
