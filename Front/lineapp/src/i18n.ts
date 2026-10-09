@@ -121,6 +121,7 @@ const resources = {
                     expense: "รายจ่าย",
                     addIncome: "เพิ่มหมวดรายรับ",
                     addExpense: "เพิ่มหมวดรายจ่าย",
+                    quotaLimitReached: "แพ็กเกจ {{plan}} สร้างหมวดรายรับและรายจ่ายรวมกันได้ไม่เกิน {{max}} หมวด",
                     mockIncome: {
                         cropSales: "ขายผลผลิต",
                         sideJob: "รายได้เสริม",
@@ -159,7 +160,6 @@ const resources = {
                 loadingMore: "กำลังโหลด...",
                 addButtonAria: "เพิ่มรายการ",
                 addNew: "เพิ่มรายการใหม่",
-                addViaLine: "เพิ่มผ่านไลน์",
                 quickAddTitle: "รายการใหม่",
                 quickAddCategory: "อื่นๆ",
                 addFormTitle: "เพิ่มรายการ",
@@ -279,7 +279,7 @@ const resources = {
                 save: "บันทึก",
                 deleteConfirmTitle: "ยืนยันการลบ",
                 deleteConfirmMessage:
-                    "ลบพืช \"{{name}}\" ใช่หรือไม่? ฤดูกาลและงบประมาณจะถูกลบด้วย (ห้ามลบถ้ายังมีรายการธุรกรรม)",
+                    "ลบพืช \"{{name}}\" ใช่หรือไม่? ฤดูกาล งบประมาณ และรายการธุรกรรมของพืชนี้จะถูกลบด้วย",
                 deleteConfirmButton: "ลบพืช",
                 detailNotFound: "ไม่พบพืชนี้",
                 detailLoading: "กำลังโหลด...",
@@ -622,6 +622,7 @@ const resources = {
                     expense: "Expense",
                     addIncome: "Add income category",
                     addExpense: "Add expense category",
+                    quotaLimitReached: "Plan {{plan}} allows at most {{max}} income and expense categories combined",
                     mockIncome: {
                         cropSales: "Crop sales",
                         sideJob: "Side income",
@@ -660,7 +661,6 @@ const resources = {
                 loadingMore: "Loading...",
                 addButtonAria: "Add transaction",
                 addNew: "Add new transaction",
-                addViaLine: "Add via LINE",
                 quickAddTitle: "New transaction",
                 quickAddCategory: "Other",
                 addFormTitle: "Add transaction",
@@ -780,7 +780,7 @@ const resources = {
                 save: "Save",
                 deleteConfirmTitle: "Confirm deletion",
                 deleteConfirmMessage:
-                    'Delete crop "{{name}}"? Its seasons and budgets will be removed (blocked if transactions exist).',
+                    'Delete crop "{{name}}"? Its seasons, budgets, and transactions will also be removed.',
                 deleteConfirmButton: "Delete crop",
                 detailNotFound: "This crop was not found",
                 detailLoading: "Loading...",
@@ -1123,6 +1123,7 @@ const resources = {
                     expense: "支出",
                     addIncome: "収入カテゴリを追加",
                     addExpense: "支出カテゴリを追加",
+                    quotaLimitReached: "プラン {{plan}} では収入と支出のカテゴリを合わせて{{max}}件までです",
                     mockIncome: {
                         cropSales: "農作物販売",
                         sideJob: "副収入",
@@ -1161,7 +1162,6 @@ const resources = {
                 loadingMore: "読み込み中...",
                 addButtonAria: "取引を追加",
                 addNew: "新しい取引を追加",
-                addViaLine: "LINEで追加",
                 quickAddTitle: "新規取引",
                 quickAddCategory: "その他",
                 addFormTitle: "取引を追加",
@@ -1281,7 +1281,7 @@ const resources = {
                 save: "保存",
                 deleteConfirmTitle: "削除の確認",
                 deleteConfirmMessage:
-                    "作物「{{name}}」を削除しますか？シーズンと予算も削除されます（取引がある場合は削除できません）。",
+                    "作物「{{name}}」を削除しますか？シーズン、予算、この作物の取引も削除されます。",
                 deleteConfirmButton: "作物を削除",
                 detailNotFound: "この作物は見つかりません",
                 detailLoading: "読み込み中...",

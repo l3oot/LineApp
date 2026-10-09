@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # โควต้าที่ API ใช้ร่วมกันระหว่าง prompt กับคำตอบ และที่จองไว้ให้คำตอบยายเภา
 CONTEXT_TOKEN_QUOTA = 8192
-OUTPUT_TOKEN_RESERVE = 730
+OUTPUT_TOKEN_RESERVE = 1460
 INPUT_TOKEN_BUDGET = CONTEXT_TOKEN_QUOTA - OUTPUT_TOKEN_RESERVE
 
 _CHART_OPEN = "```chart"
@@ -189,6 +189,19 @@ def fit_source_to_budget(user_message: str, source: str) -> tuple[str, bool]:
     return best, True
 
 
+_SUMMARY_META_LINE = re.compile(r"ย่อส่วนที่เหลือ|ยายสรุป.{0,160}?ให้ฟัง")
+
+
+def strip_summary_preamble(text: str) -> str:
+    """ตัดประโยคเกริ่นสรุป และประโยคที่บอกว่ายายย่อส่วนที่เหลือไว้"""
+    kept: list[str] = []
+    for line in (text or "").splitlines():
+        if _SUMMARY_META_LINE.search(line):
+            continue
+        kept.append(line)
+    return "\n".join(kept).strip()
+
+
 def _reply_text(payload: Any) -> str:
     if isinstance(payload, str):
         return payload.strip()
@@ -237,7 +250,10 @@ def rewrite_agri_for_yai(user_message: str, source: str) -> tuple[str, str | Non
                 estimate_tokens(build_agri_rewrite_prompt(user_message, fitted)),
             )
         try:
-            result = run_llm(build_agri_rewrite_prompt(user_message, fitted))
+            result = run_llm(
+                build_agri_rewrite_prompt(user_message, fitted),
+                max_completion_tokens=OUTPUT_TOKEN_RESERVE,
+            )
         except Exception as exc:
             logger.warning(
                 "[ai-route] hop=ai reqId=%s action=agri-rewrite-fail attempt=%d overflow=%s error=%s",
@@ -250,7 +266,7 @@ def rewrite_agri_for_yai(user_message: str, source: str) -> tuple[str, str | Non
                 break
             text = _shrink(fitted)
             continue
-        reply = _reply_text(result.get("result"))
+        reply = strip_summary_preamble(_reply_text(result.get("result")))
         model = result.get("source_model")
         if reply:
             return reply, str(model) if model else None

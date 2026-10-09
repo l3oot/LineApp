@@ -3,7 +3,8 @@ import { FiX } from "react-icons/fi";
 import { FaPlus } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import { auth } from "../lib/auth";
-import { categoryApi, type Category } from "../lib/userService";
+import { ApiError } from "../lib/api";
+import { categoryApi, planApi, type Category, type PlanQuota } from "../lib/userService";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
 
 type CategoryCenterModalProps = {
@@ -15,6 +16,7 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
     const { t } = useTranslation();
     const [activeType, setActiveType] = useState<"income" | "expense">("income");
     const [categories, setCategories] = useState<Category[]>([]);
+    const [planQuota, setPlanQuota] = useState<PlanQuota | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isAdding, setIsAdding] = useState(false);
@@ -24,6 +26,23 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
     const [saving, setSaving] = useState(false);
 
     const isIncomeType = activeType === "income";
+    const categoryLimitReached = planQuota != null && planQuota.canCreateCategory === false;
+    const quotaMessage = t("settings.categorySheet.quotaLimitReached", {
+        plan: planQuota?.planName ?? "",
+        max: planQuota?.maxCategories ?? 0,
+    });
+
+    const loadQuota = useCallback(async () => {
+        if (!auth.isAuthed()) {
+            setPlanQuota(null);
+            return;
+        }
+        try {
+            setPlanQuota(await planApi.getQuota());
+        } catch {
+            setPlanQuota(null);
+        }
+    }, []);
 
     const loadCategories = useCallback(async () => {
         if (!auth.isAuthed()) {
@@ -50,7 +69,8 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
         setEditingId(null);
         setEditName("");
         loadCategories();
-    }, [open, loadCategories]);
+        loadQuota();
+    }, [open, loadCategories, loadQuota]);
 
     const resetEditor = () => {
         setIsAdding(false);
@@ -64,14 +84,25 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
         const name = newName.trim();
         if (!name) return;
 
+        if (categoryLimitReached) {
+            setError(quotaMessage);
+            return;
+        }
+
         setSaving(true);
         setError(null);
         try {
             await categoryApi.create({ name, type: activeType });
             resetEditor();
-            await loadCategories();
+            await Promise.all([loadCategories(), loadQuota()]);
         } catch (err) {
-            setError(getFriendlyApiErrorMessage(err, t));
+            if (err instanceof ApiError && err.code === "CATEGORY_QUOTA_EXCEEDED") {
+                setIsAdding(false);
+                setError(quotaMessage);
+                await loadQuota();
+            } else {
+                setError(getFriendlyApiErrorMessage(err, t));
+            }
         } finally {
             setSaving(false);
         }
@@ -104,7 +135,7 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
             if (editingId === category.categoryId) {
                 resetEditor();
             }
-            await loadCategories();
+            await Promise.all([loadCategories(), loadQuota()]);
         } catch (err) {
             setError(getFriendlyApiErrorMessage(err, t));
         } finally {
@@ -174,7 +205,7 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
                 {!isAdding ? (
                     <button
                         type="button"
-                        disabled={saving || editingId !== null}
+                        disabled={saving || editingId !== null || categoryLimitReached}
                         onClick={() => setIsAdding(true)}
                         className={`group mt-2 flex w-full items-center justify-center rounded-[var(--radius-control)] border-2 border-dashed px-3 py-2 transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50 ${
                             isIncomeType
@@ -222,7 +253,12 @@ export default function CategoryCenterModal({ open, onClose }: CategoryCenterMod
                     </form>
                 )}
 
-                {error && <p className="mt-2 text-sm text-[var(--danger)]">{error}</p>}
+                {categoryLimitReached && (
+                    <p className="mt-2 text-sm text-[var(--danger)]">{quotaMessage}</p>
+                )}
+                {error && !(categoryLimitReached && error === quotaMessage) && (
+                    <p className="mt-2 text-sm text-[var(--danger)]">{error}</p>
+                )}
 
                 <div className="mt-2 max-h-[240px] overflow-y-auto">
                     {loading ? (

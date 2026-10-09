@@ -34,6 +34,9 @@ public class PlanEntity {
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
+    @Column(name = "max_categories")
+    private Integer maxCategories;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -41,11 +44,12 @@ public class PlanEntity {
     public PlanEntity() {
     }
 
-    public PlanEntity(String name, int maxCycles, BigDecimal price, boolean isActive) {
+    public PlanEntity(String name, int maxCycles, BigDecimal price, boolean isActive, int maxCategories) {
         this.name = name;
         this.maxCycles = maxCycles;
         this.price = price;
         this.isActive = isActive;
+        this.maxCategories = maxCategories;
     }
 
     public UUID getPlanId() {
@@ -66,6 +70,14 @@ public class PlanEntity {
 
     public boolean isActive() {
         return isActive;
+    }
+
+    public Integer getMaxCategories() {
+        return maxCategories;
+    }
+
+    public void setMaxCategories(Integer maxCategories) {
+        this.maxCategories = maxCategories;
     }
 
     public LocalDateTime getCreatedAt() {

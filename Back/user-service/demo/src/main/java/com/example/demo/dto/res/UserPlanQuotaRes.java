@@ -7,5 +7,8 @@ public record UserPlanQuotaRes(
         int maxCycles,
         long activeCycles,
         boolean canCreate,
-        LocalDateTime expiresAt) {
+        LocalDateTime expiresAt,
+        int maxCategories,
+        long categoryCount,
+        boolean canCreateCategory) {
 }

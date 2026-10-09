@@ -32,4 +32,6 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
     boolean existsByCycleIdIn(Collection<UUID> cycleIds);
 
     boolean existsByCycleId(UUID cycleId);
+
+    void deleteByCycleIdIn(Collection<UUID> cycleIds);
 }

@@ -9,10 +9,10 @@ import BottomSheet from "../components/BottomSheet";
 import ConfirmBottomSheet from "../components/ConfirmBottomSheet";
 import CycleSummaryModal from "../components/CycleSummaryModal";
 import IconPickerSheet from "../components/IconPickerSheet";
+import { Button, Dialog, DialogTrigger, Popover } from "react-aria-components";
+import { FiCalendar } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import { icons } from "../assets/Iconlist";
-import { CalendarDate } from "@internationalized/date";
-import AppDateField from "../components/AppDateField";
 import { auth } from "../lib/auth";
 import {
     cropApi,
@@ -26,30 +26,44 @@ import {
 } from "../lib/userService";
 import { getFriendlyApiErrorMessage } from "../utils/friendlyApiError";
 import { statsForCropRound } from "../utils/cycleStats";
-import {
-    gregorianDateKey,
-    initialAppDateTime,
-    parseTxToGregorianCalendarDate,
-    toGregorianCalendarDate,
-} from "../utils/formatAppDate";
+import { formatAppMonth } from "../utils/formatAppDate";
 import { formatCycleMonthRange, formatMonthRange } from "../utils/formatMonthYear";
 
-function calendarDateToApiDate(value: CalendarDate): string {
-    const gregorian = toGregorianCalendarDate(value);
-    return gregorianDateKey(gregorian.year, gregorian.month, gregorian.day);
+function currentMonth(): number {
+    return new Date().getMonth() + 1;
 }
 
-function apiDateToCalendarDate(value: string | null | undefined): CalendarDate {
-    if (!value) return initialAppDateTime().date;
-    return parseTxToGregorianCalendarDate(`${value}T12:00:00`);
+function monthAfter(month: number): number {
+    return month === 12 ? 1 : month + 1;
 }
 
-function defaultCycleStartDate(lang?: string): CalendarDate {
-    return initialAppDateTime(lang).date;
+function pad2(value: number): string {
+    return String(value).padStart(2, "0");
 }
 
-function defaultCycleEndDate(lang?: string): CalendarDate {
-    return defaultCycleStartDate(lang).add({ days: 30 });
+function lastDayOfMonth(year: number, month: number): number {
+    return new Date(year, month, 0).getDate();
+}
+
+/** ช่วงวันที่จริงของรอบ จากเดือนที่เลือก ครอบคลุมทั้งเดือน และข้ามปีได้ */
+function seasonApiDates(startMonth: number, endMonth: number, startYear: number) {
+    const endYear = endMonth >= startMonth ? startYear : startYear + 1;
+    return {
+        startDate: `${startYear}-${pad2(startMonth)}-01`,
+        endDate: `${endYear}-${pad2(endMonth)}-${pad2(lastDayOfMonth(endYear, endMonth))}`,
+    };
+}
+
+function monthFromApiDate(value: string | null | undefined, fallback: number): number {
+    if (!value) return fallback;
+    const month = Number(value.slice(5, 7));
+    return month >= 1 && month <= 12 ? month : fallback;
+}
+
+function yearFromApiDate(value: string | null | undefined): number {
+    if (!value) return new Date().getFullYear();
+    const year = Number(value.slice(0, 4));
+    return Number.isFinite(year) && year > 1900 ? year : new Date().getFullYear();
 }
 
 type IconName = keyof typeof icons;
@@ -81,6 +95,55 @@ function cropSeasonLabel(crop: Crop, lang: string): string {
     return formatCycleMonthRange(season.startDate, season.endDate, lang);
 }
 
+function MonthField({
+    value,
+    onChange,
+    ariaLabel,
+    isOpen,
+    onOpenChange,
+}: {
+    value: number;
+    onChange: (month: number) => void;
+    ariaLabel: string;
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
+    const { i18n } = useTranslation();
+    return (
+        <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
+            <Button
+                aria-label={ariaLabel}
+                className="relative mt-2 flex w-full items-center gap-2 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left outline-none transition-all data-[focus-visible]:border-[var(--primary)] data-[pressed]:border-[var(--primary)]"
+            >
+                <span className="min-w-0 flex-1 whitespace-nowrap text-sm font-semibold text-[var(--text)]">
+                    {formatAppMonth(value, i18n.language)}
+                </span>
+                <FiCalendar size={18} className="shrink-0 text-[var(--text-soft)]" aria-hidden />
+            </Button>
+            <Popover placement="bottom" offset={8} className="date-picker-popover month-picker-popover">
+                <Dialog aria-label={ariaLabel} className="outline-none">
+                    <div className="month-picker-grid">
+                        {Array.from({ length: 12 }, (_, index) => index + 1).map((month) => (
+                            <button
+                                key={month}
+                                type="button"
+                                className="month-picker-cell"
+                                data-selected={month === value ? "true" : undefined}
+                                onClick={() => {
+                                    onChange(month);
+                                    onOpenChange(false);
+                                }}
+                            >
+                                {formatAppMonth(month, i18n.language)}
+                            </button>
+                        ))}
+                    </div>
+                </Dialog>
+            </Popover>
+        </DialogTrigger>
+    );
+}
+
 type SheetMode = "addCrop" | "editCrop";
 
 export default function CyclePage() {
@@ -105,11 +168,11 @@ export default function CyclePage() {
     const [selectedIcon, setSelectedIcon] = useState<IconName>("corn");
     const [iconQuery, setIconQuery] = useState("");
     const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
-    const [startDate, setStartDate] = useState<CalendarDate>(() => defaultCycleStartDate());
-    const [endDate, setEndDate] = useState<CalendarDate>(() => defaultCycleEndDate());
+    const [startMonth, setStartMonth] = useState(currentMonth);
+    const [endMonth, setEndMonth] = useState(() => monthAfter(currentMonth()));
+    const [seasonYear, setSeasonYear] = useState(() => new Date().getFullYear());
     const [note, setNote] = useState("");
-    const [isStartPickerOpen, setIsStartPickerOpen] = useState(false);
-    const [isEndPickerOpen, setIsEndPickerOpen] = useState(false);
+    const [openMonthField, setOpenMonthField] = useState<"start" | "end" | null>(null);
 
     const activeCropCount = countActiveCrops(crops);
     const canCreateCrop = canCreateFromQuota(planQuota, activeCropCount);
@@ -181,12 +244,12 @@ export default function CyclePage() {
         setSelectedIcon("corn");
         setIconQuery("");
         setIsIconPickerOpen(false);
-        const today = defaultCycleStartDate(i18n.language);
-        setStartDate(today);
-        setEndDate(defaultCycleEndDate(i18n.language));
+        const month = currentMonth();
+        setStartMonth(month);
+        setEndMonth(monthAfter(month));
+        setSeasonYear(new Date().getFullYear());
         setNote("");
-        setIsStartPickerOpen(false);
-        setIsEndPickerOpen(false);
+        setOpenMonthField(null);
     };
 
     const openAddCropSheet = () => {
@@ -208,21 +271,19 @@ export default function CyclePage() {
         setTitle(crop.name);
         setFarmType(crop.farmType ?? "ทั่วไป");
         setSelectedIcon(isIconName(crop.icon) ? crop.icon : "corn");
-        setStartDate(apiDateToCalendarDate(season?.startDate));
-        setEndDate(apiDateToCalendarDate(season?.endDate));
+        const fallbackMonth = currentMonth();
+        setStartMonth(crop.startMonth ?? monthFromApiDate(season?.startDate, fallbackMonth));
+        setEndMonth(crop.endMonth ?? monthFromApiDate(season?.endDate, fallbackMonth));
+        setSeasonYear(yearFromApiDate(season?.startDate));
         setNote(season?.note ?? crop.note ?? "");
         setIconQuery("");
         setIsIconPickerOpen(false);
-        setIsStartPickerOpen(false);
-        setIsEndPickerOpen(false);
         setError(null);
         setIsSheetOpen(true);
     };
 
     const handleCloseSheet = () => {
         setIsSheetOpen(false);
-        setIsStartPickerOpen(false);
-        setIsEndPickerOpen(false);
         setEditingCrop(null);
         resetForm();
     };
@@ -254,6 +315,7 @@ export default function CyclePage() {
             if (sheetMode === "editCrop" && editingCrop) {
                 const nextTitle = title.trim();
                 if (!nextTitle) return;
+                const seasonDates = seasonApiDates(startMonth, endMonth, seasonYear);
                 await cropApi.update({
                     cropId: editingCrop.cropId,
                     name: nextTitle,
@@ -261,15 +323,15 @@ export default function CyclePage() {
                     farmType: farmType.trim() || editingCrop.farmType || "ทั่วไป",
                     icon: selectedIcon,
                     status: editingCrop.status ?? "active",
-                    startMonth: startDate.month,
-                    endMonth: endDate.month,
+                    startMonth,
+                    endMonth,
                 });
                 if (editingCrop.currentSeason) {
                     await cycleApi.update({
                         cycleId: editingCrop.currentSeason.cycleId,
                         note: note.trim().slice(0, 50),
-                        startDate: calendarDateToApiDate(startDate),
-                        endDate: calendarDateToApiDate(endDate),
+                        startDate: seasonDates.startDate,
+                        endDate: seasonDates.endDate,
                         status: editingCrop.currentSeason.status ?? "active",
                     });
                 }
@@ -277,16 +339,17 @@ export default function CyclePage() {
             } else {
                 const nextTitle = title.trim();
                 if (!nextTitle) return;
+                const seasonDates = seasonApiDates(startMonth, endMonth, seasonYear);
                 await cropApi.create({
                     name: nextTitle,
                     note: note.trim().slice(0, 50),
                     farmType: farmType.trim() || "ทั่วไป",
                     icon: selectedIcon,
                     status: "active",
-                    startMonth: startDate.month,
-                    endMonth: endDate.month,
-                    startDate: calendarDateToApiDate(startDate),
-                    endDate: calendarDateToApiDate(endDate),
+                    startMonth,
+                    endMonth,
+                    startDate: seasonDates.startDate,
+                    endDate: seasonDates.endDate,
                     seasonNote: note.trim().slice(0, 50),
                 });
                 await reloadCrops();
@@ -432,28 +495,22 @@ export default function CyclePage() {
                         <div className="grid grid-cols-2 gap-2">
                             <label className="text-sm font-bold text-[var(--text)]">
                                 {t("cycle.startLabel")}
-                                <AppDateField
-                                    value={startDate}
-                                    onChange={setStartDate}
+                                <MonthField
+                                    value={startMonth}
+                                    onChange={setStartMonth}
                                     ariaLabel={t("cycle.startLabel")}
-                                    isOpen={isStartPickerOpen}
-                                    onOpenChange={(open) => {
-                                        setIsStartPickerOpen(open);
-                                        if (open) setIsEndPickerOpen(false);
-                                    }}
+                                    isOpen={openMonthField === "start"}
+                                    onOpenChange={(open) => setOpenMonthField(open ? "start" : null)}
                                 />
                             </label>
                             <label className="text-sm font-bold text-[var(--text)]">
                                 {t("cycle.endLabel")}
-                                <AppDateField
-                                    value={endDate}
-                                    onChange={setEndDate}
+                                <MonthField
+                                    value={endMonth}
+                                    onChange={setEndMonth}
                                     ariaLabel={t("cycle.endLabel")}
-                                    isOpen={isEndPickerOpen}
-                                    onOpenChange={(open) => {
-                                        setIsEndPickerOpen(open);
-                                        if (open) setIsStartPickerOpen(false);
-                                    }}
+                                    isOpen={openMonthField === "end"}
+                                    onOpenChange={(open) => setOpenMonthField(open ? "end" : null)}
                                 />
                             </label>
                         </div>

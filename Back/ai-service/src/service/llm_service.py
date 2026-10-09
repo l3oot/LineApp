@@ -50,12 +50,12 @@ def _try_json(text: str) -> Any:
         return text
 
 
-def _call_opentyphoon(prompt: str) -> str:
+def _call_opentyphoon(prompt: str, *, max_completion_tokens: int = 730) -> str:
     stream = _get_opentyphoon_client().chat.completions.create(
         model=_LLM.opentyphoon_model,
         messages=[{"role": "system", "content": prompt}],
         temperature=0.3,
-        max_completion_tokens=730,
+        max_completion_tokens=max_completion_tokens,
         top_p=0.5,
         stream=True,
     )
@@ -114,11 +114,11 @@ def _call_opentyphoon_tools(
     }
 
 
-def _call_thaillm(url: str, prompt: str) -> str:
+def _call_thaillm(url: str, prompt: str, *, max_tokens: int = 2048) -> str:
     body = {
         "model": "/model",
         "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 2048,
+        "max_tokens": max_tokens,
         "temperature": 0.3,
     }
     response = requests.post(
@@ -180,14 +180,16 @@ def _llm_result(source_model: str, text: str, *, llm_ms: int, providers_tried: i
     }
 
 
-def run_llm(prompt: str) -> dict[str, Any]:
+def run_llm(prompt: str, *, max_completion_tokens: int | None = None) -> dict[str, Any]:
     """รัน LLM ตาม fallback chain — คืน {"source_model", "result"}"""
+    typhoon_max = 730 if max_completion_tokens is None else max_completion_tokens
+    thaillm_max = 2048 if max_completion_tokens is None else max(2048, max_completion_tokens)
     prompt_chars = len(prompt or "")
     t0 = time.monotonic()
     providers_tried = 0
     try:
         providers_tried += 1
-        text = _call_opentyphoon(prompt)
+        text = _call_opentyphoon(prompt, max_completion_tokens=typhoon_max)
         llm_ms = int((time.monotonic() - t0) * 1000)
         logger.info(
             "[ai-latency] hop=ai-llm reqId=%s action=done provider=opentyphoon model=%s "
@@ -222,7 +224,7 @@ def run_llm(prompt: str) -> dict[str, Any]:
     t1 = time.monotonic()
     try:
         providers_tried += 1
-        text = _call_thaillm(_LLM.thaillm_typhoon_url, prompt)
+        text = _call_thaillm(_LLM.thaillm_typhoon_url, prompt, max_tokens=thaillm_max)
         llm_ms = int((time.monotonic() - t1) * 1000)
         logger.info(
             "[ai-latency] hop=ai-llm reqId=%s action=done provider=thaillm/typhoon "
@@ -251,7 +253,7 @@ def run_llm(prompt: str) -> dict[str, Any]:
     t2 = time.monotonic()
     try:
         providers_tried += 1
-        text = _call_thaillm(_LLM.thaillm_kbtg_url, prompt)
+        text = _call_thaillm(_LLM.thaillm_kbtg_url, prompt, max_tokens=thaillm_max)
         llm_ms = int((time.monotonic() - t2) * 1000)
         logger.info(
             "[ai-latency] hop=ai-llm reqId=%s action=done provider=thaillm/kbtg "
