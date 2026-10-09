@@ -12,6 +12,7 @@ from src.orchestrator.agri_rewrite import (
     fit_source_to_budget,
     normalize_agri_markup,
     rewrite_agri_for_yai,
+    strip_summary_preamble,
 )
 from src.orchestrator.intent_rules import classify_agri_knowledge_intent
 from src.orchestrator.tool_loop import run_tool_loop
@@ -101,6 +102,22 @@ class AgriMarkupTests(unittest.TestCase):
         self.assertNotIn("|", text)
         self.assertIn("S1 เหมาะสมสูง: 242,975", text)
         self.assertIn("N ไม่เหมาะสม: 1,630,720", text)
+
+
+class AgriRewritePreambleTests(unittest.TestCase):
+    def test_drops_summary_intro_and_trimmed_notice(self) -> None:
+        raw = (
+            "หลานจ๋า ยายสรุปวิธีจัดการหอยบุกนาข้าวให้ฟังง่าย ๆ นะจ๊ะ\n"
+            "\n"
+            "ยายย่อส่วนที่เหลือไว้จ๊ะ 🌾\n"
+            "เก็บไข่หอยและทำลายทิ้งนะจ๊ะ\n"
+            "หลานจ๋า ยายสรุปให้ฟังง่าย ๆ นะจ๊ะ\n"
+            "ยายย่อส่วนที่เหลือไว้จ๊ะ"
+        )
+        text = strip_summary_preamble(raw)
+        self.assertNotIn("ย่อส่วนที่เหลือ", text)
+        self.assertNotIn("สรุปให้ฟัง", text)
+        self.assertIn("เก็บไข่หอยและทำลายทิ้งนะจ๊ะ", text)
 
 
 class AgriRewriteBudgetTests(unittest.TestCase):

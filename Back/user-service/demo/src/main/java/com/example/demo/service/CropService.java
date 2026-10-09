@@ -152,8 +152,8 @@ public class CropService {
         CropEntity crop = requireOwnedCrop(cropId, userId);
         List<CycleEntity> seasons = cycleRepository.findByCropIdOrderByCreatedAtDesc(cropId);
         List<UUID> cycleIds = seasons.stream().map(CycleEntity::getCycleId).collect(Collectors.toList());
-        if (!cycleIds.isEmpty() && transactionRepository.existsByCycleIdIn(cycleIds)) {
-            throw new ApiException(ErrorCode.CROP_HAS_TRANSACTIONS, "Cannot delete crop with transactions");
+        if (!cycleIds.isEmpty()) {
+            transactionRepository.deleteByCycleIdIn(cycleIds);
         }
         for (CycleEntity season : seasons) {
             budgetCycleRepository.deleteByCycleId(season.getCycleId());
