@@ -751,6 +751,54 @@ body {
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--primary) 35%, white);
 }
 
+.date-picker-popover.month-picker-popover {
+  width: 13.75rem;
+  min-width: 13.75rem;
+  max-width: 13.75rem;
+}
+
+.month-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.month-picker-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 1.875rem;
+  margin: 0 auto;
+  padding: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1;
+  outline: none;
+  cursor: pointer;
+}
+
+.month-picker-cell:hover {
+  background: var(--surface-soft);
+}
+
+.month-picker-cell[data-selected="true"] {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+.month-picker-cell[data-selected="true"]:hover {
+  background: var(--primary);
+}
+
+.month-picker-cell:focus-visible {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--primary) 35%, white);
+}
+
 .list-date-range-label {
   font-size: 0.875rem;
   font-weight: 700;
