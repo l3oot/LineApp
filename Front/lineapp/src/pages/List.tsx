@@ -965,15 +965,27 @@ export default function List() {
                                 </button>
                             </div>
 
-                            <label className="text-sm font-bold text-[var(--text)]">
-                                {t("list.amountLabel")}
-                                <div className="mt-2 flex items-center rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 focus-within:border-[var(--primary)]">
+                            <label className="grid grid-cols-[2fr_3fr] items-center gap-3">
+                                <span className="text-[1.75rem] font-extrabold leading-none tracking-[-0.02em] text-[var(--text)]">
+                                    {t("list.amountLabel")}
+                                </span>
+                                <div
+                                    className={`flex w-full items-center rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface)] px-3 py-3 ${
+                                        newType === "expense"
+                                            ? "focus-within:border-[var(--expense)]"
+                                            : "focus-within:border-[var(--income)]"
+                                    }`}
+                                >
                                     <FormattedNumberInput
                                         required
                                         value={newAmount}
                                         onChange={setNewAmount}
                                         placeholder={t("list.amountPlaceholder")}
-                                        className="w-full bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-soft)]"
+                                        className={`w-full min-w-0 bg-transparent text-right text-[2rem] font-extrabold leading-none tracking-[-0.02em] tabular-nums outline-none placeholder:text-[2rem] placeholder:font-extrabold placeholder:text-[color-mix(in_oklch,var(--text)_50%,transparent)] ${
+                                            newType === "expense"
+                                                ? "text-[var(--expense)] caret-[var(--expense)]"
+                                                : "text-[var(--income)] caret-[var(--income)]"
+                                        }`}
                                     />
                                 </div>
                             </label>
