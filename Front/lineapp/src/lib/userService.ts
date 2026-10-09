@@ -198,6 +198,9 @@ export type PlanQuota = {
     activeCycles: number;
     canCreate: boolean;
     expiresAt: string | null;
+    maxCategories: number;
+    categoryCount: number;
+    canCreateCategory: boolean;
 };
 
 export const planApi = {

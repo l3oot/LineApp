@@ -121,6 +121,7 @@ const resources = {
                     expense: "รายจ่าย",
                     addIncome: "เพิ่มหมวดรายรับ",
                     addExpense: "เพิ่มหมวดรายจ่าย",
+                    quotaLimitReached: "แพ็กเกจ {{plan}} สร้างหมวดรายรับและรายจ่ายรวมกันได้ไม่เกิน {{max}} หมวด",
                     mockIncome: {
                         cropSales: "ขายผลผลิต",
                         sideJob: "รายได้เสริม",
@@ -621,6 +622,7 @@ const resources = {
                     expense: "Expense",
                     addIncome: "Add income category",
                     addExpense: "Add expense category",
+                    quotaLimitReached: "Plan {{plan}} allows at most {{max}} income and expense categories combined",
                     mockIncome: {
                         cropSales: "Crop sales",
                         sideJob: "Side income",
@@ -1121,6 +1123,7 @@ const resources = {
                     expense: "支出",
                     addIncome: "収入カテゴリを追加",
                     addExpense: "支出カテゴリを追加",
+                    quotaLimitReached: "プラン {{plan}} では収入と支出のカテゴリを合わせて{{max}}件までです",
                     mockIncome: {
                         cropSales: "農作物販売",
                         sideJob: "副収入",

@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.dto.req.CategoryCreateReq;
 import com.example.demo.dto.req.CategoryUpdateReq;
@@ -21,10 +22,15 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final UserPlanService userPlanService;
 
-    public CategoryService(CategoryRepository categoryRepository, UserRepository userRepository) {
+    public CategoryService(
+            CategoryRepository categoryRepository,
+            UserRepository userRepository,
+            UserPlanService userPlanService) {
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
+        this.userPlanService = userPlanService;
     }
 
     public List<CategoryRes> listCategories(UUID userId, String type) {
@@ -54,6 +60,7 @@ public class CategoryService {
         return toRes(entity);
     }
 
+    @Transactional
     public CategoryRes createCategory(CategoryCreateReq req) {
         if (req.userId() == null) {
             throw new ApiException(ErrorCode.USER_ID_REQUIRED, "userId is required");
@@ -70,6 +77,7 @@ public class CategoryService {
         if (categoryRepository.existsByUserIdAndName(req.userId(), name)) {
             throw new ApiException(ErrorCode.CATEGORY_NAME_EXISTS, "Category name already exists for this user");
         }
+        userPlanService.assertCanCreateCategory(req.userId());
         CategoryEntity saved = categoryRepository.save(
                 new CategoryEntity(req.userId(), name, normalizedType));
         return toRes(saved);

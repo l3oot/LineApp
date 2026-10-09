@@ -39,17 +39,20 @@ export type ApiRes<T> = {
     message: string | null;
     typeError: string | null;
     data: T | null;
+    code?: string | null;
 };
 
 export class ApiError extends Error {
     readonly status: number;
     readonly typeError: string | null;
+    readonly code: string | null;
 
-    constructor(status: number, typeError: string | null, message: string) {
+    constructor(status: number, typeError: string | null, message: string, code: string | null = null) {
         super(message);
         this.name = "ApiError";
         this.status = status;
         this.typeError = typeError;
+        this.code = code;
     }
 }
 
@@ -130,6 +133,7 @@ async function request<T>(
             res.status,
             body?.typeError ?? null,
             body?.message ?? `Request failed: ${res.status}`,
+            body?.code ?? null,
         );
     }
     return body.data as T;

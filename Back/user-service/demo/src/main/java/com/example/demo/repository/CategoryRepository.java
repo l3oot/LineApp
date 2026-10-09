@@ -13,6 +13,8 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
 
     boolean existsByUserId(UUID userId);
 
+    long countByUserId(UUID userId);
+
     List<CategoryEntity> findByUserIdAndTypeOrderByNameAsc(UUID userId, String type);
 
     boolean existsByUserIdAndName(UUID userId, String name);

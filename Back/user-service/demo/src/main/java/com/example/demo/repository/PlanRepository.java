@@ -9,5 +9,7 @@ import com.example.demo.entity.PlanEntity;
 
 public interface PlanRepository extends JpaRepository<PlanEntity, UUID> {
 
+    Optional<PlanEntity> findByName(String name);
+
     Optional<PlanEntity> findByNameAndIsActiveTrue(String name);
 }

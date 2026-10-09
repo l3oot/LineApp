@@ -54,6 +54,7 @@ function mapTypeErrorToFriendlyMessage(typeError: string | undefined, t: TFuncti
         case "CROP_QUOTA_EXCEEDED":
         case "CROP_HAS_TRANSACTIONS":
         case "CYCLE_QUOTA_EXCEEDED":
+        case "CATEGORY_QUOTA_EXCEEDED":
             return t("errors.conflict");
         case "PRODUCT_IMAGE_REQUIRED":
         case "PRODUCT_IMAGE_INVALID":
@@ -83,6 +84,10 @@ function mapTypeErrorToFriendlyMessage(typeError: string | undefined, t: TFuncti
 
 export function getFriendlyApiErrorMessage(error: unknown, t: TFunction): string {
     if (error instanceof ApiError) {
+        const codeMessage = mapTypeErrorToFriendlyMessage(error.code ?? undefined, t);
+        if (codeMessage && (error.code ?? "").toUpperCase() === "CATEGORY_QUOTA_EXCEEDED") {
+            return codeMessage;
+        }
         // Prefer backend message for image/validation so user sees resize/size guidance
         const type = (error.typeError ?? "").toUpperCase();
         if (
