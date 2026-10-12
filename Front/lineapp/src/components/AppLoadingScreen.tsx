@@ -1,4 +1,3 @@
-import loadMark from "../assets/load.png";
 import "../styles/app-loading.css";
 
 type AppLoadingScreenProps = {
@@ -13,9 +12,8 @@ export default function AppLoadingScreen({ label = "กำลังโหลด"
             role="status"
             aria-live="polite"
             aria-busy="true"
-            aria-label={label}
         >
-            <img className="app-loading-mark" src={loadMark} alt="" />
+            <span className="app-loading-label">{label}</span>
         </div>
     );
 }
