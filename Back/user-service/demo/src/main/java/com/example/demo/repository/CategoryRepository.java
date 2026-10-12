@@ -1,6 +1,7 @@
 package com.example.demo.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,6 +19,8 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
     List<CategoryEntity> findByUserIdAndTypeOrderByNameAsc(UUID userId, String type);
 
     boolean existsByUserIdAndName(UUID userId, String name);
+
+    Optional<CategoryEntity> findFirstByUserIdAndNameIgnoreCase(UUID userId, String name);
 
     boolean existsByUserIdAndNameAndCategoryIdNot(UUID userId, String name, UUID categoryId);
 }

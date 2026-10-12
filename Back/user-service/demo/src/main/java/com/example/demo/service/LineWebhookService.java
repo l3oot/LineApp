@@ -69,6 +69,7 @@ public class LineWebhookService {
     private final LineProperties lineProperties;
     private final CycleRepository cycleRepository;
     private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
     public LineWebhookService(
             UserRepository userRepository,
@@ -80,7 +81,8 @@ public class LineWebhookService {
             LineTransactionNotifyService lineTransactionNotifyService,
             LineProperties lineProperties,
             CycleRepository cycleRepository,
-            CategoryRepository categoryRepository) {
+            CategoryRepository categoryRepository,
+            CategoryService categoryService) {
         this.userRepository = userRepository;
         this.aiClientService = aiClientService;
         this.chatHistoryService = chatHistoryService;
@@ -91,6 +93,7 @@ public class LineWebhookService {
         this.lineProperties = lineProperties;
         this.cycleRepository = cycleRepository;
         this.categoryRepository = categoryRepository;
+        this.categoryService = categoryService;
     }
 
     @Async("lineWebhookExecutor")
@@ -344,25 +347,34 @@ public class LineWebhookService {
             return LineReply.text("ยายขอโทษน้า ยายยังแยกข้อมูลไม่ครบ ช่วยพิมพ์ใหม่อีกครั้งนะจ๊ะ");
         }
 
+        AiParseRes.Data assigned = categoryService
+                .assignForIncomingTransaction(
+                        user.getUserId(),
+                        data.categoryId(),
+                        data.type(),
+                        data.categoryName())
+                .map(category -> data.withCategory(category.categoryId(), category.name()))
+                .orElseGet(() -> data.withCategory(null, null));
+
         TransactionCreateReq req = new TransactionCreateReq(
                 user.getUserId(),
-                data.cycleId(),
-                data.categoryId(), 
-                data.type(),
-                BigDecimal.valueOf(data.price()),
-                data.main(),
-                data.icon(),  
+                assigned.cycleId(),
+                assigned.categoryId(),
+                assigned.type(),
+                BigDecimal.valueOf(assigned.price()),
+                assigned.main(),
+                assigned.icon(),
                 AppTime.fromEpochMilli(timestampMs));
 
         try {
             TransactionRes saved = transactionService.createTransaction(req);
             LineReply.FlexBubble transactionCard = new LineReply.FlexBubble(
                     lineFlexMessageBuilder.buildTransactionBubble(
-                            data,
+                            assigned,
                             saved,
                             timestampMs,
                             lineProperties.resolveLiffBaseUrl()),
-                    lineFlexMessageBuilder.buildAltText(data, saved));
+                    lineFlexMessageBuilder.buildAltText(assigned, saved));
             if (needsGoWebPrompt(user.getUserId())) {
                 return LineReply.flexes(
                         transactionCard,
