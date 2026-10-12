@@ -276,3 +276,71 @@
 .analytic-cal-badge--expense {
     background: var(--expense);
 }
+
+.analytic-month-totals-wrap {
+    container-type: inline-size;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--border);
+}
+
+.analytic-month-totals {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.analytic-month-total {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.75rem;
+    background: var(--surface-soft);
+}
+
+.analytic-month-total--income {
+    background: color-mix(in srgb, var(--income) 14%, var(--surface));
+}
+
+.analytic-month-total--expense {
+    background: color-mix(in srgb, var(--expense) 14%, var(--surface));
+}
+
+.analytic-month-total-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-soft);
+}
+
+.analytic-month-total-value {
+    font-size: 1rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.analytic-month-total--income .analytic-month-total-value {
+    color: var(--income);
+}
+
+.analytic-month-total--expense .analytic-month-total-value {
+    color: var(--expense);
+}
+
+@container (max-width: 26rem) {
+    .analytic-month-totals {
+        grid-template-columns: 1fr;
+    }
+
+    .analytic-month-total {
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+}

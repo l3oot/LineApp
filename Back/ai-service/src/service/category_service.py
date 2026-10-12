@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+MAX_PROPOSED_CATEGORY_NAME_LENGTH = 40
+
 
 def categories_for_prompt(categories: list[dict[str, Any]]) -> list[dict[str, str | None]]:
     """ส่งให้ LLM แค่ name + type — categoryId map ฝั่ง server หลัง parse"""
@@ -14,6 +16,18 @@ def categories_for_prompt(categories: list[dict[str, Any]]) -> list[dict[str, st
             continue
         out.append({"name": row.get("name"), "type": row.get("type")})
     return out
+
+
+def sanitize_proposed_category_name(category_name: str | None) -> str | None:
+    """ตัดช่องว่าง / จำกัดความยาว สำหรับชื่อหมวดที่ LLM เสนอมาให้สร้างใหม่"""
+    name = " ".join((category_name or "").split())
+    if not name:
+        return None
+    if any(ch.isdigit() for ch in name):
+        return None
+    if len(name) > MAX_PROPOSED_CATEGORY_NAME_LENGTH:
+        name = name[:MAX_PROPOSED_CATEGORY_NAME_LENGTH].strip()
+    return name or None
 
 
 def resolve_category(
@@ -60,6 +74,18 @@ def resolve_category(
         return UUID(str(cid)), canonical_name
     except (ValueError, TypeError):
         return None, canonical_name
+
+
+def resolve_or_propose_category(
+    categories: list[dict[str, Any]],
+    category_name: str | None,
+    type_hint: str | None = None,
+) -> tuple[UUID | None, str | None]:
+    """จับคู่หมวดที่มีอยู่ หรือคงชื่อที่ LLM เสนอไว้ให้ user-service สร้างเงียบ ๆ"""
+    category_id, canonical_name = resolve_category(categories, category_name, type_hint)
+    if category_id is not None:
+        return category_id, canonical_name
+    return None, sanitize_proposed_category_name(category_name)
 
 
 def allowed_category_ids(categories: list[dict[str, Any]]) -> set[str]:

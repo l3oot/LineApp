@@ -33,5 +33,17 @@ public record AiParseRes(
             UUID categoryId,
             String categoryName,
             String icon) {
+
+        public Data withCategory(UUID resolvedCategoryId, String resolvedCategoryName) {
+            return new Data(
+                    main,
+                    price,
+                    type,
+                    cycleId,
+                    cycleName,
+                    resolvedCategoryId,
+                    resolvedCategoryName,
+                    icon);
+        }
     }
 }

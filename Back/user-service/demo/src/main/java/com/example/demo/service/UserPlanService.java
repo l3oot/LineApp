@@ -121,21 +121,35 @@ public class UserPlanService {
 
     @Transactional
     public void assertCanCreateCategory(UUID userId) {
+        CategoryQuotaCheck check = checkCategoryQuota(userId);
+        if (!check.allowed()) {
+            throw new ApiException(
+                    ErrorCode.CATEGORY_QUOTA_EXCEEDED,
+                    "Category limit reached (" + check.maxCategories() + ")");
+        }
+    }
+
+    /** Silent quota probe for convenience auto-create — never throws on a full plan. */
+    @Transactional
+    public boolean tryCanCreateCategory(UUID userId) {
+        return checkCategoryQuota(userId).allowed();
+    }
+
+    private CategoryQuotaCheck checkCategoryQuota(UUID userId) {
         UserPlanEntity userPlan = resolveActiveUserPlanForUpdate(userId);
         PlanEntity plan = planRepository.findById(userPlan.getPlanId())
                 .orElseThrow(() -> new ApiException(ErrorCode.INTERNAL_ERROR, "Plan not found"));
 
         int maxCategories = resolveMaxCategories(plan);
         if (maxCategories == -1) {
-            return;
+            return new CategoryQuotaCheck(true, maxCategories);
         }
 
         long categoryCount = categoryRepository.countByUserId(userId);
-        if (categoryCount >= maxCategories) {
-            throw new ApiException(
-                    ErrorCode.CATEGORY_QUOTA_EXCEEDED,
-                    "Category limit reached (" + maxCategories + ")");
-        }
+        return new CategoryQuotaCheck(categoryCount < maxCategories, maxCategories);
+    }
+
+    private record CategoryQuotaCheck(boolean allowed, int maxCategories) {
     }
 
     private int resolveMaxCategories(PlanEntity plan) {

@@ -13,7 +13,7 @@ from src.dto.extract import AiExtractLlmRaw, AiExtractStructured, AiParseRespons
 from src.data.icons import normalize_icon
 from src.service.category_service import (
     allowed_category_ids,
-    resolve_category,
+    resolve_or_propose_category,
 )
 from src.service.cycle_service import (
     allowed_cycle_ids,
@@ -48,7 +48,7 @@ def structured_from_dict(
     try:
         raw = AiExtractLlmRaw.model_validate(obj)
         cycle_id, cycle_name = resolve_cycle(cycles, raw.cycleName, raw.cycleFarmType)
-        category_id, category_name = resolve_category(
+        category_id, category_name = resolve_or_propose_category(
             categories, raw.categoryName, raw.type
         )
         return AiExtractStructured(
@@ -123,7 +123,6 @@ def sanitize_ids(
                 sorted(allowed_cats),
             )
             updates["categoryId"] = None
-            updates["categoryName"] = None
     return structured.model_copy(update=updates) if updates else structured
 
 

@@ -19,7 +19,7 @@ EXTRACT_JSON_SHAPE_FOR_PROMPT = """{
 }
 (type เป็น "expense" หรือ "income"; price เป็นตัวเลข;
  cycleName และ cycleFarmType ต้องตรงกับรายการ cycles ที่ให้ทุกตัวอักษร หรือ null ถ้าไม่ตรงรอบใด;
- categoryName ต้องตรงกับรายการ categories ที่ให้ทุกตัวอักษร หรือ null ถ้าไม่ตรงหมวดใด;
+ categoryName เป็นชื่อจากรายการ categories ที่ให้ทุกตัวอักษร หรือชื่อหมวดใหม่สั้น ๆ ถ้าไม่มีหมวดที่ตรง หรือ null;
  icon ต้องเป็น key จากรายการ icons ที่ให้ทุกตัวอักษร หรือ null ถ้าไม่ตรง icon ใด)"""
 
 
