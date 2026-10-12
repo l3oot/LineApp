@@ -94,6 +94,18 @@ export default function AnalyticCalendarCard({
     const selectedMonth = String(focusedGregorian.month);
     const selectedYear = String(usesBuddhistEra(lang) ? focusedGregorian.year + 543 : focusedGregorian.year);
 
+    const monthTotals = useMemo(() => {
+        const prefix = `${focusedGregorian.year}-${String(focusedGregorian.month).padStart(2, "0")}-`;
+        let income = 0;
+        let expense = 0;
+        for (const [key, totals] of dailyTotals) {
+            if (!key.startsWith(prefix)) continue;
+            income += totals.income;
+            expense += totals.expense;
+        }
+        return { income, expense };
+    }, [dailyTotals, focusedGregorian.month, focusedGregorian.year]);
+
     const handleMonthChange = (monthValue: string) => {
         const nextGregorian = focusedGregorian.set({ month: Number(monthValue) });
         onFocusedDateChange(toAppCalendarDate(nextGregorian, lang));
@@ -121,6 +133,8 @@ export default function AnalyticCalendarCard({
     };
 
     const todayKey = gregorianKeyFromCalendarDate(today(getLocalTimeZone()));
+
+    const formatAmount = (amount: number) => Math.abs(amount).toLocaleString();
 
     return (
         <section className="analytic-card">
@@ -255,6 +269,21 @@ export default function AnalyticCalendarCard({
                             </CalendarGrid>
                         </div>
                     </Calendar>
+                )}
+
+                {!loading && (
+                    <div className="analytic-month-totals-wrap">
+                        <div className="analytic-month-totals" aria-live="polite">
+                            <div className="analytic-month-total analytic-month-total--income">
+                                <span className="analytic-month-total-label">{t("analytic.income")}</span>
+                                <span className="analytic-month-total-value">{formatAmount(monthTotals.income)}</span>
+                            </div>
+                            <div className="analytic-month-total analytic-month-total--expense">
+                                <span className="analytic-month-total-label">{t("analytic.expense")}</span>
+                                <span className="analytic-month-total-value">{formatAmount(monthTotals.expense)}</span>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
         </section>
